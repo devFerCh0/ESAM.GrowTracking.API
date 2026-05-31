@@ -1,0 +1,6 @@
+@ESAM.GrowTracking.API_HostAddress = http://localhost:5225
+
+GET {{ESAM.GrowTracking.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

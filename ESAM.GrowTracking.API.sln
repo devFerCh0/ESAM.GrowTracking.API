@@ -1,0 +1,68 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.37111.16
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ESAM.GrowTracking.API", "ESAM.GrowTracking.API\ESAM.GrowTracking.API.csproj", "{0C0CFA7E-A4B7-462C-8371-716FB3159A41}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ESAM.GrowTracking.Domain", "ESAM.GrowTracking.Domain", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ESAM.GrowTracking.Domain", "ESAM.GrowTracking.Domain\ESAM.GrowTracking.Domain.csproj", "{8E18E8DB-DF90-44A9-91AA-ACACBF5AED17}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ESAM.GrowTracking.Persistence", "ESAM.GrowTracking.Persistence", "{C76A5BDE-EE73-4D89-B816-C7D145D575EC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ESAM.GrowTracking.Persistence", "ESAM.GrowTracking.Persistence\ESAM.GrowTracking.Persistence.csproj", "{8D5693DF-8B3D-49AF-81C2-0DD2D37F3431}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ESAM.GrowTracking.Application", "ESAM.GrowTracking.Application", "{BF29D281-E41B-411B-8BB0-C997DE040C0E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ESAM.GrowTracking.Application", "ESAM.GrowTracking.Application\ESAM.GrowTracking.Application.csproj", "{35BEBF45-6DA9-4CEE-9519-D9170913116F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ESAM.GrowTracking.Infrastructure", "ESAM.GrowTracking.Infrastructure", "{12DA2196-0BB7-4D0C-8983-000C7FFB0691}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ESAM.GrowTracking.Infrastructure", "ESAM.GrowTracking.Infrastructure\ESAM.GrowTracking.Infrastructure.csproj", "{7D8B6F61-5A99-4E4E-B5A2-83A335F15A4D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Elementos de la solución", "Elementos de la solución", "{D107F4C8-89CC-BEA8-D3D7-CA6B7733353D}"
+	ProjectSection(SolutionItems) = preProject
+		Notes.txt = Notes.txt
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0C0CFA7E-A4B7-462C-8371-716FB3159A41}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C0CFA7E-A4B7-462C-8371-716FB3159A41}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C0CFA7E-A4B7-462C-8371-716FB3159A41}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C0CFA7E-A4B7-462C-8371-716FB3159A41}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8E18E8DB-DF90-44A9-91AA-ACACBF5AED17}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E18E8DB-DF90-44A9-91AA-ACACBF5AED17}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E18E8DB-DF90-44A9-91AA-ACACBF5AED17}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E18E8DB-DF90-44A9-91AA-ACACBF5AED17}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8D5693DF-8B3D-49AF-81C2-0DD2D37F3431}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D5693DF-8B3D-49AF-81C2-0DD2D37F3431}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8D5693DF-8B3D-49AF-81C2-0DD2D37F3431}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D5693DF-8B3D-49AF-81C2-0DD2D37F3431}.Release|Any CPU.Build.0 = Release|Any CPU
+		{35BEBF45-6DA9-4CEE-9519-D9170913116F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{35BEBF45-6DA9-4CEE-9519-D9170913116F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{35BEBF45-6DA9-4CEE-9519-D9170913116F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{35BEBF45-6DA9-4CEE-9519-D9170913116F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7D8B6F61-5A99-4E4E-B5A2-83A335F15A4D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D8B6F61-5A99-4E4E-B5A2-83A335F15A4D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D8B6F61-5A99-4E4E-B5A2-83A335F15A4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D8B6F61-5A99-4E4E-B5A2-83A335F15A4D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{8E18E8DB-DF90-44A9-91AA-ACACBF5AED17} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{8D5693DF-8B3D-49AF-81C2-0DD2D37F3431} = {C76A5BDE-EE73-4D89-B816-C7D145D575EC}
+		{35BEBF45-6DA9-4CEE-9519-D9170913116F} = {BF29D281-E41B-411B-8BB0-C997DE040C0E}
+		{7D8B6F61-5A99-4E4E-B5A2-83A335F15A4D} = {12DA2196-0BB7-4D0C-8983-000C7FFB0691}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {15424C10-679C-467A-A2D7-67E3D929E137}
+	EndGlobalSection
+EndGlobal

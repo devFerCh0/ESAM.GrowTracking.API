@@ -1,0 +1,37 @@
+﻿using ESAM.GrowTracking.Application.Enums;
+
+namespace ESAM.GrowTracking.Application.Abstractions.Services
+{
+    public interface ICurrentUserService
+    {
+        bool IsAuthenticated { get; }
+
+        AccessTokenType? AccessTokenType { get; }
+
+        int? UserId { get; }
+
+        string? SecurityStamp { get; }
+
+        int? TokenVersion { get; }
+
+        string? Jti { get; }
+
+        DateTime? AccessTokenExpiration { get; }
+
+        int? UserDeviceId { get; }
+
+        int? UserSessionId { get; }
+
+        bool? IsPersistent { get; }
+
+        int? WorkProfileId { get; }
+
+        int? RoleId { get; }
+
+        int? CampusId { get; }
+
+        IReadOnlyList<string> Permissions { get; }
+
+        bool HasPermission(string permission);
+    }
+}
