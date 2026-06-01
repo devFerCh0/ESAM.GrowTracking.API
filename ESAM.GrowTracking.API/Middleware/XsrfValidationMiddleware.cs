@@ -1,9 +1,10 @@
-﻿using System.Security.Cryptography;
-using System.Text;
-using System.Text.Json;
+﻿using ESAM.GrowTracking.API.Responses;
 using ESAM.GrowTracking.Infrastructure.Settings;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.Options;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 
 namespace ESAM.GrowTracking.API.Middleware
 {
@@ -82,14 +83,19 @@ namespace ESAM.GrowTracking.API.Middleware
             return false;
         }
 
-        private async Task DenyAsync(HttpContext context)
+        //private async Task DenyAsync(HttpContext context)
+        //{
+        //    context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        //    var problemDetails = _problemDetailsFactory.CreateProblemDetails(context, StatusCodes.Status403Forbidden, "Forbidden", 
+        //        "https://tools.ietf.org/html/rfc7231#section-6.5.3", "Token XSRF no válido o faltante.");
+        //    if (!problemDetails.Extensions.ContainsKey("traceId"))
+        //        problemDetails.Extensions["traceId"] = context.TraceIdentifier;
+        //    await context.Response.WriteAsJsonAsync(problemDetails, s_jsonOptions, "application/problem+json; charset=utf-8");
+        //}
+
+        private static async Task DenyAsync(HttpContext context)
         {
-            context.Response.StatusCode = StatusCodes.Status403Forbidden;
-            var problemDetails = _problemDetailsFactory.CreateProblemDetails(context, StatusCodes.Status403Forbidden, "Forbidden", 
-                "https://tools.ietf.org/html/rfc7231#section-6.5.3", "Token XSRF no válido o faltante.");
-            if (!problemDetails.Extensions.ContainsKey("traceId"))
-                problemDetails.Extensions["traceId"] = context.TraceIdentifier;
-            await context.Response.WriteAsJsonAsync(problemDetails, s_jsonOptions, "application/problem+json; charset=utf-8");
+            await ApiErrorWriter.WriteAsync(context, StatusCodes.Status403Forbidden, "Token XSRF no válido o faltante.");
         }
 
         private static bool IsStateChangingMethod(string method) =>  HttpMethods.IsPost(method) || HttpMethods.IsPut(method) || HttpMethods.IsDelete(method) 

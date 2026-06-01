@@ -44,6 +44,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 app.UseResponseCompression();
+app.UseMiddleware<StatusCodeToApiErrorMiddleware>();
 app.UseRouting();
 app.UseCors();
 app.UseCookiePolicy();

@@ -47,15 +47,25 @@ namespace ESAM.GrowTracking.API.ConfigureOptions
                     QueueLimit = 0
                 });
             });
+            //options.OnRejected = async (ctx, token) =>
+            //{
+            //    ctx.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+            //    ctx.HttpContext.Response.ContentType = "application/problem+json; charset=utf-8";
+            //    if (ctx.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+            //        ctx.HttpContext.Response.Headers.RetryAfter = ((int)retryAfter.TotalSeconds).ToString(CultureInfo.InvariantCulture);
+            //    const string payload = "{\"type\":\"https://tools.ietf.org/html/rfc6585#section-4\",\"title\":\"Too Many Requests\",\"status\":429," +
+            //        "\"detail\":\"Has excedido el límite de solicitudes permitidas. Intente de nuevo en un momento.\"}";
+            //    await ctx.HttpContext.Response.WriteAsync(payload, token);
+            //};
             options.OnRejected = async (ctx, token) =>
             {
-                ctx.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-                ctx.HttpContext.Response.ContentType = "application/problem+json; charset=utf-8";
                 if (ctx.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
                     ctx.HttpContext.Response.Headers.RetryAfter = ((int)retryAfter.TotalSeconds).ToString(CultureInfo.InvariantCulture);
-                const string payload = "{\"type\":\"https://tools.ietf.org/html/rfc6585#section-4\",\"title\":\"Too Many Requests\",\"status\":429," +
-                    "\"detail\":\"Has excedido el límite de solicitudes permitidas. Intente de nuevo en un momento.\"}";
-                await ctx.HttpContext.Response.WriteAsync(payload, token);
+                await Responses.ApiErrorWriter.WriteAsync(
+                    ctx.HttpContext,
+                    StatusCodes.Status429TooManyRequests,
+                    "Has excedido el límite de solicitudes permitidas. Intente de nuevo en un momento."
+                );
             };
         }
     }

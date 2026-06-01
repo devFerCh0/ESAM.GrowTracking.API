@@ -8,6 +8,7 @@ namespace ESAM.GrowTracking.API.ConfigureOptions
         public void Configure(ApiBehaviorOptions options)
         {
             options.SuppressModelStateInvalidFilter = true;
+            options.SuppressMapClientErrors = true;
         }
     }
 }

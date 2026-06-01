@@ -1,4 +1,5 @@
-﻿using ESAM.GrowTracking.Infrastructure.Settings;
+﻿using ESAM.GrowTracking.API.Responses;
+using ESAM.GrowTracking.Infrastructure.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -35,6 +36,20 @@ namespace ESAM.GrowTracking.API.ConfigureOptions
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey)),
                 ValidateLifetime = true,
                 ClockSkew = TimeSpan.Zero
+            };
+            jwtBearerOptions.Events ??= new JwtBearerEvents();
+            jwtBearerOptions.Events.OnChallenge = async context =>
+            {
+                context.HandleResponse();
+                if (context.Response.HasStarted)
+                    return;
+                await ApiErrorWriter.WriteAsync(context.HttpContext, StatusCodes.Status401Unauthorized, "Unauthorized.");
+            };
+            jwtBearerOptions.Events.OnForbidden = async context =>
+            {
+                if (context.Response.HasStarted)
+                    return;
+                await ApiErrorWriter.WriteAsync(context.HttpContext, StatusCodes.Status403Forbidden, "Forbidden.");
             };
         }
     }

@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using ESAM.GrowTracking.API.Abstractions.Mappers;
+//using ESAM.GrowTracking.API.Contracts;
 using ESAM.GrowTracking.API.Controllers.Auth.AssumeRoleCampus;
 using ESAM.GrowTracking.API.Controllers.Auth.AssumeRoleCampus.HttpResponses;
 using ESAM.GrowTracking.API.Controllers.Auth.AssumeWorkProfile;
@@ -10,6 +11,7 @@ using ESAM.GrowTracking.API.Controllers.Auth.Login.HttpResponses;
 using ESAM.GrowTracking.API.Controllers.Auth.Logout;
 using ESAM.GrowTracking.API.Controllers.Auth.Refresh;
 using ESAM.GrowTracking.API.Extensions;
+using ESAM.GrowTracking.API.Responses;
 using ESAM.GrowTracking.Application.Abstractions.Services;
 using ESAM.GrowTracking.Application.Features.Auth.AssumeRoleCampus;
 using ESAM.GrowTracking.Application.Features.Auth.AssumeWorkProfile;
@@ -46,23 +48,42 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
             _authSessionCookieService = authSessionCookieService;
         }
 
+        //[AllowAnonymous]
+        //[HttpPost("login")]
+        //[Consumes("application/json")]
+        //[ProducesResponseType(typeof(LoginHttpResponse), StatusCodes.Status200OK)]
+        //[ProducesResponseType(StatusCodes.Status400BadRequest)]
+        //[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        //[ProducesResponseType(StatusCodes.Status403Forbidden)]
+        //[ProducesResponseType(StatusCodes.Status423Locked)]
+        //[ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        //public async Task<ActionResult<LoginHttpResponse>> LoginAsync([FromBody] LoginRequest request, CancellationToken cancellationToken)
+        //{
+        //    var command = new LoginCommand(request.Credential, request.Password, request.IsPersistent, request.DeviceIdentifier, request.DeviceName, request.ApiClientType);
+        //    var loginResult = await _sender.Send(command, cancellationToken);
+        //    if (loginResult.IsFailure)
+        //        return loginResult.ToErrorActionResult(_errorToHttpMapper);
+        //    var login = _mapper.Map<LoginHttpResponse>(loginResult.Value);
+        //    return Ok(new { success = true, data = login });
+        //}
+
         [AllowAnonymous]
         [HttpPost("login")]
         [Consumes("application/json")]
-        [ProducesResponseType(typeof(LoginHttpResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        [ProducesResponseType(StatusCodes.Status423Locked)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<LoginHttpResponse>> LoginAsync([FromBody] LoginRequest request, CancellationToken cancellationToken)
+        [ProducesResponseType(typeof(ApiSuccessResponse<LoginHttpResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status423Locked)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<ApiSuccessResponse<LoginHttpResponse>>> LoginAsync([FromBody] LoginRequest request, CancellationToken cancellationToken)
         {
             var command = new LoginCommand(request.Credential, request.Password, request.IsPersistent, request.DeviceIdentifier, request.DeviceName, request.ApiClientType);
             var loginResult = await _sender.Send(command, cancellationToken);
             if (loginResult.IsFailure)
-                return loginResult.ToErrorActionResult(_errorToHttpMapper);
+                return loginResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
             var login = _mapper.Map<LoginHttpResponse>(loginResult.Value);
-            return Ok(new { success = true, data = login });
+            return Ok(ApiSuccessResponse<LoginHttpResponse>.From(login, HttpContext.TraceIdentifier));
         }
 
         [Authorize]
