@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 
 namespace ESAM.GrowTracking.API.ConfigureOptions
 {
-    internal sealed class RateLimiterOptionsSetup : IConfigureOptions<RateLimiterOptions> // 1, 2
+    internal sealed class RateLimiterOptionsSetup : IConfigureOptions<RateLimiterOptions>
     {
         private readonly IHostEnvironment _environment;
 

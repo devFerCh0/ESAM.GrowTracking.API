@@ -114,19 +114,7 @@ namespace ESAM.GrowTracking.API
             return endpoints;
         }
 
-        //public static IServiceCollection AddAPIMiddlewareServices(this IServiceCollection services)
-        //{
-        //    ArgumentNullException.ThrowIfNull(services);
-        //    services.AddScoped<ValidateModelStateFilter>();
-        //    services.AddSingleton<IErrorToHttpMapper, ErrorToHttpMapper>();
-        //    services.AddSingleton<GlobalExceptionMiddleware>();
-        //    services.AddSingleton<SecurityHeadersMiddleware>();
-        //    services.AddSingleton<XsrfValidationMiddleware>();
-        //    services.AddSingleton<CorrelationIdMiddleware>();
-        //    return services;
-        //}
-
-        public static IServiceCollection AddAPIMiddlewareServices(this IServiceCollection services) // 1, 2
+        public static IServiceCollection AddAPIMiddlewareServices(this IServiceCollection services)
         {
             ArgumentNullException.ThrowIfNull(services);
             services.AddHealthChecks();
@@ -187,15 +175,6 @@ namespace ESAM.GrowTracking.API
             services.ConfigureOptions<JsonOptionsSetup>();
             return services;
         }
-
-        //public static IServiceCollection AddAPISwagger(this IServiceCollection services)
-        //{
-        //    ArgumentNullException.ThrowIfNull(services);
-        //    services.AddEndpointsApiExplorer();
-        //    services.AddSwaggerGen();
-        //    services.ConfigureOptions<SwaggerGenOptionsSetup>();
-        //    return services;
-        //}
 
         public static IServiceCollection AddAPISwagger(this IServiceCollection services, IHostEnvironment environment)
         {

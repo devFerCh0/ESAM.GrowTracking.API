@@ -21,8 +21,8 @@ namespace ESAM.GrowTracking.Application.Abstractions.Services.Results
             CampusId = campusId;
         }
 
-        public static TokenSessionValidationResult Success(string revokedReason, User validatedUser, int workProfileId, int? roleId, int? campusId)
-            => new(true, revokedReason, validatedUser, workProfileId, roleId, campusId);
+        public static TokenSessionValidationResult Success(string revokedReason, User validatedUser, int workProfileId, int? roleId, int? campusId) => 
+            new(true, revokedReason, validatedUser, workProfileId, roleId, campusId);
 
         public static TokenSessionValidationResult Failure(string revokedReason) => new(false, revokedReason, null, 0, null, null);
     }

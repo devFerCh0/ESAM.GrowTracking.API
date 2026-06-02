@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace ESAM.GrowTracking.API.Filters
 {
-    public sealed class ValidateModelStateFilter : IActionFilter // 1, 2
+    public sealed class ValidateModelStateFilter : IActionFilter
     {
         private readonly ILogger<ValidateModelStateFilter> _logger;
 
