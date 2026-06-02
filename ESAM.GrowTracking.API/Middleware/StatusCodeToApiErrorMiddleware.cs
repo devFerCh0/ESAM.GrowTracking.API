@@ -24,16 +24,28 @@ namespace ESAM.GrowTracking.API.Middleware
             var status = context.Response.StatusCode;
             if (status < 400)
                 return;
-            var message = status switch
-            {
-                StatusCodes.Status404NotFound => "Not Found.",
-                StatusCodes.Status405MethodNotAllowed => "Method Not Allowed.",
-                StatusCodes.Status415UnsupportedMediaType => "Unsupported Media Type.",
-                StatusCodes.Status406NotAcceptable => "Not Acceptable.",
-                _ when status >= 500 => "Se ha producido un error inesperado.",
-                _ => "Request failed."
-            };
-            await ApiErrorWriter.WriteAsync(context, status, message);
+            await ApiErrorWriter.WriteAsync(context, status, ResolveMessage(status));
         }
+
+        private static string ResolveMessage(int statusCode) => statusCode switch
+        {
+            StatusCodes.Status400BadRequest => "Bad Request.",
+            StatusCodes.Status401Unauthorized => "Unauthorized.",
+            StatusCodes.Status403Forbidden => "Forbidden.",
+            StatusCodes.Status404NotFound => "Not Found.",
+            StatusCodes.Status405MethodNotAllowed => "Method Not Allowed.",
+            StatusCodes.Status406NotAcceptable => "Not Acceptable.",
+            StatusCodes.Status408RequestTimeout => "Request Timeout.",
+            StatusCodes.Status409Conflict => "Conflict.",
+            StatusCodes.Status410Gone => "Gone.",
+            StatusCodes.Status413RequestEntityTooLarge => "Request Entity Too Large.",
+            StatusCodes.Status415UnsupportedMediaType => "Unsupported Media Type.",
+            StatusCodes.Status422UnprocessableEntity => "Unprocessable Entity.",
+            StatusCodes.Status423Locked => "Locked.",
+            StatusCodes.Status429TooManyRequests => "Too Many Requests.",
+            StatusCodes.Status431RequestHeaderFieldsTooLarge => "Request Header Fields Too Large.",
+            >= 500 => "Se ha producido un error inesperado.",
+            _ => "Request failed."
+        };
     }
 }

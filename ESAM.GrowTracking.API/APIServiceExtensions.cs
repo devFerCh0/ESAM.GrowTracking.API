@@ -126,10 +126,9 @@ namespace ESAM.GrowTracking.API
         //    return services;
         //}
 
-        public static IServiceCollection AddAPIMiddlewareServices(this IServiceCollection services)
+        public static IServiceCollection AddAPIMiddlewareServices(this IServiceCollection services) // 1, 2
         {
             ArgumentNullException.ThrowIfNull(services);
-            services.AddProblemDetails();
             services.AddHealthChecks();
             services.AddScoped<ValidateModelStateFilter>();
             services.AddSingleton<IErrorToHttpMapper, ErrorToHttpMapper>();

@@ -9,8 +9,5 @@ namespace ESAM.GrowTracking.API.Responses
 
         [JsonPropertyName("fields")]
         public IReadOnlyList<string> Fields { get; init; } = [];
-
-        [JsonPropertyName("type")]
-        public string? Type { get; init; }
     }
 }

@@ -48,25 +48,6 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
             _authSessionCookieService = authSessionCookieService;
         }
 
-        //[AllowAnonymous]
-        //[HttpPost("login")]
-        //[Consumes("application/json")]
-        //[ProducesResponseType(typeof(LoginHttpResponse), StatusCodes.Status200OK)]
-        //[ProducesResponseType(StatusCodes.Status400BadRequest)]
-        //[ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        //[ProducesResponseType(StatusCodes.Status403Forbidden)]
-        //[ProducesResponseType(StatusCodes.Status423Locked)]
-        //[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        //public async Task<ActionResult<LoginHttpResponse>> LoginAsync([FromBody] LoginRequest request, CancellationToken cancellationToken)
-        //{
-        //    var command = new LoginCommand(request.Credential, request.Password, request.IsPersistent, request.DeviceIdentifier, request.DeviceName, request.ApiClientType);
-        //    var loginResult = await _sender.Send(command, cancellationToken);
-        //    if (loginResult.IsFailure)
-        //        return loginResult.ToErrorActionResult(_errorToHttpMapper);
-        //    var login = _mapper.Map<LoginHttpResponse>(loginResult.Value);
-        //    return Ok(new { success = true, data = login });
-        //}
-
         [AllowAnonymous]
         [HttpPost("login")]
         [Consumes("application/json")]
@@ -75,6 +56,7 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status423Locked)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<ApiSuccessResponse<LoginHttpResponse>>> LoginAsync([FromBody] LoginRequest request, CancellationToken cancellationToken)
         {
@@ -89,74 +71,77 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
         [Authorize]
         [HttpPost("assume-work-profile")]
         [Consumes("application/json")]
-        [ProducesResponseType(typeof(AssumeWorkProfileHttpResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-        [ProducesResponseType(StatusCodes.Status423Locked)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<AssumeWorkProfileHttpResponse>> AssumeWorkProfileAsync([FromBody] AssumeWorkProfileRequest request, CancellationToken cancellationToken)
+        [ProducesResponseType(typeof(ApiSuccessResponse<AssumeWorkProfileHttpResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status422UnprocessableEntity)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status423Locked)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<ApiSuccessResponse<AssumeWorkProfileHttpResponse>>> AssumeWorkProfileAsync([FromBody] AssumeWorkProfileRequest request, 
+            CancellationToken cancellationToken)
         {
             var command = new AssumeWorkProfileCommand(request.WorkProfileId);
             var assumeWorkProfileResult = await _sender.Send(command, cancellationToken);
             if (assumeWorkProfileResult.IsFailure)
-                return assumeWorkProfileResult.ToErrorActionResult(_errorToHttpMapper);
+                return assumeWorkProfileResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
             var assumeWorkProfile = _mapper.Map<AssumeWorkProfileHttpResponse>(assumeWorkProfileResult.Value);
             _authSessionCookieService.SetSessionCookies(assumeWorkProfile.RefreshTokenRaw, assumeWorkProfile.RefreshTokenExpiresAt, assumeWorkProfile.AccessTokenExpiresAt);
-            return Ok(new { success = true, data = assumeWorkProfile });
+            return Ok(ApiSuccessResponse<AssumeWorkProfileHttpResponse>.From(assumeWorkProfile, HttpContext.TraceIdentifier));
         }
 
         [Authorize]
         [HttpGet("work-profile/{workProfileId:int}/user-role-campuses")]
-        [ProducesResponseType(typeof(List<UserRoleCampusHttpResponse>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status423Locked)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<List<UserRoleCampusHttpResponse>>> GetUserRoleCampusesAsync([FromRoute] int workProfileId, CancellationToken cancellationToken)
+        [ProducesResponseType(typeof(ApiSuccessResponse<List<UserRoleCampusHttpResponse>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status423Locked)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<ApiSuccessResponse<List<UserRoleCampusHttpResponse>>>> GetUserRoleCampusesAsync([FromRoute] int workProfileId, 
+            CancellationToken cancellationToken)
         {
             var query = new GetUserRoleCampusesQuery(workProfileId);
             var userRoleCampusesResult = await _sender.Send(query, cancellationToken);
             if (userRoleCampusesResult.IsFailure)
-                return userRoleCampusesResult.ToErrorActionResult(_errorToHttpMapper);
+                return userRoleCampusesResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
             var userRoleCampuses = _mapper.Map<List<UserRoleCampusHttpResponse>>(userRoleCampusesResult.Value);
-            return Ok(new { success = true, data = userRoleCampuses });
+            return Ok(ApiSuccessResponse<List<UserRoleCampusHttpResponse>>.From(userRoleCampuses, HttpContext.TraceIdentifier));
         }
 
         [Authorize]
         [HttpPost("assume-role-campus")]
         [Consumes("application/json")]
-        [ProducesResponseType(typeof(AssumeRoleCampusHttpResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-        [ProducesResponseType(StatusCodes.Status423Locked)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<AssumeRoleCampusHttpResponse>> AssumeRoleCampusAsync([FromBody] AssumeRoleCampusRequest request, CancellationToken cancellationToken)
+        [ProducesResponseType(typeof(ApiSuccessResponse<AssumeRoleCampusHttpResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status422UnprocessableEntity)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status423Locked)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<ApiSuccessResponse<AssumeRoleCampusHttpResponse>>> AssumeRoleCampusAsync([FromBody] AssumeRoleCampusRequest request, 
+            CancellationToken cancellationToken)
         {
             var command = new AssumeRoleCampusCommand(request.WorkProfileId, request.RoleId, request.CampusId);
             var assumeRoleCampusResult = await _sender.Send(command, cancellationToken);
             if (assumeRoleCampusResult.IsFailure)
-                return assumeRoleCampusResult.ToErrorActionResult(_errorToHttpMapper);
+                return assumeRoleCampusResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
             var assumeRoleCampus = _mapper.Map<AssumeRoleCampusHttpResponse>(assumeRoleCampusResult.Value);
             _authSessionCookieService.SetSessionCookies(assumeRoleCampus.RefreshTokenRaw, assumeRoleCampus.RefreshTokenExpiresAt, assumeRoleCampus.AccessTokenExpiresAt);
-            return Ok(new { success = true, data = assumeRoleCampus });
+            return Ok(ApiSuccessResponse<AssumeRoleCampusHttpResponse>.From(assumeRoleCampus, HttpContext.TraceIdentifier));
         }
 
         [AllowAnonymous]
         [HttpPost("refresh")]
         [Consumes("application/json")]
-        [ProducesResponseType(typeof(RefreshHttpResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<RefreshHttpResponse>> RefreshAsync([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] RefreshRequest? request,
+        [ProducesResponseType(typeof(ApiSuccessResponse<RefreshHttpResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<ApiSuccessResponse<RefreshHttpResponse>>> RefreshAsync([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] RefreshRequest? request,
             CancellationToken cancellationToken)
         {
             var resolvedRefreshToken = _authSessionCookieService.ResolveRefreshToken(request?.RefreshTokenRaw);
@@ -166,19 +151,20 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
             {
                 if (_authSessionCookieService.RequiresCookieClearOnFailure(refreshResult.Errors))
                     _authSessionCookieService.ClearSessionCookies();
-                return refreshResult.ToErrorActionResult(_errorToHttpMapper);
+                return refreshResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
             }
             var refresh = _mapper.Map<RefreshHttpResponse>(refreshResult.Value);
             _authSessionCookieService.SetSessionCookies(refresh.RefreshTokenRaw, refresh.RefreshTokenExpiresAt, refresh.AccessTokenExpiresAt);
-            return Ok(new { success = true, data = refresh });
+            return Ok(ApiSuccessResponse<RefreshHttpResponse>.From(refresh, HttpContext.TraceIdentifier));
         }
 
         [AllowAnonymous]
         [HttpPost("logout")]
         [Consumes("application/json")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult> LogoutAsync([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] LogoutRequest? request, CancellationToken cancellationToken)
+        [ProducesResponseType(typeof(ApiSuccessResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<ApiSuccessResponse>> LogoutAsync([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] LogoutRequest? request, 
+            CancellationToken cancellationToken)
         {
             var resolvedRefreshToken = _authSessionCookieService.ResolveRefreshToken(request?.RefreshTokenRaw);
             var command = new LogoutCommand(resolvedRefreshToken, request?.DeviceIdentifier);
@@ -186,8 +172,8 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
             {
                 var logoutResult = await _sender.Send(command, cancellationToken);
                 if (logoutResult.IsFailure)
-                    return logoutResult.ToErrorActionResult(_errorToHttpMapper);
-                return Ok(new { success = true });
+                    return logoutResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
+                return Ok(ApiSuccessResponse.From(HttpContext.TraceIdentifier));
             }
             finally
             {

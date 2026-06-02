@@ -1,11 +1,12 @@
-﻿using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.Extensions.Options;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Threading.RateLimiting;
+using ESAM.GrowTracking.API.Responses;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Options;
 
 namespace ESAM.GrowTracking.API.ConfigureOptions
 {
-    internal sealed class RateLimiterOptionsSetup : IConfigureOptions<RateLimiterOptions>
+    internal sealed class RateLimiterOptionsSetup : IConfigureOptions<RateLimiterOptions> // 1, 2
     {
         private readonly IHostEnvironment _environment;
 
@@ -17,6 +18,7 @@ namespace ESAM.GrowTracking.API.ConfigureOptions
 
         public void Configure(RateLimiterOptions options)
         {
+            ArgumentNullException.ThrowIfNull(options);
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
             if (_environment.IsDevelopment())
             {
@@ -47,25 +49,12 @@ namespace ESAM.GrowTracking.API.ConfigureOptions
                     QueueLimit = 0
                 });
             });
-            //options.OnRejected = async (ctx, token) =>
-            //{
-            //    ctx.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-            //    ctx.HttpContext.Response.ContentType = "application/problem+json; charset=utf-8";
-            //    if (ctx.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
-            //        ctx.HttpContext.Response.Headers.RetryAfter = ((int)retryAfter.TotalSeconds).ToString(CultureInfo.InvariantCulture);
-            //    const string payload = "{\"type\":\"https://tools.ietf.org/html/rfc6585#section-4\",\"title\":\"Too Many Requests\",\"status\":429," +
-            //        "\"detail\":\"Has excedido el límite de solicitudes permitidas. Intente de nuevo en un momento.\"}";
-            //    await ctx.HttpContext.Response.WriteAsync(payload, token);
-            //};
-            options.OnRejected = async (ctx, token) =>
+            options.OnRejected = async (ctx, _) =>
             {
                 if (ctx.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
                     ctx.HttpContext.Response.Headers.RetryAfter = ((int)retryAfter.TotalSeconds).ToString(CultureInfo.InvariantCulture);
-                await Responses.ApiErrorWriter.WriteAsync(
-                    ctx.HttpContext,
-                    StatusCodes.Status429TooManyRequests,
-                    "Has excedido el límite de solicitudes permitidas. Intente de nuevo en un momento."
-                );
+                await ApiErrorWriter.WriteAsync(ctx.HttpContext, StatusCodes.Status429TooManyRequests,
+                    "Has excedido el límite de solicitudes permitidas. Intente de nuevo en un momento.");
             };
         }
     }

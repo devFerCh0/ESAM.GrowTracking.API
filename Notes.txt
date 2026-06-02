@@ -1,1 +1,2 @@
-Estandarizar resultados
+Limpiar código en Application
+Migrar
