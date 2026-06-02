@@ -20,7 +20,7 @@ namespace ESAM.GrowTracking.Persistence.Configurations.Entities
             builder.Property(batp => batp.BlacklistedAt).IsRequired().HasDefaultValueSql("GETUTCDATE()");
             builder.Property(batp => batp.Reason).IsRequired(false).HasMaxLength(250);
             builder.Property(batp => batp.CreatedAt).IsRequired().HasDefaultValueSql("GETUTCDATE()");
-            builder.Property(batp => batp.CreatedBy).IsRequired(false);
+            builder.Property(batp => batp.CreatedBy).IsRequired();
             builder.Property(batp => batp.RecordVersion).IsRequired().IsRowVersion();
             builder.HasIndex(batp => new { batp.UserSessionId, batp.ExpiresAt });
             builder.HasOne(batp => batp.UserSession).WithMany(us => us.BlacklistedAccessTokensPermanent).HasForeignKey(batp => batp.UserSessionId).IsRequired()

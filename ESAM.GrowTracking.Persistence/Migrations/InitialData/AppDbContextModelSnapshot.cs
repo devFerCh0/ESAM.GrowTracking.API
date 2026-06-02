@@ -40,10 +40,10 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETUTCDATE()");
 
-                    b.Property<int?>("CreatedBy")
+                    b.Property<int>("CreatedBy")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("ExpirationDate")
+                    b.Property<DateTime>("ExpiresAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Jti")
@@ -66,13 +66,13 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ExpirationDate");
+                    b.HasIndex("ExpiresAt");
 
                     b.HasIndex("Jti");
 
                     b.HasIndex("UserSessionId");
 
-                    b.HasIndex("UserSessionId", "ExpirationDate");
+                    b.HasIndex("UserSessionId", "ExpiresAt");
 
                     b.ToTable("BlacklistedAccessTokensPermanent", (string)null);
                 });
@@ -95,10 +95,10 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETUTCDATE()");
 
-                    b.Property<int?>("CreatedBy")
+                    b.Property<int>("CreatedBy")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("ExpirationDate")
+                    b.Property<DateTime>("ExpiresAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Jti")
@@ -121,13 +121,13 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ExpirationDate");
+                    b.HasIndex("ExpiresAt");
 
                     b.HasIndex("Jti");
 
                     b.HasIndex("UserId");
 
-                    b.HasIndex("UserId", "ExpirationDate");
+                    b.HasIndex("UserId", "ExpiresAt");
 
                     b.ToTable("BlacklistedAccessTokensTemporary", (string)null);
                 });
@@ -150,11 +150,16 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETUTCDATE()");
 
-                    b.Property<int?>("CreatedBy")
+                    b.Property<int>("CreatedBy")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("ExpirationDate")
+                    b.Property<DateTime>("ExpiresAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Identifier")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("Reason")
                         .HasMaxLength(250)
@@ -166,19 +171,14 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
-                    b.Property<string>("TokenIdentifier")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
                     b.Property<int>("UserSessionRefreshTokenId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ExpirationDate");
+                    b.HasIndex("ExpiresAt");
 
-                    b.HasIndex("TokenIdentifier");
+                    b.HasIndex("Identifier");
 
                     b.HasIndex("UserSessionRefreshTokenId")
                         .IsUnique();
@@ -255,9 +255,9 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         {
                             Id = 1,
                             Abbreviation = "ESAM",
-                            CreatedAt = new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8760),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedBy = 1,
-                            FoundingDate = new DateTime(2000, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FoundingDate = new DateTime(2022, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsDeleted = false,
                             Name = "ESAM",
                             WebSite = "https://esam.edu.bo/"
@@ -330,9 +330,9 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         {
                             Id = 1,
                             BusinessUnitId = 1,
-                            CreatedAt = new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8782),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedBy = 1,
-                            FoundingDate = new DateTime(2022, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FoundingDate = new DateTime(2022, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsDeleted = false,
                             Name = "ESAM Sucre 2",
                             WebSite = "https://esam.edu.bo/Sucre2"
@@ -341,9 +341,9 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         {
                             Id = 2,
                             BusinessUnitId = 1,
-                            CreatedAt = new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8783),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedBy = 1,
-                            FoundingDate = new DateTime(2022, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FoundingDate = new DateTime(2022, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsDeleted = false,
                             Name = "ESAM Monteagudo",
                             WebSite = "https://esam.edu.bo/Monteagudo"
@@ -538,7 +538,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8818),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedBy = 1,
                             FirstName = "Luis Fernando",
                             Gender = (byte)1,
@@ -552,7 +552,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8819),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedBy = 1,
                             FirstName = "Efrain",
                             Gender = (byte)1,
@@ -618,7 +618,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8708),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedBy = 1,
                             IsDeleted = false,
                             Name = "Coordinador de T. I."
@@ -669,7 +669,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         {
                             RoleId = 1,
                             PermissionId = 1,
-                            CreatedAt = new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8728),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedBy = 1,
                             HasAccess = true
                         },
@@ -677,7 +677,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         {
                             RoleId = 1,
                             PermissionId = 2,
-                            CreatedAt = new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8728),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedBy = 1,
                             HasAccess = true
                         },
@@ -685,7 +685,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         {
                             RoleId = 1,
                             PermissionId = 3,
-                            CreatedAt = new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8734),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedBy = 1,
                             HasAccess = true
                         });
@@ -791,15 +791,15 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8865),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedBy = 1,
                             Email = "luis.flores@esam.edu.bo",
                             IsDeleted = false,
                             IsEmailConfirmed = false,
                             NormalizedEmail = "LUIS.FLORES@ESAM.EDU.BO",
                             NormalizedUserName = "LFLORESPADILLA",
-                            PasswordHash = "Z7eBIXKE/zRbqjjTQxBblU7PPgL2PEripZFO2uXn0I8=",
-                            Salt = "vUcZ/OlrC75ZxlRRcYQyWw==",
+                            PasswordHash = "cNqBlSDNez491Q3/7bC8mmNnFisihQ28n1MlWy6fXyU=",
+                            Salt = "1DAIl850O7FsKxxjnPtRuw==",
                             SecurityStamp = "2bb48cdd-afbd-48f7-ab11-0cd74eea240e",
                             TokenVersion = 0,
                             Username = "lflorespadilla"
@@ -807,15 +807,15 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8870),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedBy = 1,
                             Email = "efrain.chiri@esam.edu.bo",
                             IsDeleted = false,
                             IsEmailConfirmed = false,
                             NormalizedEmail = "EFRAIN.CHIRI@ESAM.EDU.BO",
                             NormalizedUserName = "ECHIRININA",
-                            PasswordHash = "b2J0LbtVmAE85Y3MJYtjVWcA6eNsgtJT4NGxZQgqxjg=",
-                            Salt = "fyJIWA4KGwOZTuLLPKyZlg==",
+                            PasswordHash = "PKi+hECJUsg7aujM85GlYNGEAu2J1ZrNS6QqJ603WpU=",
+                            Salt = "pxAU4s4HEGtDsUFFA3y1vw==",
                             SecurityStamp = "2f01a267-92db-4703-99f5-5b995167d3bd",
                             TokenVersion = 0,
                             Username = "echirinina"
@@ -1021,7 +1021,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                             UserId = 1,
                             RoleId = 1,
                             CampusId = 1,
-                            CreatedAt = new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8897),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedBy = 1,
                             IsDeleted = false
                         },
@@ -1030,7 +1030,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                             UserId = 1,
                             RoleId = 1,
                             CampusId = 2,
-                            CreatedAt = new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8898),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedBy = 1,
                             IsDeleted = false
                         },
@@ -1039,7 +1039,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                             UserId = 2,
                             RoleId = 1,
                             CampusId = 1,
-                            CreatedAt = new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8899),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedBy = 1,
                             IsDeleted = false
                         },
@@ -1048,7 +1048,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                             UserId = 2,
                             RoleId = 1,
                             CampusId = 2,
-                            CreatedAt = new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8899),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedBy = 1,
                             IsDeleted = false
                         });
@@ -1161,6 +1161,11 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                     b.Property<DateTime>("ExpiresAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Identifier")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
                     b.Property<bool>("IsRevoked")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -1200,11 +1205,6 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         .HasMaxLength(512)
                         .HasColumnType("nvarchar(512)");
 
-                    b.Property<string>("TokenIdentifier")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
@@ -1218,12 +1218,12 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
 
                     b.HasIndex("ExpiresAt");
 
+                    b.HasIndex("Identifier")
+                        .IsUnique();
+
                     b.HasIndex("ReplacedByUserSessionRefreshTokenId")
                         .IsUnique()
                         .HasFilter("[ReplacedByUserSessionRefreshTokenId] IS NOT NULL");
-
-                    b.HasIndex("TokenIdentifier")
-                        .IsUnique();
 
                     b.HasIndex("UserSessionId");
 
@@ -1232,39 +1232,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                     b.ToTable("UserSessionRefreshTokens", (string)null);
                 });
 
-            modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.UserSessionUserWorkProfileSelected", b =>
-                {
-                    b.Property<int>("UserSessionId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
-
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("UpdatedBy")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("WorkProfileId")
-                        .HasColumnType("int");
-
-                    b.HasKey("UserSessionId");
-
-                    b.HasIndex("UserId", "WorkProfileId");
-
-                    b.ToTable("UserSessionUserWorkProfilesSelected", (string)null);
-                });
-
-            modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.UserSessionUserWorkProfileSelectedUserRoleCampusSelected", b =>
+            modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.UserSessionRoleCampusSelected", b =>
                 {
                     b.Property<int>("UserSessionId")
                         .HasColumnType("int");
@@ -1282,7 +1250,25 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
 
                     b.HasIndex("UserId", "RoleId", "CampusId");
 
-                    b.ToTable("UserSessionUserWorkProfileSelectedUserRoleCampusesSelected", (string)null);
+                    b.ToTable("UserSessionRoleCampusesSelected", (string)null);
+                });
+
+            modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.UserSessionWorkProfileSelected", b =>
+                {
+                    b.Property<int>("UserSessionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("WorkProfileId")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserSessionId");
+
+                    b.HasIndex("UserId", "WorkProfileId");
+
+                    b.ToTable("UserSessionWorkProfilesSelected", (string)null);
                 });
 
             modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.UserWorkProfile", b =>
@@ -1329,7 +1315,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         {
                             UserId = 1,
                             WorkProfileId = 1,
-                            CreatedAt = new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8925),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedBy = 1,
                             IsDeleted = false
                         },
@@ -1337,7 +1323,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         {
                             UserId = 1,
                             WorkProfileId = 2,
-                            CreatedAt = new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8986),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedBy = 1,
                             IsDeleted = false
                         },
@@ -1345,7 +1331,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         {
                             UserId = 1,
                             WorkProfileId = 3,
-                            CreatedAt = new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8986),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedBy = 1,
                             IsDeleted = false
                         },
@@ -1353,7 +1339,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         {
                             UserId = 2,
                             WorkProfileId = 1,
-                            CreatedAt = new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8987),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedBy = 1,
                             IsDeleted = false
                         },
@@ -1361,7 +1347,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         {
                             UserId = 2,
                             WorkProfileId = 2,
-                            CreatedAt = new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8988),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedBy = 1,
                             IsDeleted = false
                         },
@@ -1369,7 +1355,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         {
                             UserId = 2,
                             WorkProfileId = 3,
-                            CreatedAt = new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8989),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedBy = 1,
                             IsDeleted = false
                         });
@@ -1479,7 +1465,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         {
                             WorkProfileId = 2,
                             PermissionId = 1,
-                            CreatedAt = new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8672),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedBy = 1,
                             HasAccess = false
                         },
@@ -1487,7 +1473,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         {
                             WorkProfileId = 2,
                             PermissionId = 2,
-                            CreatedAt = new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8675),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedBy = 1,
                             HasAccess = true
                         },
@@ -1495,7 +1481,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         {
                             WorkProfileId = 2,
                             PermissionId = 3,
-                            CreatedAt = new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8675),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedBy = 1,
                             HasAccess = true
                         },
@@ -1503,7 +1489,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         {
                             WorkProfileId = 3,
                             PermissionId = 1,
-                            CreatedAt = new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8676),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedBy = 1,
                             HasAccess = false
                         },
@@ -1511,7 +1497,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         {
                             WorkProfileId = 3,
                             PermissionId = 2,
-                            CreatedAt = new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8677),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedBy = 1,
                             HasAccess = false
                         },
@@ -1519,7 +1505,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         {
                             WorkProfileId = 3,
                             PermissionId = 3,
-                            CreatedAt = new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8677),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedBy = 1,
                             HasAccess = true
                         });
@@ -1703,16 +1689,35 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                     b.Navigation("UserSession");
                 });
 
-            modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.UserSessionUserWorkProfileSelected", b =>
+            modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.UserSessionRoleCampusSelected", b =>
+                {
+                    b.HasOne("ESAM.GrowTracking.Domain.Entities.UserSessionWorkProfileSelected", "UserSessionWorkProfileSelected")
+                        .WithOne("UserSessionRoleCampusSelected")
+                        .HasForeignKey("ESAM.GrowTracking.Domain.Entities.UserSessionRoleCampusSelected", "UserSessionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ESAM.GrowTracking.Domain.Entities.UserRoleCampus", "UserRoleCampus")
+                        .WithMany("UserSessionRoleCampusesSelected")
+                        .HasForeignKey("UserId", "RoleId", "CampusId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("UserRoleCampus");
+
+                    b.Navigation("UserSessionWorkProfileSelected");
+                });
+
+            modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.UserSessionWorkProfileSelected", b =>
                 {
                     b.HasOne("ESAM.GrowTracking.Domain.Entities.UserSession", "UserSession")
-                        .WithOne("UserSessionUserWorkProfileSelected")
-                        .HasForeignKey("ESAM.GrowTracking.Domain.Entities.UserSessionUserWorkProfileSelected", "UserSessionId")
+                        .WithOne("UserSessionWorkProfileSelected")
+                        .HasForeignKey("ESAM.GrowTracking.Domain.Entities.UserSessionWorkProfileSelected", "UserSessionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("ESAM.GrowTracking.Domain.Entities.UserWorkProfile", "UserWorkProfile")
-                        .WithMany("UserSessionUserWorkProfilesSelected")
+                        .WithMany("UserSessionWorkProfilesSelected")
                         .HasForeignKey("UserId", "WorkProfileId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -1720,25 +1725,6 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                     b.Navigation("UserSession");
 
                     b.Navigation("UserWorkProfile");
-                });
-
-            modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.UserSessionUserWorkProfileSelectedUserRoleCampusSelected", b =>
-                {
-                    b.HasOne("ESAM.GrowTracking.Domain.Entities.UserSessionUserWorkProfileSelected", "UserSessionUserWorkProfileSelected")
-                        .WithOne("UserSessionUserWorkProfileSelectedUserRoleCampusSelected")
-                        .HasForeignKey("ESAM.GrowTracking.Domain.Entities.UserSessionUserWorkProfileSelectedUserRoleCampusSelected", "UserSessionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("ESAM.GrowTracking.Domain.Entities.UserRoleCampus", "UserRoleCampus")
-                        .WithMany("UserSessionUserWorkProfileSelectedUserRoleCampusSelected")
-                        .HasForeignKey("UserId", "RoleId", "CampusId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("UserRoleCampus");
-
-                    b.Navigation("UserSessionUserWorkProfileSelected");
                 });
 
             modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.UserWorkProfile", b =>
@@ -1838,7 +1824,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
 
             modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.UserRoleCampus", b =>
                 {
-                    b.Navigation("UserSessionUserWorkProfileSelectedUserRoleCampusSelected");
+                    b.Navigation("UserSessionRoleCampusesSelected");
                 });
 
             modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.UserSession", b =>
@@ -1847,7 +1833,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
 
                     b.Navigation("UserSessionRefreshTokens");
 
-                    b.Navigation("UserSessionUserWorkProfileSelected");
+                    b.Navigation("UserSessionWorkProfileSelected");
                 });
 
             modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.UserSessionRefreshToken", b =>
@@ -1857,14 +1843,14 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                     b.Navigation("ReplacesUserSessionRefreshToken");
                 });
 
-            modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.UserSessionUserWorkProfileSelected", b =>
+            modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.UserSessionWorkProfileSelected", b =>
                 {
-                    b.Navigation("UserSessionUserWorkProfileSelectedUserRoleCampusSelected");
+                    b.Navigation("UserSessionRoleCampusSelected");
                 });
 
             modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.UserWorkProfile", b =>
                 {
-                    b.Navigation("UserSessionUserWorkProfilesSelected");
+                    b.Navigation("UserSessionWorkProfilesSelected");
                 });
 
             modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.WorkProfile", b =>

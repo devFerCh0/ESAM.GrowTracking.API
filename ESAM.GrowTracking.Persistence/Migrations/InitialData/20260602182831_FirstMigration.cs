@@ -5,7 +5,7 @@
 namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
 {
     /// <inheritdoc />
-    public partial class InitialDatabaseMigration : Migration
+    public partial class FirstMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -260,11 +260,11 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<int>(type: "int", nullable: false),
                     Jti = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
-                    ExpirationDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     BlacklistedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
                     Reason = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    CreatedBy = table.Column<int>(type: "int", nullable: true),
+                    CreatedBy = table.Column<int>(type: "int", nullable: false),
                     RecordVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
                 },
                 constraints: table =>
@@ -463,11 +463,11 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserSessionId = table.Column<int>(type: "int", nullable: false),
                     Jti = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
-                    ExpirationDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     BlacklistedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
                     Reason = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    CreatedBy = table.Column<int>(type: "int", nullable: true),
+                    CreatedBy = table.Column<int>(type: "int", nullable: false),
                     RecordVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
                 },
                 constraints: table =>
@@ -488,7 +488,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserSessionId = table.Column<int>(type: "int", nullable: false),
-                    TokenIdentifier = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    Identifier = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
                     Salt = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
                     TokenHash = table.Column<string>(type: "nvarchar(512)", maxLength: 512, nullable: false),
                     ExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -522,28 +522,24 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                 });
 
             migrationBuilder.CreateTable(
-                name: "UserSessionUserWorkProfilesSelected",
+                name: "UserSessionWorkProfilesSelected",
                 columns: table => new
                 {
                     UserSessionId = table.Column<int>(type: "int", nullable: false),
                     UserId = table.Column<int>(type: "int", nullable: false),
-                    WorkProfileId = table.Column<int>(type: "int", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    CreatedBy = table.Column<int>(type: "int", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    UpdatedBy = table.Column<int>(type: "int", nullable: true)
+                    WorkProfileId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_UserSessionUserWorkProfilesSelected", x => x.UserSessionId);
+                    table.PrimaryKey("PK_UserSessionWorkProfilesSelected", x => x.UserSessionId);
                     table.ForeignKey(
-                        name: "FK_UserSessionUserWorkProfilesSelected_UserSessions_UserSessionId",
+                        name: "FK_UserSessionWorkProfilesSelected_UserSessions_UserSessionId",
                         column: x => x.UserSessionId,
                         principalTable: "UserSessions",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_UserSessionUserWorkProfilesSelected_UserWorkProfiles_UserId_WorkProfileId",
+                        name: "FK_UserSessionWorkProfilesSelected_UserWorkProfiles_UserId_WorkProfileId",
                         columns: x => new { x.UserId, x.WorkProfileId },
                         principalTable: "UserWorkProfiles",
                         principalColumns: ["UserId", "WorkProfileId"],
@@ -557,12 +553,12 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserSessionRefreshTokenId = table.Column<int>(type: "int", nullable: false),
-                    TokenIdentifier = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
-                    ExpirationDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Identifier = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    ExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     BlacklistedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
                     Reason = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    CreatedBy = table.Column<int>(type: "int", nullable: true),
+                    CreatedBy = table.Column<int>(type: "int", nullable: false),
                     RecordVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
                 },
                 constraints: table =>
@@ -577,7 +573,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                 });
 
             migrationBuilder.CreateTable(
-                name: "UserSessionUserWorkProfileSelectedUserRoleCampusesSelected",
+                name: "UserSessionRoleCampusesSelected",
                 columns: table => new
                 {
                     UserSessionId = table.Column<int>(type: "int", nullable: false),
@@ -587,17 +583,17 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_UserSessionUserWorkProfileSelectedUserRoleCampusesSelected", x => x.UserSessionId);
+                    table.PrimaryKey("PK_UserSessionRoleCampusesSelected", x => x.UserSessionId);
                     table.ForeignKey(
-                        name: "FK_UserSessionUserWorkProfileSelectedUserRoleCampusesSelected_UserRoleCampuses_UserId_RoleId_CampusId",
+                        name: "FK_UserSessionRoleCampusesSelected_UserRoleCampuses_UserId_RoleId_CampusId",
                         columns: x => new { x.UserId, x.RoleId, x.CampusId },
                         principalTable: "UserRoleCampuses",
                         principalColumns: ["UserId", "RoleId", "CampusId"],
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_UserSessionUserWorkProfileSelectedUserRoleCampusesSelected_UserSessionUserWorkProfilesSelected_UserSessionId",
+                        name: "FK_UserSessionRoleCampusesSelected_UserSessionWorkProfilesSelected_UserSessionId",
                         column: x => x.UserSessionId,
-                        principalTable: "UserSessionUserWorkProfilesSelected",
+                        principalTable: "UserSessionWorkProfilesSelected",
                         principalColumn: "UserSessionId",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -605,7 +601,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
             migrationBuilder.InsertData(
                 table: "BusinessUnits",
                 columns: ["Id", "Abbreviation", "CreatedAt", "CreatedBy", "FoundingDate", "Name", "UpdatedAt", "UpdatedBy", "WebSite"],
-                values: [1, "ESAM", new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8760), 1, new DateTime(2000, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "ESAM", null, null, "https://esam.edu.bo/"]);
+                values: [1, "ESAM", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 1, new DateTime(2022, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "ESAM", null, null, "https://esam.edu.bo/"]);
 
             migrationBuilder.InsertData(
                 table: "Modules",
@@ -617,14 +613,14 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                 columns: ["Id", "CreatedAt", "CreatedBy", "FirstName", "Gender", "IdentityDocument", "IdentityDocumentType", "LastName", "MaritalStatus", "SecondLastName", "UpdatedAt", "UpdatedBy"],
                 values: new object[,]
                 {
-                    { 1, new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8818), 1, "Luis Fernando", (byte)1, "5681003", (byte)1, "Flores", (byte)2, "Padilla", null, null },
-                    { 2, new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8819), 1, "Efrain", (byte)1, "13071262", (byte)1, "Chiri", (byte)1, "Nina", null, null }
+                    { 1, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 1, "Luis Fernando", (byte)1, "5681003", (byte)1, "Flores", (byte)2, "Padilla", null, null },
+                    { 2, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 1, "Efrain", (byte)1, "13071262", (byte)1, "Chiri", (byte)1, "Nina", null, null }
                 });
 
             migrationBuilder.InsertData(
                 table: "Roles",
                 columns: ["Id", "CreatedAt", "CreatedBy", "Description", "Name", "UpdatedAt", "UpdatedBy"],
-                values: [1, new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8708), 1, null, "Coordinador de T. I.", null, null]);
+                values: [1, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 1, null, "Coordinador de T. I.", null, null]);
 
             migrationBuilder.InsertData(
                 table: "WorkProfiles",
@@ -641,8 +637,8 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                 columns: ["Id", "BusinessUnitId", "CreatedAt", "CreatedBy", "FoundingDate", "Name", "UpdatedAt", "UpdatedBy", "WebSite"],
                 values: new object[,]
                 {
-                    { 1, 1, new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8782), 1, new DateTime(2022, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "ESAM Sucre 2", null, null, "https://esam.edu.bo/Sucre2" },
-                    { 2, 1, new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8783), 1, new DateTime(2022, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "ESAM Monteagudo", null, null, "https://esam.edu.bo/Monteagudo" }
+                    { 1, 1, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 1, new DateTime(2022, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "ESAM Sucre 2", null, null, "https://esam.edu.bo/Sucre2" },
+                    { 2, 1, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 1, new DateTime(2022, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "ESAM Monteagudo", null, null, "https://esam.edu.bo/Monteagudo" }
                 });
 
             migrationBuilder.InsertData(
@@ -660,8 +656,8 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                 columns: ["Id", "CreatedAt", "CreatedBy", "Email", "LockoutEndAt", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "Salt", "SecurityStamp", "UpdatedAt", "UpdatedBy", "Username"],
                 values: new object[,]
                 {
-                    { 1, new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8865), 1, "luis.flores@esam.edu.bo", null, "LUIS.FLORES@ESAM.EDU.BO", "LFLORESPADILLA", "Z7eBIXKE/zRbqjjTQxBblU7PPgL2PEripZFO2uXn0I8=", "vUcZ/OlrC75ZxlRRcYQyWw==", "2bb48cdd-afbd-48f7-ab11-0cd74eea240e", null, null, "lflorespadilla" },
-                    { 2, new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8870), 1, "efrain.chiri@esam.edu.bo", null, "EFRAIN.CHIRI@ESAM.EDU.BO", "ECHIRININA", "b2J0LbtVmAE85Y3MJYtjVWcA6eNsgtJT4NGxZQgqxjg=", "fyJIWA4KGwOZTuLLPKyZlg==", "2f01a267-92db-4703-99f5-5b995167d3bd", null, null, "echirinina" }
+                    { 1, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 1, "luis.flores@esam.edu.bo", null, "LUIS.FLORES@ESAM.EDU.BO", "LFLORESPADILLA", "cNqBlSDNez491Q3/7bC8mmNnFisihQ28n1MlWy6fXyU=", "1DAIl850O7FsKxxjnPtRuw==", "2bb48cdd-afbd-48f7-ab11-0cd74eea240e", null, null, "lflorespadilla" },
+                    { 2, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 1, "efrain.chiri@esam.edu.bo", null, "EFRAIN.CHIRI@ESAM.EDU.BO", "ECHIRININA", "PKi+hECJUsg7aujM85GlYNGEAu2J1ZrNS6QqJ603WpU=", "pxAU4s4HEGtDsUFFA3y1vw==", "2f01a267-92db-4703-99f5-5b995167d3bd", null, null, "echirinina" }
                 });
 
             migrationBuilder.InsertData(
@@ -669,9 +665,9 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                 columns: ["PermissionId", "RoleId", "CreatedAt", "CreatedBy", "HasAccess", "UpdatedAt", "UpdatedBy"],
                 values: new object[,]
                 {
-                    { 1, 1, new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8728), 1, true, null, null },
-                    { 2, 1, new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8728), 1, true, null, null },
-                    { 3, 1, new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8734), 1, true, null, null }
+                    { 1, 1, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 1, true, null, null },
+                    { 2, 1, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 1, true, null, null },
+                    { 3, 1, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 1, true, null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -679,10 +675,10 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                 columns: ["CampusId", "RoleId", "UserId", "CreatedAt", "CreatedBy", "UpdatedAt", "UpdatedBy"],
                 values: new object[,]
                 {
-                    { 1, 1, 1, new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8897), 1, null, null },
-                    { 2, 1, 1, new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8898), 1, null, null },
-                    { 1, 1, 2, new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8899), 1, null, null },
-                    { 2, 1, 2, new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8899), 1, null, null }
+                    { 1, 1, 1, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 1, null, null },
+                    { 2, 1, 1, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 1, null, null },
+                    { 1, 1, 2, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 1, null, null },
+                    { 2, 1, 2, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 1, null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -690,26 +686,26 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                 columns: ["UserId", "WorkProfileId", "CreatedAt", "CreatedBy", "UpdatedAt", "UpdatedBy"],
                 values: new object[,]
                 {
-                    { 1, 1, new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8925), 1, null, null },
-                    { 1, 2, new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8986), 1, null, null },
-                    { 1, 3, new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8986), 1, null, null },
-                    { 2, 1, new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8987), 1, null, null },
-                    { 2, 2, new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8988), 1, null, null },
-                    { 2, 3, new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8989), 1, null, null }
+                    { 1, 1, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 1, null, null },
+                    { 1, 2, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 1, null, null },
+                    { 1, 3, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 1, null, null },
+                    { 2, 1, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 1, null, null },
+                    { 2, 2, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 1, null, null },
+                    { 2, 3, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 1, null, null }
                 });
 
             migrationBuilder.InsertData(
                 table: "WorkProfilePermissions",
                 columns: ["PermissionId", "WorkProfileId", "CreatedAt", "CreatedBy", "UpdatedAt", "UpdatedBy"],
-                values: [1, 2, new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8672), 1, null, null]);
+                values: [1, 2, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 1, null, null]);
 
             migrationBuilder.InsertData(
                 table: "WorkProfilePermissions",
                 columns: ["PermissionId", "WorkProfileId", "CreatedAt", "CreatedBy", "HasAccess", "UpdatedAt", "UpdatedBy"],
                 values: new object[,]
                 {
-                    { 2, 2, new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8675), 1, true, null, null },
-                    { 3, 2, new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8675), 1, true, null, null }
+                    { 2, 2, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 1, true, null, null },
+                    { 3, 2, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 1, true, null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -717,19 +713,19 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                 columns: ["PermissionId", "WorkProfileId", "CreatedAt", "CreatedBy", "UpdatedAt", "UpdatedBy"],
                 values: new object[,]
                 {
-                    { 1, 3, new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8676), 1, null, null },
-                    { 2, 3, new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8677), 1, null, null }
+                    { 1, 3, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 1, null, null },
+                    { 2, 3, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 1, null, null }
                 });
 
             migrationBuilder.InsertData(
                 table: "WorkProfilePermissions",
                 columns: ["PermissionId", "WorkProfileId", "CreatedAt", "CreatedBy", "HasAccess", "UpdatedAt", "UpdatedBy"],
-                values: [3, 3, new DateTime(2026, 4, 14, 5, 54, 4, 111, DateTimeKind.Utc).AddTicks(8677), 1, true, null, null]);
+                values: [3, 3, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 1, true, null, null]);
 
             migrationBuilder.CreateIndex(
-                name: "IX_BlacklistedAccessTokensPermanent_ExpirationDate",
+                name: "IX_BlacklistedAccessTokensPermanent_ExpiresAt",
                 table: "BlacklistedAccessTokensPermanent",
-                column: "ExpirationDate");
+                column: "ExpiresAt");
 
             migrationBuilder.CreateIndex(
                 name: "IX_BlacklistedAccessTokensPermanent_Jti",
@@ -742,14 +738,14 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                 column: "UserSessionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_BlacklistedAccessTokensPermanent_UserSessionId_ExpirationDate",
+                name: "IX_BlacklistedAccessTokensPermanent_UserSessionId_ExpiresAt",
                 table: "BlacklistedAccessTokensPermanent",
-                columns: ["UserSessionId", "ExpirationDate"]);
+                columns: ["UserSessionId", "ExpiresAt"]);
 
             migrationBuilder.CreateIndex(
-                name: "IX_BlacklistedAccessTokensTemporary_ExpirationDate",
+                name: "IX_BlacklistedAccessTokensTemporary_ExpiresAt",
                 table: "BlacklistedAccessTokensTemporary",
-                column: "ExpirationDate");
+                column: "ExpiresAt");
 
             migrationBuilder.CreateIndex(
                 name: "IX_BlacklistedAccessTokensTemporary_Jti",
@@ -762,19 +758,19 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_BlacklistedAccessTokensTemporary_UserId_ExpirationDate",
+                name: "IX_BlacklistedAccessTokensTemporary_UserId_ExpiresAt",
                 table: "BlacklistedAccessTokensTemporary",
-                columns: ["UserId", "ExpirationDate"]);
+                columns: ["UserId", "ExpiresAt"]);
 
             migrationBuilder.CreateIndex(
-                name: "IX_BlacklistedRefreshTokens_ExpirationDate",
+                name: "IX_BlacklistedRefreshTokens_ExpiresAt",
                 table: "BlacklistedRefreshTokens",
-                column: "ExpirationDate");
+                column: "ExpiresAt");
 
             migrationBuilder.CreateIndex(
-                name: "IX_BlacklistedRefreshTokens_TokenIdentifier",
+                name: "IX_BlacklistedRefreshTokens_Identifier",
                 table: "BlacklistedRefreshTokens",
-                column: "TokenIdentifier");
+                column: "Identifier");
 
             migrationBuilder.CreateIndex(
                 name: "IX_BlacklistedRefreshTokens_UserSessionRefreshTokenId",
@@ -960,17 +956,17 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                 column: "ExpiresAt");
 
             migrationBuilder.CreateIndex(
+                name: "IX_UserSessionRefreshTokens_Identifier",
+                table: "UserSessionRefreshTokens",
+                column: "Identifier",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UserSessionRefreshTokens_ReplacedByUserSessionRefreshTokenId",
                 table: "UserSessionRefreshTokens",
                 column: "ReplacedByUserSessionRefreshTokenId",
                 unique: true,
                 filter: "[ReplacedByUserSessionRefreshTokenId] IS NOT NULL");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_UserSessionRefreshTokens_TokenIdentifier",
-                table: "UserSessionRefreshTokens",
-                column: "TokenIdentifier",
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserSessionRefreshTokens_UserSessionId",
@@ -981,6 +977,11 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                 name: "IX_UserSessionRefreshTokens_UserSessionId_IsRevoked",
                 table: "UserSessionRefreshTokens",
                 columns: ["UserSessionId", "IsRevoked"]);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserSessionRoleCampusesSelected_UserId_RoleId_CampusId",
+                table: "UserSessionRoleCampusesSelected",
+                columns: ["UserId", "RoleId", "CampusId"]);
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserSessions_AbsoluteExpiresAt",
@@ -1018,13 +1019,8 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                 columns: ["UserId", "IsRevoked"]);
 
             migrationBuilder.CreateIndex(
-                name: "IX_UserSessionUserWorkProfileSelectedUserRoleCampusesSelected_UserId_RoleId_CampusId",
-                table: "UserSessionUserWorkProfileSelectedUserRoleCampusesSelected",
-                columns: ["UserId", "RoleId", "CampusId"]);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_UserSessionUserWorkProfilesSelected_UserId_WorkProfileId",
-                table: "UserSessionUserWorkProfilesSelected",
+                name: "IX_UserSessionWorkProfilesSelected_UserId_WorkProfileId",
+                table: "UserSessionWorkProfilesSelected",
                 columns: ["UserId", "WorkProfileId"]);
 
             migrationBuilder.CreateIndex(
@@ -1068,7 +1064,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                 name: "UserPhotos");
 
             migrationBuilder.DropTable(
-                name: "UserSessionUserWorkProfileSelectedUserRoleCampusesSelected");
+                name: "UserSessionRoleCampusesSelected");
 
             migrationBuilder.DropTable(
                 name: "WorkProfilePermissions");
@@ -1080,7 +1076,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                 name: "UserRoleCampuses");
 
             migrationBuilder.DropTable(
-                name: "UserSessionUserWorkProfilesSelected");
+                name: "UserSessionWorkProfilesSelected");
 
             migrationBuilder.DropTable(
                 name: "Permissions");

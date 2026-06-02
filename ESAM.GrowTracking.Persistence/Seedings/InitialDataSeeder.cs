@@ -63,16 +63,18 @@ namespace ESAM.GrowTracking.Persistence.Seedings
             modelBuilder.Entity<Campus>().HasData(campus1, campus2);
         }
 
-        // Password user1: BodoqueManchas2025.
+        // User 1: lflorespadilla
+        // Password user1: 5681003
+        // User 2: echirinina
         // Password user2: 13071262
         private static void SeedPeopleAndUsers(ModelBuilder modelBuilder)
         {
             var person1 = new Person(1, "Luis Fernando", "Flores", "Padilla", "5681003", IdentityDocumentType.IdentityCard, Gender.Man, MaritalStatus.Married, 1, SeedDate);
             var person2 = new Person(2, "Efrain", "Chiri", "Nina", "13071262", IdentityDocumentType.IdentityCard, Gender.Man, MaritalStatus.Single, 1, SeedDate);
             modelBuilder.Entity<Person>().HasData(person1, person2);
-            var user1 = new User(1, "lflorespadilla", "luis.flores@esam.edu.bo", "vUcZ/OlrC75ZxlRRcYQyWw==", "Z7eBIXKE/zRbqjjTQxBblU7PPgL2PEripZFO2uXn0I8=",
+            var user1 = new User(1, "lflorespadilla", "luis.flores@esam.edu.bo", "1DAIl850O7FsKxxjnPtRuw==", "cNqBlSDNez491Q3/7bC8mmNnFisihQ28n1MlWy6fXyU=",
                 "2bb48cdd-afbd-48f7-ab11-0cd74eea240e", 1, SeedDate);
-            var user2 = new User(2, "echirinina", "efrain.chiri@esam.edu.bo", "fyJIWA4KGwOZTuLLPKyZlg==", "b2J0LbtVmAE85Y3MJYtjVWcA6eNsgtJT4NGxZQgqxjg=",
+            var user2 = new User(2, "echirinina", "efrain.chiri@esam.edu.bo", "pxAU4s4HEGtDsUFFA3y1vw==", "PKi+hECJUsg7aujM85GlYNGEAu2J1ZrNS6QqJ603WpU=",
                 "2f01a267-92db-4703-99f5-5b995167d3bd", 1, SeedDate);
             modelBuilder.Entity<User>().HasData(user1, user2);
         }
