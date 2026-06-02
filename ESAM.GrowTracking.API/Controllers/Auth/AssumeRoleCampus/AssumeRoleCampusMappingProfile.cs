@@ -12,7 +12,8 @@ namespace ESAM.GrowTracking.API.Controllers.Auth.AssumeRoleCampus
             CreateMap<AssumeRoleCampusSessionWorkProfileSelectedResponse, AssumeRoleCampusSessionWorkProfileSelectedHttpResponse>();
             CreateMap<AssumeRoleCampusUserSessionResponse, AssumeRoleCampusUserSessionHttpResponse>();
             CreateMap<AssumeRoleCampusUserRoleCampusResponse, AssumeRoleCampusUserRoleCampusHttpResponse>();
-            CreateMap<AssumeRoleCampusUserWorkProfileResponse, AssumeRoleCampusUserWorkProfileHttpResponse>();
+            CreateMap<AssumeRoleCampusUserWorkProfileResponse, AssumeRoleCampusUserWorkProfileHttpResponse>()
+                .ForCtorParam("workProfileType", opt => opt.MapFrom(src => src.WorkProfileType.ToString()));
             CreateMap<AssumeRoleCampusUserResponse, AssumeRoleCampusUserHttpResponse>();
             CreateMap<AssumeRoleCampusResponse, AssumeRoleCampusHttpResponse>();
         }

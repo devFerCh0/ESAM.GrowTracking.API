@@ -16,13 +16,13 @@
 
         public AssumeRoleCampusUserHttpResponse AssumeRoleCampusUser { get; init; }
 
-        public AssumeRoleCampusHttpResponse(string accessToken, int accessTokenExpiresIn, DateTime accessTokenExpiresAt, string identifier, string refreshToken, 
-            int refreshTokenExpiresIn, DateTime refreshTokenExpiresAt, AssumeRoleCampusUserHttpResponse assumeRoleCampusUser)
+        public AssumeRoleCampusHttpResponse(string accessToken, int accessTokenExpiresIn, DateTime accessTokenExpiresAt, string refreshTokenRaw, int refreshTokenExpiresIn, 
+            DateTime refreshTokenExpiresAt, AssumeRoleCampusUserHttpResponse assumeRoleCampusUser)
         {
             AccessToken = accessToken;
             AccessTokenExpiresIn = accessTokenExpiresIn;
             AccessTokenExpiresAt = accessTokenExpiresAt;
-            RefreshTokenRaw = $"{identifier}.{refreshToken}";
+            RefreshTokenRaw = refreshTokenRaw;
             RefreshTokenExpiresIn = refreshTokenExpiresIn;
             RefreshTokenExpiresAt = refreshTokenExpiresAt;
             AssumeRoleCampusUser = assumeRoleCampusUser;

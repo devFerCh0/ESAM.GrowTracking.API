@@ -2,7 +2,7 @@
 {
     public sealed class ClientInfoSettings
     {
-        public List<string> IpHeaderKeys { get; set; } = ["X-Forwarded-For", "X-Real-IP"];
+        public List<string> IpHeaderKeys { get; set; } = [];
 
         public void Validate()
         {

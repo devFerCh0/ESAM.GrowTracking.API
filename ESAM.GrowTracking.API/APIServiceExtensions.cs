@@ -70,31 +70,82 @@ namespace ESAM.GrowTracking.API
             return services;
         }
 
+        //public static WebApplication UseConfiguredSwagger(this WebApplication app)
+        //{
+        //    ArgumentNullException.ThrowIfNull(app);
+        //    if (!app.Environment.IsDevelopment())
+        //        return app;
+        //    var cookieSettings = app.Services.GetRequiredService<IOptions<CookieSettings>>().Value; //x
+        //    var xsrfCookieName = cookieSettings.EffectiveXsrfCookieName(); //x
+        //    app.UseSwagger();
+        //    app.UseSwaggerUI(c =>
+        //    {
+        //        c.UseRequestInterceptor(
+        //            $"(req) => {{" +
+        //            $"  try {{" +
+        //            $"    const cookie = document.cookie.split('; ')" +
+        //            $"      .find(r => r.startsWith('{xsrfCookieName}='));" +
+        //            $"    if (cookie) {{" +
+        //            $"      req.headers['X-XSRF-TOKEN'] =" +
+        //            $"        decodeURIComponent(cookie.split('=').slice(1).join('='));" +
+        //            $"    }}" +
+        //            $"  }} catch (e) {{ console.warn('XSRF interceptor error', e); }}" +
+        //            $"  return req;" +
+        //            $"}}"); //x
+        //        c.EnablePersistAuthorization();
+        //        c.DisplayRequestDuration();
+        //    });
+        //    return app;
+        //}
+
+
         public static WebApplication UseConfiguredSwagger(this WebApplication app)
         {
             ArgumentNullException.ThrowIfNull(app);
             if (!app.Environment.IsDevelopment())
                 return app;
-            var cookieSettings = app.Services.GetRequiredService<IOptions<CookieSettings>>().Value;
-            var xsrfCookieName = cookieSettings.EffectiveXsrfCookieName();
             app.UseSwagger();
-            app.UseSwaggerUI(c =>
+            app.UseSwaggerUI(suio =>
             {
-                c.UseRequestInterceptor(
-                    $"(req) => {{" +
-                    $"  try {{" +
-                    $"    const cookie = document.cookie.split('; ')" +
-                    $"      .find(r => r.startsWith('{xsrfCookieName}='));" +
-                    $"    if (cookie) {{" +
-                    $"      req.headers['X-XSRF-TOKEN'] =" +
-                    $"        decodeURIComponent(cookie.split('=').slice(1).join('='));" +
-                    $"    }}" +
-                    $"  }} catch (e) {{ console.warn('XSRF interceptor error', e); }}" +
-                    $"  return req;" +
-                    $"}}");
-                c.EnablePersistAuthorization();
-                c.DisplayRequestDuration();
+                suio.InjectJavascript("/swagger-ui/custom.js");
+                suio.EnablePersistAuthorization();
+                suio.DisplayRequestDuration();
             });
+            return app;
+        }
+
+        public static WebApplication MapSwaggerUiCustomJs(this WebApplication app)
+        {
+            ArgumentNullException.ThrowIfNull(app);
+            if (!app.Environment.IsDevelopment())
+                return app;
+            app.MapGet("/swagger-ui/custom.js", (IOptions<CookieSettings> cookieSettings) =>
+            {
+                var xsrfCookieName = cookieSettings.Value.EffectiveXsrfCookieName();
+                var js = $$"""
+                function initConfig(configObject, oauthConfigObject)
+                {
+                    configObject.requestInterceptor = function (req)
+                    {
+                        try
+                        {
+                            const cookieName = '{{xsrfCookieName}}';
+                            const cookie = document.cookie.split('; ').find(function (value) { return value.startsWith(cookieName + '='); });
+                            if (cookie)
+                            {
+                                req.headers['X-XSRF-TOKEN'] = decodeURIComponent(cookie.split('=').slice(1).join('='));
+                            }
+                        }
+                        catch (e)
+                        {
+                            console.warn('XSRF interceptor error', e);
+                        }
+                        return req;
+                    };
+                }
+                """;
+                return Results.Text(js, "application/javascript");
+            }).AllowAnonymous();
             return app;
         }
 

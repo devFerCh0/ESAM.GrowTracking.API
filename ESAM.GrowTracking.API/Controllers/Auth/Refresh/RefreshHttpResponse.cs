@@ -14,13 +14,13 @@
 
         public DateTime RefreshTokenExpiresAt { get; init; }
 
-        public RefreshHttpResponse(string accessToken, int accessTokenExpiresIn, DateTime accessTokenExpiresAt, string identifier, string refreshToken, int refreshTokenExpiresIn, 
+        public RefreshHttpResponse(string accessToken, int accessTokenExpiresIn, DateTime accessTokenExpiresAt, string refreshTokenRaw, int refreshTokenExpiresIn, 
             DateTime refreshTokenExpiresAt)
         {
             AccessToken = accessToken;
             AccessTokenExpiresIn = accessTokenExpiresIn;
             AccessTokenExpiresAt = accessTokenExpiresAt;
-            RefreshTokenRaw = $"{identifier}.{refreshToken}";
+            RefreshTokenRaw = refreshTokenRaw;
             RefreshTokenExpiresIn = refreshTokenExpiresIn;
             RefreshTokenExpiresAt = refreshTokenExpiresAt;
         }

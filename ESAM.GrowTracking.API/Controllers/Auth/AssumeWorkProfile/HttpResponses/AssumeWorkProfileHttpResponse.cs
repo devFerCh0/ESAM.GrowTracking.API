@@ -16,13 +16,13 @@
 
         public AssumeWorkProfileUserHttpResponse AssumeWorkProfileUser { get; init; }
 
-        public AssumeWorkProfileHttpResponse(string accessToken, int accessTokenExpiresIn, DateTime accessTokenExpiresAt, string identifier, string refreshToken, 
-            int refreshTokenExpiresIn, DateTime refreshTokenExpiresAt, AssumeWorkProfileUserHttpResponse assumeWorkProfileUser)
+        public AssumeWorkProfileHttpResponse(string accessToken, int accessTokenExpiresIn, DateTime accessTokenExpiresAt, string refreshTokenRaw, int refreshTokenExpiresIn, 
+            DateTime refreshTokenExpiresAt, AssumeWorkProfileUserHttpResponse assumeWorkProfileUser)
         {
             AccessToken = accessToken;
             AccessTokenExpiresIn = accessTokenExpiresIn;
             AccessTokenExpiresAt = accessTokenExpiresAt;
-            RefreshTokenRaw = $"{identifier}.{refreshToken}";
+            RefreshTokenRaw = refreshTokenRaw;
             RefreshTokenExpiresIn = refreshTokenExpiresIn;
             RefreshTokenExpiresAt = refreshTokenExpiresAt;
             AssumeWorkProfileUser = assumeWorkProfileUser;
