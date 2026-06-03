@@ -1,5 +1,14 @@
 endpoints faltantes
 completar entidades
-como usar las tablas de auditoria
 Consumo de varios --> Usar cookies y Cors --> garantiza y refactoiza
 refactorizar controlador
+como usar las tablas de auditoria
+
+/////////////////////
+ABRIR
+XsrfValidationMiddleware
+SecurityHeadersMiddleware
+APIServiceExtensions
+Program
+appsettings
+appsettings.Development

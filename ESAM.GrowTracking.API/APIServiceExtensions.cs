@@ -70,32 +70,23 @@ namespace ESAM.GrowTracking.API
             return services;
         }
 
-        //public static WebApplication UseConfiguredSwagger(this WebApplication app)
+        //// Ajuste: nuevo método que configura las opciones de HSTS con los valores deseados
+        //// (6 meses, includeSubDomains, preload) para que UseHsts() los aplique correctamente.
+        //// No se configura en Development: UseHsts() solo se agrega al pipeline en no-Development.
+        //public static IServiceCollection AddAPIHsts(this IServiceCollection services, IHostEnvironment environment)
         //{
-        //    ArgumentNullException.ThrowIfNull(app);
-        //    if (!app.Environment.IsDevelopment())
-        //        return app;
-        //    var cookieSettings = app.Services.GetRequiredService<IOptions<CookieSettings>>().Value; //x
-        //    var xsrfCookieName = cookieSettings.EffectiveXsrfCookieName(); //x
-        //    app.UseSwagger();
-        //    app.UseSwaggerUI(c =>
+        //    ArgumentNullException.ThrowIfNull(services);
+        //    ArgumentNullException.ThrowIfNull(environment);
+        //    if (!environment.IsDevelopment())
         //    {
-        //        c.UseRequestInterceptor(
-        //            $"(req) => {{" +
-        //            $"  try {{" +
-        //            $"    const cookie = document.cookie.split('; ')" +
-        //            $"      .find(r => r.startsWith('{xsrfCookieName}='));" +
-        //            $"    if (cookie) {{" +
-        //            $"      req.headers['X-XSRF-TOKEN'] =" +
-        //            $"        decodeURIComponent(cookie.split('=').slice(1).join('='));" +
-        //            $"    }}" +
-        //            $"  }} catch (e) {{ console.warn('XSRF interceptor error', e); }}" +
-        //            $"  return req;" +
-        //            $"}}"); //x
-        //        c.EnablePersistAuthorization();
-        //        c.DisplayRequestDuration();
-        //    });
-        //    return app;
+        //        services.AddHsts(options =>
+        //        {
+        //            options.MaxAge = TimeSpan.FromSeconds(15552000); // 180 días (6 meses)
+        //            options.IncludeSubDomains = true;
+        //            options.Preload = true;
+        //        });
+        //    }
+        //    return services;
         //}
 
         public static WebApplication UseConfiguredSwagger(this WebApplication app)

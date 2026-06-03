@@ -5,10 +5,15 @@ namespace ESAM.GrowTracking.Application.Abstractions.Services.Results
     public sealed class TokenSessionValidationResult
     {
         public bool IsValid { get; }
+
         public string RevokedReason { get; }
+
         public int WorkProfileId { get; }
+
         public int? RoleId { get; }
+
         public int? CampusId { get; }
+
         public User? ValidatedUser { get; }
 
         private TokenSessionValidationResult(bool isValid, string revokedReason, User? validatedUser, int workProfileId, int? roleId, int? campusId)
