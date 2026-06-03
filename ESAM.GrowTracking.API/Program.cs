@@ -52,9 +52,7 @@ app.UseAuthentication();
 app.UseRateLimiter();
 app.UseMiddleware<XsrfValidationMiddleware>();
 app.UseAuthorization();
-
 app.MapSwaggerUiCustomJs();
-
 app.UseConfiguredSwagger();
 app.MapHealthCheckEndpoints();
 app.MapControllers();

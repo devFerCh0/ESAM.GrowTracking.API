@@ -25,15 +25,9 @@ namespace ESAM.GrowTracking.API.Middleware
         public async Task Invoke(HttpContext context)
         {
             ArgumentNullException.ThrowIfNull(context);
-
-            if (IsStateChangingMethod(context.Request.Method) && !IsExemptPath(context.Request.Path)
+            if (IsStateChangingMethod(context.Request.Method) && !IsExemptPath(context.Request.Path) && !HasBearerToken(context.Request)
                 && context.Request.Cookies.ContainsKey(_cookieSettings.EffectiveRefreshCookieName()))
             {
-                if (HasBearerToken(context.Request))
-                {
-                    await _next(context);
-                    return;
-                }
                 var clientIp = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
                 var method = context.Request.Method;
                 var path = context.Request.Path.Value ?? string.Empty;
@@ -56,7 +50,7 @@ namespace ESAM.GrowTracking.API.Middleware
                 }
                 if (!context.Request.Cookies.TryGetValue(xsrfCookieName, out var xsrfCookieValue) || string.IsNullOrWhiteSpace(xsrfCookieValue))
                 {
-                    _logger.LogWarning("XsrfValidationMiddleware: cookie XSRF '{CookieName}' ausente. Method={Method} Path={Path} ClientIp={ClientIp} TraceId={TraceId}", 
+                    _logger.LogWarning("XsrfValidationMiddleware: cookie XSRF '{CookieName}' ausente. Method={Method} Path={Path} ClientIp={ClientIp} TraceId={TraceId}",
                         xsrfCookieName, method, path, clientIp, traceId);
                     await DenyAsync(context);
                     return;
@@ -77,13 +71,13 @@ namespace ESAM.GrowTracking.API.Middleware
         private static bool HasBearerToken(HttpRequest request)
         {
             var authHeader = request.Headers.Authorization.FirstOrDefault();
-            return authHeader is { Length: > 7 }&& authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(authHeader[7..]);
+            return authHeader is { Length: > 7 } && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(authHeader[7..]);
         }
 
         private bool IsExemptPath(PathString path)
         {
             foreach (var exempt in _cookieSettings.XsrfExemptPaths)
-                if (path.StartsWithSegments(exempt, StringComparison.OrdinalIgnoreCase))
+                if (path == new PathString(exempt))
                     return true;
             return false;
         }

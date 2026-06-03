@@ -28,7 +28,7 @@ namespace ESAM.GrowTracking.API.Filters
             }).ToList();
             _logger.LogWarning("ValidateModelStateFilter: modelo inválido. TraceId={TraceId}. Errores: {Errors}", traceId,
                 string.Join(" | ", errors.Select(e => $"[{string.Join(",", e.Fields)}]: {e.Message}")));
-            var payload = ApiErrorResponse.From(errors, traceId);
+            var payload = ApiErrorResponse.From(errors, ApiErrorSource.System, traceId);
             context.Result = new BadRequestObjectResult(payload) { ContentTypes = { "application/json" } };
         }
 

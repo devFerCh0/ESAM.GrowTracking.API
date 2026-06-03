@@ -26,13 +26,15 @@ namespace ESAM.GrowTracking.Infrastructure.Services
             return _authCookieService.TryGetRefreshToken(out var cookieToken) ? cookieToken : null;
         }
 
-        public void SetSessionCookies(string refreshTokenRaw, DateTime refreshTokenExpiresAt)
+        public string? SetSessionCookies(string refreshTokenRaw, DateTime refreshTokenExpiresAt)
         {
             if (string.IsNullOrWhiteSpace(refreshTokenRaw))
-                return;
+                return null;
             var refreshExpiry = new DateTimeOffset(DateTime.SpecifyKind(refreshTokenExpiresAt, DateTimeKind.Utc));
             _authCookieService.SetRefreshTokenCookie(refreshTokenRaw, refreshExpiry);
-            _authCookieService.SetXsrfCookie(GenerateXsrfToken(), refreshExpiry);
+            var xsrfToken = GenerateXsrfToken();
+            _authCookieService.SetXsrfCookie(xsrfToken, refreshExpiry);
+            return xsrfToken;
         }
 
         public void ClearSessionCookies()

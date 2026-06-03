@@ -98,7 +98,6 @@ namespace ESAM.GrowTracking.API
         //    return app;
         //}
 
-
         public static WebApplication UseConfiguredSwagger(this WebApplication app)
         {
             ArgumentNullException.ThrowIfNull(app);

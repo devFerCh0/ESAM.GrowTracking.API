@@ -15,7 +15,7 @@ namespace ESAM.GrowTracking.API.Extensions
                 throw new InvalidOperationException("No se puede construir una respuesta de error a partir de un resultado exitoso.");
             var errors = result.Errors.Select(e => new ApiErrorItem { Message = e.Message, Fields = [.. e.Fields] }).ToList();
             var statusCode = errorToHttpMapper.GetStatusCode(result.Errors.Select(e => e.ErrorType));
-            var payload = ApiErrorResponse.From(errors, traceId);
+            var payload = ApiErrorResponse.From(errors, traceId, ApiErrorSource.UseCase);
             return new ObjectResult(payload) { StatusCode = statusCode, ContentTypes = { "application/json" } };
         }
     }

@@ -1,4 +1,5 @@
-Diferencia el ApiErrorResponse para el result y otro
-completar entidades
 endpoints faltantes
+completar entidades
 como usar las tablas de auditoria
+Consumo de varios --> Usar cookies y Cors --> garantiza y refactoiza
+refactorizar controlador

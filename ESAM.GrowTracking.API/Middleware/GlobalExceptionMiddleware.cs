@@ -59,7 +59,7 @@ namespace ESAM.GrowTracking.API.Middleware
                 foreach (var (key, value) in preservedCorsHeaders)
                     context.Response.Headers[key] = value;
                 var message = _environment.IsDevelopment() ? ex.ToString() : "Se ha producido un error inesperado.";
-                var payload = ApiErrorResponse.From([new ApiErrorItem { Message = message }], traceId: context.TraceIdentifier);
+                var payload = ApiErrorResponse.From([new ApiErrorItem { Message = message }], traceId: context.TraceIdentifier, source: ApiErrorSource.System);
                 context.Response.ContentType = "application/json; charset=utf-8";
                 await context.Response.WriteAsJsonAsync(payload, s_jsonOptions);
             }
