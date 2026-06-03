@@ -83,7 +83,7 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
             if (assumeWorkProfileResult.IsFailure)
                 return assumeWorkProfileResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
             var assumeWorkProfile = _mapper.Map<AssumeWorkProfileHttpResponse>(assumeWorkProfileResult.Value);
-            _authSessionCookieService.SetSessionCookies(assumeWorkProfile.RefreshTokenRaw, assumeWorkProfile.RefreshTokenExpiresAt, assumeWorkProfile.AccessTokenExpiresAt);
+            _authSessionCookieService.SetSessionCookies(assumeWorkProfile.RefreshTokenRaw, assumeWorkProfile.RefreshTokenExpiresAt);
             return Ok(ApiSuccessResponse<AssumeWorkProfileHttpResponse>.From(assumeWorkProfile, HttpContext.TraceIdentifier));
         }
 
@@ -121,7 +121,7 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
             if (assumeRoleCampusResult.IsFailure)
                 return assumeRoleCampusResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
             var assumeRoleCampus = _mapper.Map<AssumeRoleCampusHttpResponse>(assumeRoleCampusResult.Value);
-            _authSessionCookieService.SetSessionCookies(assumeRoleCampus.RefreshTokenRaw, assumeRoleCampus.RefreshTokenExpiresAt, assumeRoleCampus.AccessTokenExpiresAt);
+            _authSessionCookieService.SetSessionCookies(assumeRoleCampus.RefreshTokenRaw, assumeRoleCampus.RefreshTokenExpiresAt);
             return Ok(ApiSuccessResponse<AssumeRoleCampusHttpResponse>.From(assumeRoleCampus, HttpContext.TraceIdentifier));
         }
 
@@ -144,7 +144,7 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
                 return refreshResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
             }
             var refresh = _mapper.Map<RefreshHttpResponse>(refreshResult.Value);
-            _authSessionCookieService.SetSessionCookies(refresh.RefreshTokenRaw, refresh.RefreshTokenExpiresAt, refresh.AccessTokenExpiresAt);
+            _authSessionCookieService.SetSessionCookies(refresh.RefreshTokenRaw, refresh.RefreshTokenExpiresAt);
             return Ok(ApiSuccessResponse<RefreshHttpResponse>.From(refresh, HttpContext.TraceIdentifier));
         }
 

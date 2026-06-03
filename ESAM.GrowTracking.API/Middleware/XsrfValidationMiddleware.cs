@@ -25,9 +25,15 @@ namespace ESAM.GrowTracking.API.Middleware
         public async Task Invoke(HttpContext context)
         {
             ArgumentNullException.ThrowIfNull(context);
+
             if (IsStateChangingMethod(context.Request.Method) && !IsExemptPath(context.Request.Path)
                 && context.Request.Cookies.ContainsKey(_cookieSettings.EffectiveRefreshCookieName()))
             {
+                if (HasBearerToken(context.Request))
+                {
+                    await _next(context);
+                    return;
+                }
                 var clientIp = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
                 var method = context.Request.Method;
                 var path = context.Request.Path.Value ?? string.Empty;
@@ -35,7 +41,7 @@ namespace ESAM.GrowTracking.API.Middleware
                 var xsrfCookieName = _cookieSettings.EffectiveXsrfCookieName();
                 if (!context.Request.Headers.TryGetValue("X-XSRF-TOKEN", out var xsrfHeaderValues))
                 {
-                    _logger.LogWarning("XsrfValidationMiddleware: encabezado X-XSRF-TOKEN ausente. Method={Method} Path={Path} ClientIp={ClientIp} TraceId={TraceId}", method, path,
+                    _logger.LogWarning("XsrfValidationMiddleware: encabezado X-XSRF-TOKEN ausente. Method={Method} Path={Path} ClientIp={ClientIp} TraceId={TraceId}", method, path, 
                         clientIp, traceId);
                     await DenyAsync(context);
                     return;
@@ -43,14 +49,14 @@ namespace ESAM.GrowTracking.API.Middleware
                 var xsrfHeader = xsrfHeaderValues.FirstOrDefault();
                 if (string.IsNullOrWhiteSpace(xsrfHeader))
                 {
-                    _logger.LogWarning("XsrfValidationMiddleware: encabezado X-XSRF-TOKEN vacío. Method={Method} Path={Path} ClientIp={ClientIp} TraceId={TraceId}", method, path,
+                    _logger.LogWarning("XsrfValidationMiddleware: encabezado X-XSRF-TOKEN vacío. Method={Method} Path={Path} ClientIp={ClientIp} TraceId={TraceId}", method, path, 
                         clientIp, traceId);
                     await DenyAsync(context);
                     return;
                 }
                 if (!context.Request.Cookies.TryGetValue(xsrfCookieName, out var xsrfCookieValue) || string.IsNullOrWhiteSpace(xsrfCookieValue))
                 {
-                    _logger.LogWarning("XsrfValidationMiddleware: cookie XSRF '{CookieName}' ausente. Method={Method} Path={Path} ClientIp={ClientIp} TraceId={TraceId}",
+                    _logger.LogWarning("XsrfValidationMiddleware: cookie XSRF '{CookieName}' ausente. Method={Method} Path={Path} ClientIp={ClientIp} TraceId={TraceId}", 
                         xsrfCookieName, method, path, clientIp, traceId);
                     await DenyAsync(context);
                     return;
@@ -59,13 +65,19 @@ namespace ESAM.GrowTracking.API.Middleware
                 var cookieBytes = Encoding.UTF8.GetBytes(xsrfCookieValue);
                 if (!CryptographicOperations.FixedTimeEquals(headerBytes, cookieBytes))
                 {
-                    _logger.LogWarning("XsrfValidationMiddleware: tokens no coinciden (posible CSRF). Method={Method} Path={Path} ClientIp={ClientIp} TraceId={TraceId}", method,
+                    _logger.LogWarning("XsrfValidationMiddleware: tokens no coinciden (posible CSRF). Method={Method} Path={Path} ClientIp={ClientIp} TraceId={TraceId}", method, 
                         path, clientIp, traceId);
                     await DenyAsync(context);
                     return;
                 }
             }
             await _next(context);
+        }
+
+        private static bool HasBearerToken(HttpRequest request)
+        {
+            var authHeader = request.Headers.Authorization.FirstOrDefault();
+            return authHeader is { Length: > 7 }&& authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(authHeader[7..]);
         }
 
         private bool IsExemptPath(PathString path)

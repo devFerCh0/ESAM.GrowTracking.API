@@ -1,2 +1,4 @@
-Limpiar código en Application
-Migrar
+Diferencia el ApiErrorResponse para el result y otro
+completar entidades
+endpoints faltantes
+como usar las tablas de auditoria

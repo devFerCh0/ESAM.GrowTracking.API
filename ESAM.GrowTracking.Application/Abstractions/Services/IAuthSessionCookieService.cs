@@ -6,7 +6,7 @@ namespace ESAM.GrowTracking.Application.Abstractions.Services
     {
         string? ResolveRefreshToken(string? bodyToken);
 
-        void SetSessionCookies(string refreshTokenRaw, DateTime refreshTokenExpiresAt, DateTime accessTokenExpiresAt);
+        void SetSessionCookies(string refreshTokenRaw, DateTime refreshTokenExpiresAt);
 
         void ClearSessionCookies();
 
