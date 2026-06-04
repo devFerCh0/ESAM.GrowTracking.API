@@ -1,9 +1,7 @@
-endpoints faltantes
 completar entidades
-Consumo de varios --> Usar cookies y Cors --> garantiza y refactoiza
 refactorizar controlador
 como usar las tablas de auditoria
-
+Métodos para Auth
 /////////////////////
 ABRIR
 XsrfValidationMiddleware

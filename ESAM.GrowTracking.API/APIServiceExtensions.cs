@@ -70,24 +70,21 @@ namespace ESAM.GrowTracking.API
             return services;
         }
 
-        //// Ajuste: nuevo método que configura las opciones de HSTS con los valores deseados
-        //// (6 meses, includeSubDomains, preload) para que UseHsts() los aplique correctamente.
-        //// No se configura en Development: UseHsts() solo se agrega al pipeline en no-Development.
-        //public static IServiceCollection AddAPIHsts(this IServiceCollection services, IHostEnvironment environment)
-        //{
-        //    ArgumentNullException.ThrowIfNull(services);
-        //    ArgumentNullException.ThrowIfNull(environment);
-        //    if (!environment.IsDevelopment())
-        //    {
-        //        services.AddHsts(options =>
-        //        {
-        //            options.MaxAge = TimeSpan.FromSeconds(15552000); // 180 días (6 meses)
-        //            options.IncludeSubDomains = true;
-        //            options.Preload = true;
-        //        });
-        //    }
-        //    return services;
-        //}
+        public static IServiceCollection AddAPIHsts(this IServiceCollection services, IHostEnvironment environment)
+        {
+            ArgumentNullException.ThrowIfNull(services);
+            ArgumentNullException.ThrowIfNull(environment);
+            if (!environment.IsDevelopment())
+            {
+                services.AddHsts(options =>
+                {
+                    options.MaxAge = TimeSpan.FromSeconds(15552000);
+                    options.IncludeSubDomains = true;
+                    options.Preload = true;
+                });
+            }
+            return services;
+        }
 
         public static WebApplication UseConfiguredSwagger(this WebApplication app)
         {

@@ -17,7 +17,7 @@ namespace ESAM.GrowTracking.API.ConfigureOptions
 
         public void PostConfigure(string? name, CookiePolicyOptions options)
         {
-            if (name != Options.DefaultName)
+            if (!string.Equals(name, Options.DefaultName, StringComparison.Ordinal))
                 return;
             options.HttpOnly = HttpOnlyPolicy.None;
             options.MinimumSameSitePolicy = MapSameSiteMode(_cookieSettings.SameSite);
