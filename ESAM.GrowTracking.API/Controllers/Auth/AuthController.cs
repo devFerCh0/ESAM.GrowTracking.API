@@ -55,6 +55,7 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status423Locked)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<ApiSuccessResponse<LoginHttpResponse>>> LoginAsync([FromBody] LoginRequest request, CancellationToken cancellationToken)
         {
@@ -74,8 +75,9 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<ApiSuccessResponse<AssumeWorkProfileHttpResponse>>> AssumeWorkProfileAsync([FromBody] AssumeWorkProfileRequest request, 
+        public async Task<ActionResult<ApiSuccessResponse<AssumeWorkProfileHttpResponse>>> AssumeWorkProfileAsync([FromBody] AssumeWorkProfileRequest request,
             CancellationToken cancellationToken)
         {
             var command = new AssumeWorkProfileCommand(request.WorkProfileId);
@@ -83,9 +85,7 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
             if (assumeWorkProfileResult.IsFailure)
                 return assumeWorkProfileResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
             var assumeWorkProfile = _mapper.Map<AssumeWorkProfileHttpResponse>(assumeWorkProfileResult.Value);
-            var xsrfToken = _authSessionCookieService.SetSessionCookies(assumeWorkProfile.RefreshTokenRaw, assumeWorkProfile.RefreshTokenExpiresAt);
-            if (!string.IsNullOrWhiteSpace(xsrfToken))
-                Response.Headers["X-XSRF-TOKEN"] = xsrfToken;
+            ApplySessionAndXsrfToken(assumeWorkProfile.RefreshTokenRaw, assumeWorkProfile.RefreshTokenExpiresAt);
             return Ok(ApiSuccessResponse<AssumeWorkProfileHttpResponse>.From(assumeWorkProfile, HttpContext.TraceIdentifier));
         }
 
@@ -95,7 +95,9 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<ApiSuccessResponse<List<UserRoleCampusHttpResponse>>>> GetUserRoleCampusesAsync([FromRoute] int workProfileId, 
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<ApiSuccessResponse<List<UserRoleCampusHttpResponse>>>> GetUserRoleCampusesAsync([FromRoute] int workProfileId,
             CancellationToken cancellationToken)
         {
             var query = new GetUserRoleCampusesQuery(workProfileId);
@@ -114,8 +116,9 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<ApiSuccessResponse<AssumeRoleCampusHttpResponse>>> AssumeRoleCampusAsync([FromBody] AssumeRoleCampusRequest request, 
+        public async Task<ActionResult<ApiSuccessResponse<AssumeRoleCampusHttpResponse>>> AssumeRoleCampusAsync([FromBody] AssumeRoleCampusRequest request,
             CancellationToken cancellationToken)
         {
             var command = new AssumeRoleCampusCommand(request.WorkProfileId, request.RoleId, request.CampusId);
@@ -123,9 +126,7 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
             if (assumeRoleCampusResult.IsFailure)
                 return assumeRoleCampusResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
             var assumeRoleCampus = _mapper.Map<AssumeRoleCampusHttpResponse>(assumeRoleCampusResult.Value);
-            var xsrfToken = _authSessionCookieService.SetSessionCookies(assumeRoleCampus.RefreshTokenRaw, assumeRoleCampus.RefreshTokenExpiresAt);
-            if (!string.IsNullOrWhiteSpace(xsrfToken))
-                Response.Headers["X-XSRF-TOKEN"] = xsrfToken;
+            ApplySessionAndXsrfToken(assumeRoleCampus.RefreshTokenRaw, assumeRoleCampus.RefreshTokenExpiresAt);
             return Ok(ApiSuccessResponse<AssumeRoleCampusHttpResponse>.From(assumeRoleCampus, HttpContext.TraceIdentifier));
         }
 
@@ -135,6 +136,8 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
         [ProducesResponseType(typeof(ApiSuccessResponse<RefreshHttpResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<ApiSuccessResponse<RefreshHttpResponse>>> RefreshAsync([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] RefreshRequest? request,
             CancellationToken cancellationToken)
         {
@@ -148,9 +151,7 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
                 return refreshResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
             }
             var refresh = _mapper.Map<RefreshHttpResponse>(refreshResult.Value);
-            var xsrfToken = _authSessionCookieService.SetSessionCookies(refresh.RefreshTokenRaw, refresh.RefreshTokenExpiresAt);
-            if (!string.IsNullOrWhiteSpace(xsrfToken))
-                Response.Headers["X-XSRF-TOKEN"] = xsrfToken;
+            ApplySessionAndXsrfToken(refresh.RefreshTokenRaw, refresh.RefreshTokenExpiresAt);
             return Ok(ApiSuccessResponse<RefreshHttpResponse>.From(refresh, HttpContext.TraceIdentifier));
         }
 
@@ -159,7 +160,9 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
         [Consumes("application/json")]
         [ProducesResponseType(typeof(ApiSuccessResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<ApiSuccessResponse>> LogoutAsync([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] LogoutRequest? request, 
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<ApiSuccessResponse>> LogoutAsync([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] LogoutRequest? request,
             CancellationToken cancellationToken)
         {
             var resolvedRefreshToken = _authSessionCookieService.ResolveRefreshToken(request?.RefreshTokenRaw);
@@ -175,6 +178,13 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
             {
                 _authSessionCookieService.ClearSessionCookies();
             }
+        }
+
+        private void ApplySessionAndXsrfToken(string refreshTokenRaw, DateTime refreshTokenExpiresAt)
+        {
+            var xsrfToken = _authSessionCookieService.SetSessionCookies(refreshTokenRaw, refreshTokenExpiresAt);
+            if (!string.IsNullOrWhiteSpace(xsrfToken))
+                Response.Headers["X-XSRF-TOKEN"] = xsrfToken;
         }
     }
 }

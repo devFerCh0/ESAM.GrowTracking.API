@@ -1,12 +1,3 @@
 completar entidades
-refactorizar controlador
 como usar las tablas de auditoria
 Métodos para Auth
-/////////////////////
-ABRIR
-XsrfValidationMiddleware
-SecurityHeadersMiddleware
-APIServiceExtensions
-Program
-appsettings
-appsettings.Development
