@@ -77,84 +77,84 @@ namespace ESAM.GrowTracking.Application.Services
         //    return Result<User>.Ok(user!);
         //}
 
-        public async Task<Result> ValidateCurrentUserDeviceAsync(int currentUserId, int currentUserDeviceId, DateTime utcNow, bool asTracking = false,
-            CancellationToken cancellationToken = default)
-        {
-            var userDevice = await _userDeviceRepository.GetByIdAndUserIdAsync(currentUserDeviceId, currentUserId, asTracking, cancellationToken);
-            if (userDevice is null || userDevice.IsDeleted || userDevice.IsLocked(utcNow))
-            {
-                _logger.LogWarning("ValidateCurrentUserDeviceAsync: dispositivo inválido o bloqueado. UserId={UserId}, DeviceId={DeviceId}", currentUserId, currentUserDeviceId);
-                return Result.Fail(Error.Unauthorized("Dispositivo inválido o bloqueado."));
-            }
-            return Result.Ok();
-        }
+        //public async Task<Result> ValidateCurrentUserDeviceAsync(int currentUserId, int currentUserDeviceId, DateTime utcNow, bool asTracking = false,
+        //    CancellationToken cancellationToken = default)
+        //{
+        //    var userDevice = await _userDeviceRepository.GetByIdAndUserIdAsync(currentUserDeviceId, currentUserId, asTracking, cancellationToken);
+        //    if (userDevice is null || userDevice.IsDeleted || userDevice.IsLocked(utcNow))
+        //    {
+        //        _logger.LogWarning("ValidateCurrentUserDeviceAsync: dispositivo inválido o bloqueado. UserId={UserId}, DeviceId={DeviceId}", currentUserId, currentUserDeviceId);
+        //        return Result.Fail(Error.Unauthorized("Dispositivo inválido o bloqueado."));
+        //    }
+        //    return Result.Ok();
+        //}
 
-        public async Task<Result<UserDevice>> GetAndValidateCurrentUserDeviceAsync(int currentUserId, int currentUserDeviceId, DateTime utcNow, bool asTracking = false,
-            CancellationToken cancellationToken = default)
-        {
-            var userDevice = await _userDeviceRepository.GetByIdAndUserIdAsync(currentUserDeviceId, currentUserId, asTracking, cancellationToken);
-            if (userDevice is null || userDevice.IsDeleted || userDevice.IsLocked(utcNow))
-            {
-                _logger.LogWarning("GetAndValidateCurrentUserDeviceAsync: dispositivo inválido o bloqueado. UserId={UserId}, DeviceId={DeviceId}", currentUserId, 
-                    currentUserDeviceId);
-                return Result<UserDevice>.Fail(Error.Unauthorized("Dispositivo inválido o bloqueado."));
-            }
-            return Result<UserDevice>.Ok(userDevice);
-        }
+        //public async Task<Result<UserDevice>> GetAndValidateCurrentUserDeviceAsync(int currentUserId, int currentUserDeviceId, DateTime utcNow, bool asTracking = false,
+        //    CancellationToken cancellationToken = default)
+        //{
+        //    var userDevice = await _userDeviceRepository.GetByIdAndUserIdAsync(currentUserDeviceId, currentUserId, asTracking, cancellationToken);
+        //    if (userDevice is null || userDevice.IsDeleted || userDevice.IsLocked(utcNow))
+        //    {
+        //        _logger.LogWarning("GetAndValidateCurrentUserDeviceAsync: dispositivo inválido o bloqueado. UserId={UserId}, DeviceId={DeviceId}", currentUserId, 
+        //            currentUserDeviceId);
+        //        return Result<UserDevice>.Fail(Error.Unauthorized("Dispositivo inválido o bloqueado."));
+        //    }
+        //    return Result<UserDevice>.Ok(userDevice);
+        //}
 
-        public async Task<Result> ValidateUserWorkProfileAndTypeAsync(int currentUserId, int currentWorkProfileId, WorkProfileType workProfileType, bool asTracking = false,
-            CancellationToken cancellationToken = default)
-        {
-            var userWorkProfile = await _userWorkProfileRepository.GetByUserIdAndWorkProfileIdAsync(currentUserId, currentWorkProfileId, asTracking, cancellationToken);
-            if (userWorkProfile is null || userWorkProfile.IsDeleted)
-            {
-                _logger.LogWarning("ValidateUserWorkProfileAndTypeAsync: perfil de trabajo no encontrado o eliminado. UserId={UserId}, WorkProfileId={WorkProfileId}",
-                    currentUserId, currentWorkProfileId);
-                return Result.Fail(Error.NotFound("No se encontró un perfil de trabajo activo asignado al usuario."));
-            }
-            var isValidWorkProfileType = await _workProfileRepository.IsValidWorkProfileTypeAsync(currentWorkProfileId, workProfileType, asTracking, cancellationToken);
-            if (!isValidWorkProfileType)
-            {
-                _logger.LogWarning("ValidateUserWorkProfileAndTypeAsync: tipo de perfil de trabajo inválido. WorkProfileId={WorkProfileId}, TipoEsperado={ExpectedType}",
-                    currentWorkProfileId, workProfileType);
-                return Result.Fail(Error.BusinessRule("El perfil de trabajo no corresponde al tipo esperado."));
-            }
-            return Result.Ok();
-        }
+        //public async Task<Result> ValidateUserWorkProfileAndTypeAsync(int currentUserId, int currentWorkProfileId, WorkProfileType workProfileType, bool asTracking = false,
+        //    CancellationToken cancellationToken = default)
+        //{
+        //    var userWorkProfile = await _userWorkProfileRepository.GetByUserIdAndWorkProfileIdAsync(currentUserId, currentWorkProfileId, asTracking, cancellationToken);
+        //    if (userWorkProfile is null || userWorkProfile.IsDeleted)
+        //    {
+        //        _logger.LogWarning("ValidateUserWorkProfileAndTypeAsync: perfil de trabajo no encontrado o eliminado. UserId={UserId}, WorkProfileId={WorkProfileId}",
+        //            currentUserId, currentWorkProfileId);
+        //        return Result.Fail(Error.NotFound("No se encontró un perfil de trabajo activo asignado al usuario."));
+        //    }
+        //    var isValidWorkProfileType = await _workProfileRepository.IsValidWorkProfileTypeAsync(currentWorkProfileId, workProfileType, asTracking, cancellationToken);
+        //    if (!isValidWorkProfileType)
+        //    {
+        //        _logger.LogWarning("ValidateUserWorkProfileAndTypeAsync: tipo de perfil de trabajo inválido. WorkProfileId={WorkProfileId}, TipoEsperado={ExpectedType}",
+        //            currentWorkProfileId, workProfileType);
+        //        return Result.Fail(Error.BusinessRule("El perfil de trabajo no corresponde al tipo esperado."));
+        //    }
+        //    return Result.Ok();
+        //}
 
-        public async Task<Result> ValidateUserWorkProfileAndTypeAndHasPermissionsAsync(int currentUserId, int currentWorkProfileId, WorkProfileType workProfileType,
-            bool asTracking = false, CancellationToken cancellationToken = default)
-        {
-            var workProfileTypeValidationResult = await ValidateUserWorkProfileAndTypeAsync(currentUserId, currentWorkProfileId, workProfileType, asTracking, cancellationToken);
-            if (workProfileTypeValidationResult.IsFailure)
-                return Result.Fail(workProfileTypeValidationResult.Errors);
-            var hasActivePermissions = await _workProfilePermissionRepository.HasActivePermissionsAsync(currentWorkProfileId, asTracking, cancellationToken);
-            if (!hasActivePermissions)
-            {
-                _logger.LogWarning("ValidateUserWorkProfileAndTypeAndHasPermissionsAsync: perfil de trabajo sin permisos activos. WorkProfileId={WorkProfileId}",
-                    currentWorkProfileId);
-                return Result.Fail(Error.Forbidden("El perfil de trabajo no tiene permisos activos asignados."));
-            }
-            return Result.Ok();
-        }
+        //public async Task<Result> ValidateUserWorkProfileAndTypeAndHasPermissionsAsync(int currentUserId, int currentWorkProfileId, WorkProfileType workProfileType,
+        //    bool asTracking = false, CancellationToken cancellationToken = default)
+        //{
+        //    var workProfileTypeValidationResult = await ValidateUserWorkProfileAndTypeAsync(currentUserId, currentWorkProfileId, workProfileType, asTracking, cancellationToken);
+        //    if (workProfileTypeValidationResult.IsFailure)
+        //        return Result.Fail(workProfileTypeValidationResult.Errors);
+        //    var hasActivePermissions = await _workProfilePermissionRepository.HasActivePermissionsAsync(currentWorkProfileId, asTracking, cancellationToken);
+        //    if (!hasActivePermissions)
+        //    {
+        //        _logger.LogWarning("ValidateUserWorkProfileAndTypeAndHasPermissionsAsync: perfil de trabajo sin permisos activos. WorkProfileId={WorkProfileId}",
+        //            currentWorkProfileId);
+        //        return Result.Fail(Error.Forbidden("El perfil de trabajo no tiene permisos activos asignados."));
+        //    }
+        //    return Result.Ok();
+        //}
 
-        public async Task<Result> ValidateUserRoleCampusAndHasPermissionsAsync(int currentUserId, int currentRoleId, int currentCampusId, bool asTracking = false,
-            CancellationToken cancellationToken = default)
-        {
-            var userRoleCampus = await _userRoleCampusRepository.GetByUserIdAndRoleIdAndCampusIdAsync(currentUserId, currentRoleId, currentCampusId, asTracking, cancellationToken);
-            if (userRoleCampus is null || userRoleCampus.IsDeleted)
-            {
-                _logger.LogWarning("ValidateUserRoleCampusAndHasPermissionsAsync: rol de sede no encontrado o eliminado. UserId={UserId}, RoleId={RoleId}, CampusId={CampusId}",
-                    currentUserId, currentRoleId, currentCampusId);
-                return Result.Fail(Error.NotFound("No se encontró un rol de sede activo asignado al usuario."));
-            }
-            var hasActivePermissions = await _rolePermissionRepository.HasActivePermissionsAsync(userRoleCampus.RoleId, asTracking, cancellationToken);
-            if (!hasActivePermissions)
-            {
-                _logger.LogWarning("ValidateUserRoleCampusAndHasPermissionsAsync: el rol no tiene permisos activos. RoleId={RoleId}", userRoleCampus.RoleId);
-                return Result.Fail(Error.Forbidden("El rol no tiene permisos activos asignados."));
-            }
-            return Result.Ok();
-        }
+        //public async Task<Result> ValidateUserRoleCampusAndHasPermissionsAsync(int currentUserId, int currentRoleId, int currentCampusId, bool asTracking = false,
+        //    CancellationToken cancellationToken = default)
+        //{
+        //    var userRoleCampus = await _userRoleCampusRepository.GetByUserIdAndRoleIdAndCampusIdAsync(currentUserId, currentRoleId, currentCampusId, asTracking, cancellationToken);
+        //    if (userRoleCampus is null || userRoleCampus.IsDeleted)
+        //    {
+        //        _logger.LogWarning("ValidateUserRoleCampusAndHasPermissionsAsync: rol de sede no encontrado o eliminado. UserId={UserId}, RoleId={RoleId}, CampusId={CampusId}",
+        //            currentUserId, currentRoleId, currentCampusId);
+        //        return Result.Fail(Error.NotFound("No se encontró un rol de sede activo asignado al usuario."));
+        //    }
+        //    var hasActivePermissions = await _rolePermissionRepository.HasActivePermissionsAsync(userRoleCampus.RoleId, asTracking, cancellationToken);
+        //    if (!hasActivePermissions)
+        //    {
+        //        _logger.LogWarning("ValidateUserRoleCampusAndHasPermissionsAsync: el rol no tiene permisos activos. RoleId={RoleId}", userRoleCampus.RoleId);
+        //        return Result.Fail(Error.Forbidden("El rol no tiene permisos activos asignados."));
+        //    }
+        //    return Result.Ok();
+        //}
     }
 }

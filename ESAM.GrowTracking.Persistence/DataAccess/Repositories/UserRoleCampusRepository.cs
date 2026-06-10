@@ -14,5 +14,11 @@ namespace ESAM.GrowTracking.Persistence.DataAccess.Repositories
             var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
             return await query.FirstOrDefaultAsync(urc => urc.UserId == userId && urc.RoleId == roleId && urc.CampusId == campusId, cancellationToken).ConfigureAwait(false);
         }
+
+        public async Task<bool> IsActiveAsync(int userId, int roleId, int campusId, bool asTracking = false, CancellationToken cancellationToken = default)
+        {
+            var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
+            return await query.AnyAsync(urc => urc.UserId == userId && urc.RoleId == roleId && urc.CampusId == campusId && !urc.IsDeleted, cancellationToken).ConfigureAwait(false);
+        }
     }
 }

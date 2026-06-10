@@ -16,19 +16,17 @@ namespace ESAM.GrowTracking.Persistence.DataAccess.Repositories
                 .ConfigureAwait(false);
         }
 
-        public async Task<bool> ValidateCurrentUserStatusAsync(int currentUserId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
+        public async Task<bool> IsActiveAndUnlockedAsync(int id, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
         {
             var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
-            return await query.AnyAsync(u => u.Id == currentUserId && !u.IsDeleted && (u.LockoutEndAt == null || u.LockoutEndAt <= utcNow), cancellationToken)
-                .ConfigureAwait(false);
+            return await query.AnyAsync(u => u.Id == id && !u.IsDeleted && (u.LockoutEndAt == null || u.LockoutEndAt <= utcNow), cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task<bool> ValidateCurrentUserSecurityAsync(int currentUserId, string currenSecurityStamp, int currentTokenVersion, bool asTracking = false, 
+        public async Task<bool> HasValidSecurityCredentialsAsync(int id, string securityStamp, int tokenVersion, bool asTracking = false, 
             CancellationToken cancellationToken = default)
         {
             var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
-            return await query.AnyAsync(u => u.Id == currentUserId && u.SecurityStamp == currenSecurityStamp && u.TokenVersion == currentTokenVersion, cancellationToken)
-                .ConfigureAwait(false);
+            return await query.AnyAsync(u => u.Id == id && u.SecurityStamp == securityStamp && u.TokenVersion == tokenVersion, cancellationToken).ConfigureAwait(false);
         }
     }
 }

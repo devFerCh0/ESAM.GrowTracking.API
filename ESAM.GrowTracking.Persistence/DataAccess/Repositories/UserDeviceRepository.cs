@@ -21,12 +21,11 @@ namespace ESAM.GrowTracking.Persistence.DataAccess.Repositories
             return await query.FirstOrDefaultAsync(ud => ud.Id == id && ud.UserId == userId, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task<bool> ValidateCurrentUserDeviceStatusAsync(int currentUserDeviceId, int currentUserId, DateTime utcNow, bool asTracking = false, 
-            CancellationToken cancellationToken = default)
+        public async Task<bool> IsActiveAndUnlockedAsync(int id, int userId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
         {
             var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
-            return await query.AnyAsync(ud => ud.Id == currentUserDeviceId && ud.UserId == currentUserId && !ud.IsDeleted && 
-                (ud.LockoutEndAt == null || ud.LockoutEndAt <= utcNow), cancellationToken).ConfigureAwait(false);
+            return await query.AnyAsync(ud => ud.Id == id && ud.UserId == userId && !ud.IsDeleted && (ud.LockoutEndAt == null || ud.LockoutEndAt <= utcNow), cancellationToken)
+                .ConfigureAwait(false);
         }
     }
 }

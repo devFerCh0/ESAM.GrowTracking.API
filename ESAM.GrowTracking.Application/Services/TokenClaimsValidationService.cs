@@ -17,119 +17,152 @@ namespace ESAM.GrowTracking.Application.Services
             _currentUserService = currentUserService;
         }
 
-        public bool IsAuthenticated()
+        public bool GetIsAuthenticated => _currentUserService.IsAuthenticated;
+
+        public AccessTokenType GetCurrentAccessTokenType
         {
-            return _currentUserService.IsAuthenticated;
+            get
+            {
+                var currentAccessTokenType = _currentUserService.AccessTokenType;
+                if (currentAccessTokenType is null)
+                    throw new ArgumentNullException(nameof(currentAccessTokenType));
+                return currentAccessTokenType.Value;
+            }
         }
 
-        public AccessTokenType CurrentAccessTokenType()
+        public int GetCurrentUserId
         {
-            var currentAccessTokenType = _currentUserService.AccessTokenType;
-            if (currentAccessTokenType is null)
-                throw new ArgumentNullException(nameof(currentAccessTokenType));
-            return currentAccessTokenType.Value;
+            get
+            {
+                var currentUserId = _currentUserService.UserId;
+                if (currentUserId is null)
+                    throw new ArgumentNullException(nameof(currentUserId));
+                if (currentUserId <= 0)
+                    throw new ArgumentOutOfRangeException(nameof(currentUserId));
+                return currentUserId.Value;
+            }
         }
 
-        public int CurrentUserId()
+        public string GetCurrentSecurityStamp
         {
-            var currentUserId = _currentUserService.UserId;
-            if (currentUserId is null)
-                throw new ArgumentNullException(nameof(currentUserId));
-            if (currentUserId <= 0)
-                throw new ArgumentOutOfRangeException(nameof(currentUserId));
-            return currentUserId.Value;
+            get
+            {
+                var currentSecurityStamp = _currentUserService.SecurityStamp;
+                if (string.IsNullOrWhiteSpace(currentSecurityStamp))
+                    throw new ArgumentException(nameof(currentSecurityStamp));
+                return currentSecurityStamp;
+            }
         }
 
-        public string CurrentSecurityStamp()
+        public int GetCurrentTokenVersion
         {
-            var currentSecurityStamp = _currentUserService.SecurityStamp;
-            if (string.IsNullOrWhiteSpace(currentSecurityStamp))
-                throw new ArgumentException(nameof(currentSecurityStamp));
-            return currentSecurityStamp;
+            get
+            {
+                var currentTokenVersion = _currentUserService.TokenVersion;
+                if (currentTokenVersion is null)
+                    throw new ArgumentNullException(nameof(currentTokenVersion));
+                if (currentTokenVersion < 0)
+                    throw new ArgumentOutOfRangeException(nameof(currentTokenVersion));
+                return currentTokenVersion.Value;
+            }
         }
 
-        public int CurrentTokenVersion()
+        public string GetCurrentJti
         {
-            var currentTokenVersion = _currentUserService.TokenVersion;
-            if (currentTokenVersion is null)
-                throw new ArgumentNullException(nameof(currentTokenVersion));
-            if (currentTokenVersion < 0)
-                throw new ArgumentOutOfRangeException(nameof(currentTokenVersion));
-            return currentTokenVersion.Value;
+            get
+            {
+                var currentJti = _currentUserService.Jti;
+                if (string.IsNullOrWhiteSpace(currentJti))
+                    throw new ArgumentException(nameof(currentJti));
+                return currentJti;
+            }
         }
 
-        public string CurrentJti()
+        public DateTime GetCurrentAccessTokenExpiration
         {
-            var currentJti = _currentUserService.Jti;
-            if (string.IsNullOrWhiteSpace(currentJti))
-                throw new ArgumentException(nameof(currentJti));
-            return currentJti;
+            get
+            {
+                var currentAccessTokenExpiration = _currentUserService.AccessTokenExpiration;
+                if (currentAccessTokenExpiration is null)
+                    throw new ArgumentException(nameof(currentAccessTokenExpiration));
+                return currentAccessTokenExpiration.Value;
+            }
         }
 
-        public DateTime CurrentAccessTokenExpiration()
+        public int GetCurrentUserDeviceId
         {
-            var currentAccessTokenExpiration = _currentUserService.AccessTokenExpiration;
-            if (currentAccessTokenExpiration is null)
-                throw new ArgumentException(nameof(currentAccessTokenExpiration));
-            return currentAccessTokenExpiration.Value;
+            get
+            {
+                var currentUserDeviceId = _currentUserService.UserDeviceId;
+                if (currentUserDeviceId is null)
+                    throw new ArgumentNullException(nameof(currentUserDeviceId));
+                if (currentUserDeviceId <= 0)
+                    throw new ArgumentOutOfRangeException(nameof(currentUserDeviceId));
+                return currentUserDeviceId.Value;
+            }
         }
 
-        public int CurrentUserDeviceId()
+        public int GetCurrentUserSessionId
         {
-            var currentUserDeviceId = _currentUserService.UserDeviceId;
-            if (currentUserDeviceId is null)
-                throw new ArgumentNullException(nameof(currentUserDeviceId));
-            if (currentUserDeviceId <= 0)
-                throw new ArgumentOutOfRangeException(nameof(currentUserDeviceId));
-            return currentUserDeviceId.Value;
+            get
+            {
+                var currentUserSessionId = _currentUserService.UserSessionId;
+                if (currentUserSessionId is null)
+                    throw new ArgumentNullException(nameof(currentUserSessionId));
+                if (currentUserSessionId <= 0)
+                    throw new ArgumentOutOfRangeException(nameof(currentUserSessionId));
+                return currentUserSessionId.Value;
+            }
         }
 
-        public int CurrentUserSessionId()
+        public bool GetCurrentIsPersistent
         {
-            var currentUserSessionId = _currentUserService.UserSessionId;
-            if (currentUserSessionId is null)
-                throw new ArgumentNullException(nameof(currentUserSessionId));
-            if (currentUserSessionId <= 0)
-                throw new ArgumentOutOfRangeException(nameof(currentUserSessionId));
-            return currentUserSessionId.Value;
+            get
+            {
+                var currentIsPersistent = _currentUserService.IsPersistent;
+                if (currentIsPersistent is null)
+                    throw new ArgumentException(nameof(currentIsPersistent));
+                return currentIsPersistent.Value;
+            }
         }
 
-        public bool CurrentIsPersistent()
+        public int GetCurrentWorkProfileId
         {
-            var currentIsPersistent = _currentUserService.IsPersistent;
-            if (currentIsPersistent is null)
-                throw new ArgumentException(nameof(currentIsPersistent));
-            return currentIsPersistent.Value;
+            get
+            {
+                var currentWorkProfileId = _currentUserService.WorkProfileId;
+                if (currentWorkProfileId is null)
+                    throw new ArgumentNullException(nameof(currentWorkProfileId));
+                if (currentWorkProfileId <= 0)
+                    throw new ArgumentOutOfRangeException(nameof(currentWorkProfileId));
+                return currentWorkProfileId.Value;
+            }
         }
 
-        public int CurrentWorkProfileId()
+        public int GetCurrentRoleId
         {
-            var currentWorkProfileId = _currentUserService.WorkProfileId;
-            if (currentWorkProfileId is null)
-                throw new ArgumentNullException(nameof(currentWorkProfileId));
-            if (currentWorkProfileId <= 0)
-                throw new ArgumentOutOfRangeException(nameof(currentWorkProfileId));
-            return currentWorkProfileId.Value;
+            get
+            {
+                var currentRoleId = _currentUserService.RoleId;
+                if (currentRoleId is null)
+                    throw new ArgumentNullException(nameof(currentRoleId));
+                if (currentRoleId <= 0)
+                    throw new ArgumentOutOfRangeException(nameof(currentRoleId));
+                return currentRoleId.Value;
+            }
         }
 
-        public int CurrentRoleId()
+        public int GetCurrentCampusId
         {
-            var currentRoleId = _currentUserService.RoleId;
-            if (currentRoleId is null)
-                throw new ArgumentNullException(nameof(currentRoleId));
-            if (currentRoleId <= 0)
-                throw new ArgumentOutOfRangeException(nameof(currentRoleId));
-            return currentRoleId.Value;
-        }
-
-        public int CurrentCampusId()
-        {
-            var currentCampusId = _currentUserService.CampusId;
-            if (currentCampusId is null)
-                throw new ArgumentNullException(nameof(currentCampusId));
-            if (currentCampusId <= 0)
-                throw new ArgumentOutOfRangeException(nameof(currentCampusId));
-            return currentCampusId.Value;
+            get
+            {
+                var currentCampusId = _currentUserService.CampusId;
+                if (currentCampusId is null)
+                    throw new ArgumentNullException(nameof(currentCampusId));
+                if (currentCampusId <= 0)
+                    throw new ArgumentOutOfRangeException(nameof(currentCampusId));
+                return currentCampusId.Value;
+            }
         }
     }
 }
