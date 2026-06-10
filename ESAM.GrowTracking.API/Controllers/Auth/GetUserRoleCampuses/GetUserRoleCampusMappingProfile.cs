@@ -3,11 +3,11 @@ using ESAM.GrowTracking.Application.Features.Auth.GetUserRoleCampuses;
 
 namespace ESAM.GrowTracking.API.Controllers.Auth.GetUserRoleCampuses
 {
-    public class UserRoleCampusMappingProfile : Profile
+    public class GetUserRoleCampusMappingProfile : Profile
     {
-        public UserRoleCampusMappingProfile()
+        public GetUserRoleCampusMappingProfile()
         {
-            CreateMap<UserRoleCampusResponse, UserRoleCampusHttpResponse>();
+            CreateMap<GetUserRoleCampusResponse, GetUserRoleCampusHttpResponse>();
         }
     }
 }

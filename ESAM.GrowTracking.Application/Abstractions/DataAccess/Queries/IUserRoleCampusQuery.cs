@@ -5,6 +5,6 @@ namespace ESAM.GrowTracking.Application.Abstractions.DataAccess.Queries
 {
     public interface IUserRoleCampusQuery : IQuery<UserRoleCampus>
     {
-        Task<List<UserRoleCampusResponse>> GetUserRoleCampusesByUserIdAsync(int userId, bool asTracking = false, CancellationToken cancellationToken = default);
+        Task<List<GetUserRoleCampusResponse>> GetUserRoleCampusesByUserIdAsync(int userId, bool asTracking = false, CancellationToken cancellationToken = default);
     }
 }

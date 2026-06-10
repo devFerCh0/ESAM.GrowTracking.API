@@ -3,7 +3,7 @@ using MediatR;
 
 namespace ESAM.GrowTracking.Application.Features.Auth.GetUserRoleCampuses
 {
-    public record GetUserRoleCampusesQuery : IRequest<Result<List<UserRoleCampusResponse>>>
+    public record GetUserRoleCampusesQuery : IRequest<Result<List<GetUserRoleCampusResponse>>>
     {
         public int? WorkProfileId { get; init; }
 

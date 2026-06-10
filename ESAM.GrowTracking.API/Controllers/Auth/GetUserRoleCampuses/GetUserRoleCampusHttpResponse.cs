@@ -1,6 +1,6 @@
-﻿namespace ESAM.GrowTracking.Application.Features.Auth.GetUserRoleCampuses
+﻿namespace ESAM.GrowTracking.API.Controllers.Auth.GetUserRoleCampuses
 {
-    public record UserRoleCampusResponse
+    public record GetUserRoleCampusHttpResponse
     {
         public int RoleId { get; init; }
 
@@ -10,7 +10,7 @@
 
         public string Campus { get; init; }
 
-        public UserRoleCampusResponse(int roleId, string role, int campusId, string campus)
+        public GetUserRoleCampusHttpResponse(int roleId, string role, int campusId, string campus)
         {
             RoleId = roleId;
             Role = role;

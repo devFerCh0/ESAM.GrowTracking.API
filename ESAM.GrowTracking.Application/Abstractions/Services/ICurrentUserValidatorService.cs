@@ -6,9 +6,9 @@ namespace ESAM.GrowTracking.Application.Abstractions.Services
 {
     public interface ICurrentUserValidatorService
     {
-        Task<Result> ValidateCurrentUserAsync(int currentUserId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default);
+        //Task<Result> ValidateCurrentUserAsync(int currentUserId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default);
 
-        Task<Result<User>> GetAndValidateCurrentUserAsync(int currentUserId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default);
+        //Task<Result<User>> GetAndValidateCurrentUserAsync(int currentUserId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default);
 
         Task<Result> ValidateCurrentUserDeviceAsync(int currentUserId, int currentUserDeviceId, DateTime utcNow, bool asTracking = false, 
             CancellationToken cancellationToken = default);

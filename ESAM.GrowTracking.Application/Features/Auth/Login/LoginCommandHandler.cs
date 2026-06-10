@@ -71,7 +71,7 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Login
                 _logger.LogWarning("LoginCommand: validación fallida. Errores: {Errors}", string.Join(" | ", validation.Errors.Select(e => e.ErrorMessage)));
                 return Result<LoginResponse>.Fail(validation.ToDomainErrors());
             }
-            _ = EnumHelper.TryParseFromString<ApiClientType>(request.ApiClientType, out var apiClientType);
+            var apiClientType = EnumHelper.ParseFromString<ApiClientType>(request.ApiClientType);
             var utcNow = _dateTimeService.UtcNow;
             var user = await _userRepository.GetByCredentialAsync(request.Credential!, asTracking, cancellationToken);
             if (user is null)

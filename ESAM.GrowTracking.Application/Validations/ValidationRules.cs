@@ -39,7 +39,7 @@ namespace ESAM.GrowTracking.Application.Validations
 
         public static bool BeAValidEnum<TEnum>(string? value) where TEnum : struct, Enum
         {
-            return EnumHelper.TryParseFromString<TEnum>(value, out _);
+            return EnumHelper.IsValidFromString<TEnum>(value);
         }
     }
 }

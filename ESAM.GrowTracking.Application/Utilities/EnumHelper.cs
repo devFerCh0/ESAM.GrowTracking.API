@@ -19,83 +19,90 @@ namespace ESAM.GrowTracking.Application.Utilities
             return EnumMetadata<TEnum>.ValueToStringMap.TryGetValue(numericValue, out var stringValue) ? stringValue : enumValue.ToString();
         }
 
-        public static bool TryGetZeroFlagStringValue<TEnum>(out string? value) where TEnum : struct, Enum
+        public static bool HasZeroFlagStringValue<TEnum>() where TEnum : struct, Enum
         {
-            value = null;
-            if (!EnumMetadata<TEnum>.IsFlags)
-                return false;
-            return EnumMetadata<TEnum>.ValueToStringMap.TryGetValue(0UL, out value);
+            return EnumMetadata<TEnum>.IsFlags && EnumMetadata<TEnum>.ValueToStringMap.ContainsKey(0UL);
         }
 
-        public static bool TryParseFromString<TEnum>(string? value, out TEnum result) where TEnum : struct, Enum
+        public static string? GetZeroFlagStringValue<TEnum>() where TEnum : struct, Enum
         {
-            result = default;
-            if (string.IsNullOrWhiteSpace(value))
+            if (!EnumMetadata<TEnum>.IsFlags)
+                return null;
+            return EnumMetadata<TEnum>.ValueToStringMap.TryGetValue(0UL, out var value) ? value : null;
+        }
+
+        public static bool IsValidFromString<TEnum>(string? value) where TEnum : struct, Enum
+        {
+            return TryParseInternal<TEnum>(value) is not null;
+        }
+
+        public static TEnum ParseFromString<TEnum>(string? value) where TEnum : struct, Enum
+        {
+            var result = TryParseInternal<TEnum>(value);
+            if (result is not null)
+                return result.Value;
+            throw new FormatException($"'{value}' no es un valor válido para {typeof(TEnum).Name}");
+        }
+
+        public static bool IsValidListFromString<TEnum>(IEnumerable<string>? values) where TEnum : struct, Enum
+        {
+            if (values is null)
                 return false;
+            foreach (var value in values)
+                if (TryParseInternal<TEnum>(value) is null)
+                    return false;
+            return true;
+        }
+
+        public static List<TEnum> ParseListFromString<TEnum>(IEnumerable<string> values) where TEnum : struct, Enum
+        {
+            ArgumentNullException.ThrowIfNull(values);
+            var result = new List<TEnum>();
+            foreach (var value in values)
+                result.Add(ParseFromString<TEnum>(value));
+            return result;
+        }
+
+        private static TEnum? TryParseInternal<TEnum>(string? value) where TEnum : struct, Enum
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return null;
             var trimmed = value.Trim();
             if (EnumMetadata<TEnum>.IsFlags && trimmed.Contains(','))
             {
                 var tokens = trimmed.Split([','], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                if (tokens.Length == 0)
+                    return null;
                 ulong combined = 0UL;
                 foreach (var token in tokens)
                 {
-                    if (!TryParseSingleToken<TEnum>(token, out var parsed))
-                        return false;
-                    combined |= Convert.ToUInt64(parsed);
+                    var parsedToken = TryParseSingleToken<TEnum>(token);
+                    if (parsedToken is null)
+                        return null;
+                    combined |= Convert.ToUInt64(parsedToken.Value);
                 }
-                result = (TEnum)Enum.ToObject(typeof(TEnum), combined);
-                return true;
+                return (TEnum)Enum.ToObject(typeof(TEnum), combined);
             }
-            return TryParseSingleToken(trimmed, out result);
+            return TryParseSingleToken<TEnum>(trimmed);
         }
 
-        private static bool TryParseSingleToken<TEnum>(string token, out TEnum result) where TEnum : struct, Enum
+        private static TEnum? TryParseSingleToken<TEnum>(string token) where TEnum : struct, Enum
         {
-            if (EnumMetadata<TEnum>.ParseMap.TryGetValue(token, out result))
-                return true;
+            if (EnumMetadata<TEnum>.ParseMap.TryGetValue(token, out var parsedFromMap))
+                return parsedFromMap;
             if (long.TryParse(token, NumberStyles.Integer, CultureInfo.InvariantCulture, out var signed))
             {
                 var candidate = (TEnum)Enum.ToObject(typeof(TEnum), signed);
                 if (EnumMetadata<TEnum>.IsFlags || Enum.IsDefined(typeof(TEnum), candidate))
-                {
-                    result = candidate;
-                    return true;
-                }
+                    return candidate;
             }
-            else if (ulong.TryParse(token, NumberStyles.Integer, CultureInfo.InvariantCulture, out var unsigned))
+            if (ulong.TryParse(token, NumberStyles.Integer, CultureInfo.InvariantCulture, out var unsigned))
             {
                 var candidate = (TEnum)Enum.ToObject(typeof(TEnum), unsigned);
                 if (EnumMetadata<TEnum>.IsFlags || Enum.IsDefined(typeof(TEnum), candidate))
-                {
-                    result = candidate;
-                    return true;
-                }
+                    return candidate;
             }
-            result = default;
-            return false;
-        }
-
-        public static TEnum ParseFromString<TEnum>(string value) where TEnum : struct, Enum
-        {
-            if (TryParseFromString<TEnum>(value, out var result))
-                return result;
-            throw new FormatException($"'{value}' no es un valor válido para {typeof(TEnum).Name}");
-        }
-
-        public static bool TryParseListFromString<TEnum>(IEnumerable<string>? values, out List<TEnum> result) where TEnum : struct, Enum
-        {
-            result = [];
-            if (values is null)
-                return false;
-            var parsed = new List<TEnum>();
-            foreach (var value in values)
-            {
-                if (!TryParseFromString<TEnum>(value, out var item))
-                    return false;
-                parsed.Add(item);
-            }
-            result = parsed;
-            return true;
+            return null;
         }
     }
 }

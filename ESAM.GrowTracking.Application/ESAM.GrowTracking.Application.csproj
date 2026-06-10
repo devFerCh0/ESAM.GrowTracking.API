@@ -7,8 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Features\Auth\GetCurrentUserProfile\**" />
     <Compile Remove="ValueObjects\**" />
+    <EmbeddedResource Remove="Features\Auth\GetCurrentUserProfile\**" />
     <EmbeddedResource Remove="ValueObjects\**" />
+    <None Remove="Features\Auth\GetCurrentUserProfile\**" />
     <None Remove="ValueObjects\**" />
   </ItemGroup>
 

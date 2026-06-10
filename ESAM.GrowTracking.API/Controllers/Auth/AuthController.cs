@@ -4,6 +4,8 @@ using ESAM.GrowTracking.API.Controllers.Auth.AssumeRoleCampus;
 using ESAM.GrowTracking.API.Controllers.Auth.AssumeRoleCampus.HttpResponses;
 using ESAM.GrowTracking.API.Controllers.Auth.AssumeWorkProfile;
 using ESAM.GrowTracking.API.Controllers.Auth.AssumeWorkProfile.HttpResponses;
+using ESAM.GrowTracking.API.Controllers.Auth.GetCurrentUserRoleCampus.HttpResponses;
+using ESAM.GrowTracking.API.Controllers.Auth.GetCurrentUserWorkProfile.HttpResponses;
 using ESAM.GrowTracking.API.Controllers.Auth.GetUserRoleCampuses;
 using ESAM.GrowTracking.API.Controllers.Auth.Login;
 using ESAM.GrowTracking.API.Controllers.Auth.Login.HttpResponses;
@@ -14,10 +16,13 @@ using ESAM.GrowTracking.API.Responses;
 using ESAM.GrowTracking.Application.Abstractions.Services;
 using ESAM.GrowTracking.Application.Features.Auth.AssumeRoleCampus;
 using ESAM.GrowTracking.Application.Features.Auth.AssumeWorkProfile;
+using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserRoleCampus;
+using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserWorkProfile;
 using ESAM.GrowTracking.Application.Features.Auth.GetUserRoleCampuses;
 using ESAM.GrowTracking.Application.Features.Auth.Login;
 using ESAM.GrowTracking.Application.Features.Auth.Logout;
 using ESAM.GrowTracking.Application.Features.Auth.Refresh;
+using ESAM.GrowTracking.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -91,21 +96,21 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
 
         [Authorize]
         [HttpGet("work-profile/{workProfileId:int}/user-role-campuses")]
-        [ProducesResponseType(typeof(ApiSuccessResponse<List<UserRoleCampusHttpResponse>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiSuccessResponse<List<GetUserRoleCampusHttpResponse>>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<ApiSuccessResponse<List<UserRoleCampusHttpResponse>>>> GetUserRoleCampusesAsync([FromRoute] int workProfileId,
+        public async Task<ActionResult<ApiSuccessResponse<List<GetUserRoleCampusHttpResponse>>>> GetUserRoleCampusesAsync([FromRoute] int workProfileId,
             CancellationToken cancellationToken)
         {
             var query = new GetUserRoleCampusesQuery(workProfileId);
             var userRoleCampusesResult = await _sender.Send(query, cancellationToken);
             if (userRoleCampusesResult.IsFailure)
                 return userRoleCampusesResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
-            var userRoleCampuses = _mapper.Map<List<UserRoleCampusHttpResponse>>(userRoleCampusesResult.Value);
-            return Ok(ApiSuccessResponse<List<UserRoleCampusHttpResponse>>.From(userRoleCampuses, HttpContext.TraceIdentifier));
+            var userRoleCampuses = _mapper.Map<List<GetUserRoleCampusHttpResponse>>(userRoleCampusesResult.Value);
+            return Ok(ApiSuccessResponse<List<GetUserRoleCampusHttpResponse>>.From(userRoleCampuses, HttpContext.TraceIdentifier));
         }
 
         [Authorize]
@@ -178,6 +183,46 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
             {
                 _authSessionCookieService.ClearSessionCookies();
             }
+        }
+
+        [AllowAnonymous]
+        [HttpGet("current-user-work-profile")]
+        [Consumes("application/json")]
+        [ProducesResponseType(typeof(ApiSuccessResponse<GetCurrentUserWorkProfileHttpResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<ApiSuccessResponse<GetCurrentUserWorkProfileHttpResponse>>> GetCurrentUserWorkProfileAsync(CancellationToken cancellationToken)
+        {
+            var query = new GetCurrentUserWorkProfileQuery();
+            var currentUserWorkProfileResult = await _sender.Send(query, cancellationToken);
+            if (currentUserWorkProfileResult.IsFailure)
+                return currentUserWorkProfileResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
+            var currentUserWorkProfile = _mapper.Map<GetCurrentUserWorkProfileHttpResponse>(currentUserWorkProfileResult.Value);
+            return Ok(ApiSuccessResponse<GetCurrentUserWorkProfileHttpResponse>.From(currentUserWorkProfile, HttpContext.TraceIdentifier));
+        }
+
+        [AllowAnonymous]
+        [HttpGet("current-user-role-campus")]
+        [Consumes("application/json")]
+        [ProducesResponseType(typeof(ApiSuccessResponse<GetCurrentUserRoleCampusHttpResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<ApiSuccessResponse<GetCurrentUserRoleCampusHttpResponse>>> GetCurrentUserRoleCampusAsync(CancellationToken cancellationToken)
+        {
+            var query = new GetCurrentUserRoleCampusQuery();
+            var currentUserRoleCampusResult = await _sender.Send(query, cancellationToken);
+            if (currentUserRoleCampusResult.IsFailure)
+                return currentUserRoleCampusResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
+            var currentUserRoleCampus = _mapper.Map<GetCurrentUserRoleCampusHttpResponse>(currentUserRoleCampusResult.Value);
+            return Ok(ApiSuccessResponse<GetCurrentUserRoleCampusHttpResponse>.From(currentUserRoleCampus, HttpContext.TraceIdentifier));
         }
 
         private void ApplySessionAndXsrfToken(string refreshTokenRaw, DateTime refreshTokenExpiresAt)

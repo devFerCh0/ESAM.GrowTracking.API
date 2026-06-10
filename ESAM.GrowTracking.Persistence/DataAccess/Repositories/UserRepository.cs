@@ -15,5 +15,20 @@ namespace ESAM.GrowTracking.Persistence.DataAccess.Repositories
             return await query.FirstOrDefaultAsync(u => u.NormalizedUserName == normalizedCredential || u.NormalizedEmail == normalizedCredential, cancellationToken)
                 .ConfigureAwait(false);
         }
+
+        public async Task<bool> ValidateCurrentUserStatusAsync(int currentUserId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
+        {
+            var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
+            return await query.AnyAsync(u => u.Id == currentUserId && !u.IsDeleted && (u.LockoutEndAt == null || u.LockoutEndAt <= utcNow), cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        public async Task<bool> ValidateCurrentUserSecurityAsync(int currentUserId, string currenSecurityStamp, int currentTokenVersion, bool asTracking = false, 
+            CancellationToken cancellationToken = default)
+        {
+            var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
+            return await query.AnyAsync(u => u.Id == currentUserId && u.SecurityStamp == currenSecurityStamp && u.TokenVersion == currentTokenVersion, cancellationToken)
+                .ConfigureAwait(false);
+        }
     }
 }

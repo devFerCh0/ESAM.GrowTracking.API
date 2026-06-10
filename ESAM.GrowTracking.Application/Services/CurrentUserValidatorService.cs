@@ -45,37 +45,37 @@ namespace ESAM.GrowTracking.Application.Services
             _rolePermissionRepository = rolePermissionRepository;
         }
 
-        private async Task<(User? User, Result? Failure)> GetAndValidateUserCoreAsync(int currentUserId, DateTime utcNow, bool asTracking, CancellationToken cancellationToken)
-        { 
-            var currentSecurityStamp = _currentUserService.SecurityStamp!;
-            var currentTokenVersion = _currentUserService.TokenVersion!.Value;
-            var user = await _userRepository.GetByIdAsync(currentUserId, asTracking, cancellationToken);
-            if (user is null || user.IsDeleted || user.IsLocked(utcNow))
-            {
-                _logger.LogWarning("CurrentUserValidatorService: usuario inválido o bloqueado. UserId={UserId}", currentUserId);
-                return (null, Result.Fail(Error.Unauthorized("Usuario inválido o bloqueado.")));
-            }
-            if (user.SecurityStamp != currentSecurityStamp || user.TokenVersion != currentTokenVersion)
-            {
-                _logger.LogWarning("CurrentUserValidatorService: sesión invalidada por cambios en la cuenta. UserId={UserId}", currentUserId);
-                return (null, Result.Fail(Error.Unauthorized("Sesión invalidada por cambios en la cuenta.")));
-            }
-            return (user, null);
-        }
+        //private async Task<(User? User, Result? Failure)> GetAndValidateUserCoreAsync(int currentUserId, DateTime utcNow, bool asTracking, CancellationToken cancellationToken)
+        //{ 
+        //    var currentSecurityStamp = _currentUserService.SecurityStamp!;
+        //    var currentTokenVersion = _currentUserService.TokenVersion!.Value;
+        //    var user = await _userRepository.GetByIdAsync(currentUserId, asTracking, cancellationToken);
+        //    if (user is null || user.IsDeleted || user.IsLocked(utcNow))
+        //    {
+        //        _logger.LogWarning("CurrentUserValidatorService: usuario inválido o bloqueado. UserId={UserId}", currentUserId);
+        //        return (null, Result.Fail(Error.Unauthorized("Usuario inválido o bloqueado.")));
+        //    }
+        //    if (user.SecurityStamp != currentSecurityStamp || user.TokenVersion != currentTokenVersion)
+        //    {
+        //        _logger.LogWarning("CurrentUserValidatorService: sesión invalidada por cambios en la cuenta. UserId={UserId}", currentUserId);
+        //        return (null, Result.Fail(Error.Unauthorized("Sesión invalidada por cambios en la cuenta.")));
+        //    }
+        //    return (user, null);
+        //}
 
-        public async Task<Result> ValidateCurrentUserAsync(int currentUserId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
-        {
-            var (_, failure) = await GetAndValidateUserCoreAsync(currentUserId, utcNow, asTracking, cancellationToken);
-            return failure ?? Result.Ok();
-        }
+        //public async Task<Result> ValidateCurrentUserAsync(int currentUserId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
+        //{
+        //    var (_, failure) = await GetAndValidateUserCoreAsync(currentUserId, utcNow, asTracking, cancellationToken);
+        //    return failure ?? Result.Ok();
+        //}
 
-        public async Task<Result<User>> GetAndValidateCurrentUserAsync(int currentUserId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
-        {
-            var (user, failure) = await GetAndValidateUserCoreAsync(currentUserId, utcNow, asTracking, cancellationToken);
-            if (failure is not null)
-                return Result<User>.Fail(failure.Errors);
-            return Result<User>.Ok(user!);
-        }
+        //public async Task<Result<User>> GetAndValidateCurrentUserAsync(int currentUserId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
+        //{
+        //    var (user, failure) = await GetAndValidateUserCoreAsync(currentUserId, utcNow, asTracking, cancellationToken);
+        //    if (failure is not null)
+        //        return Result<User>.Fail(failure.Errors);
+        //    return Result<User>.Ok(user!);
+        //}
 
         public async Task<Result> ValidateCurrentUserDeviceAsync(int currentUserId, int currentUserDeviceId, DateTime utcNow, bool asTracking = false,
             CancellationToken cancellationToken = default)
