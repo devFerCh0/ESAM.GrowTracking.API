@@ -16,14 +16,12 @@ namespace ESAM.GrowTracking.Application.Services
         private readonly IWorkProfileRepository _workProfileRepository;
         private readonly IWorkProfilePermissionRepository _workProfilePermissionRepository;
         private readonly IUserRoleCampusRepository _userRoleCampusRepository;
-        private readonly IRoleRepository _roleRepository;
-        private readonly ICampusRepository _campusRepository;
         private readonly IRolePermissionRepository _rolePermissionRepository;
 
         public CurrentSessionIntegrityValidationService(ILogger<CurrentSessionIntegrityValidationService> logger, IUserRepository userRepository, 
             IUserDeviceRepository userDeviceRepository, IUserWorkProfileRepository userWorkProfileRepository, IWorkProfileRepository workProfileRepository, 
-            IWorkProfilePermissionRepository workProfilePermissionRepository, IUserRoleCampusRepository userRoleCampusRepository, IRoleRepository roleRepository, 
-            ICampusRepository campusRepository, IRolePermissionRepository rolePermissionRepository)
+            IWorkProfilePermissionRepository workProfilePermissionRepository, IUserRoleCampusRepository userRoleCampusRepository, 
+            IRolePermissionRepository rolePermissionRepository)
         {
             ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(userRepository);
@@ -32,8 +30,6 @@ namespace ESAM.GrowTracking.Application.Services
             ArgumentNullException.ThrowIfNull(workProfileRepository);
             ArgumentNullException.ThrowIfNull(workProfilePermissionRepository);
             ArgumentNullException.ThrowIfNull(userRoleCampusRepository);
-            ArgumentNullException.ThrowIfNull(roleRepository);
-            ArgumentNullException.ThrowIfNull(campusRepository);
             ArgumentNullException.ThrowIfNull(rolePermissionRepository);
             _logger = logger;
             _userRepository = userRepository;
@@ -42,12 +38,10 @@ namespace ESAM.GrowTracking.Application.Services
             _workProfileRepository = workProfileRepository;
             _workProfilePermissionRepository = workProfilePermissionRepository;
             _userRoleCampusRepository = userRoleCampusRepository;
-            _roleRepository = roleRepository;
-            _campusRepository = campusRepository;
             _rolePermissionRepository = rolePermissionRepository;
         }
 
-        public async Task<Result> ValidateUserContextAsync(int currentUserId, string currentSecurityStamp, int currentTokenVersion, DateTime utcNow, bool asTracking = false, 
+        public async Task<Result> ValidateUserAsync(int currentUserId, string currentSecurityStamp, int currentTokenVersion, DateTime utcNow, bool asTracking = false, 
             CancellationToken cancellationToken = default)
         {
             var isUserActiveAndUnlocked = await _userRepository.IsActiveAndUnlockedAsync(currentUserId, utcNow, asTracking, cancellationToken);
@@ -78,71 +72,53 @@ namespace ESAM.GrowTracking.Application.Services
             return Result.Ok();
         }
 
-        public async Task<Result> ValidateWorkProfileContextAsync(int currentUserId, int currentWorkProfileId, WorkProfileType workProfileType, bool asTracking = false, 
+        public async Task<Result> ValidateUserWorkProfileAsync(int currentUserId, int currentWorkProfileId, WorkProfileType workProfileType, bool asTracking = false, 
             CancellationToken cancellationToken = default)
         {
-            var isUserWorkProfileActive = await _userWorkProfileRepository.IsActiveAsync(currentUserId, currentWorkProfileId, asTracking, cancellationToken);
-            if (!isUserWorkProfileActive)
+            var isUserWorkProfileActiveAndOfType = await _userWorkProfileRepository.IsActiveAndOfTypeAsync(currentUserId, currentWorkProfileId, workProfileType, asTracking, 
+                cancellationToken);
+            if (!isUserWorkProfileActiveAndOfType)
             {
-                _logger.LogWarning("ValidateWorkProfileContextAsync: perfil de trabajo de usuario no encontrado o eliminado. UserId={UserId}, WorkProfileId={WorkProfileId}", 
+                _logger.LogWarning("ValidateWorkProfileAsync: perfil de trabajo de usuario no encontrado o eliminado. UserId={UserId}, WorkProfileId={WorkProfileId}", 
                     currentUserId, currentWorkProfileId);
-                return Result.Fail(Error.NotFound("No se encontró un perfil de trabajo activo asignado al usuario."));
-            }
-            var isWorkProfileActiveAndOfType = await _workProfileRepository.IsActiveAndOfTypeAsync(currentWorkProfileId, workProfileType, asTracking, cancellationToken);
-            if (!isWorkProfileActiveAndOfType)
-            {
-                _logger.LogWarning("ValidateWorkProfileContextAsync: tipo de perfil de trabajo del usuario inválido. WorkProfileId={WorkProfileId}, TipoEsperado={ExpectedType}", 
-                    currentWorkProfileId, workProfileType);
-                return Result.Fail(Error.BusinessRule("El perfil de trabajo no corresponde al tipo esperado."));
+                return Result.Fail(Error.NotFound("No se encontró un perfil de trabajo activo del tipo especificado asignado al usuario."));
             }
             return Result.Ok();
         }
 
-        public async Task<Result> ValidateWorkProfileContextAndPermissionsAsync(int currentUserId, int currentWorkProfileId, WorkProfileType workProfileType, 
-            bool asTracking = false, CancellationToken cancellationToken = default)
-        {
-            var validateWorkProfileContextResult = await ValidateWorkProfileContextAsync(currentUserId, currentWorkProfileId, workProfileType, asTracking, cancellationToken);
-            if (validateWorkProfileContextResult.IsFailure)
-                return Result.Fail(validateWorkProfileContextResult.Errors);
-            var workProfileHasActivePermissions = await _workProfilePermissionRepository.HasActivePermissionsAsync(currentWorkProfileId, asTracking, cancellationToken);
-            if (!workProfileHasActivePermissions)
-            {
-                _logger.LogWarning("ValidateWorkProfileContextAndPermissionsAsync: perfil de trabajo sin permisos activos. WorkProfileId={WorkProfileId}", 
-                    currentWorkProfileId);
-                return Result.Fail(Error.Forbidden("El perfil de trabajo no tiene permisos activos asignados."));
-            }
-            return Result.Ok();
-        }
+        //public async Task<Result> ValidateUserWorkProfileAndPermissionsAsync(int currentUserId, int currentWorkProfileId, WorkProfileType workProfileType, 
+        //    bool asTracking = false, CancellationToken cancellationToken = default)
+        //{
+        //    var validateUserWorkProfileContextResult = await ValidateUserWorkProfileAsync(currentUserId, currentWorkProfileId, workProfileType, asTracking, cancellationToken);
+        //    if (validateUserWorkProfileContextResult.IsFailure)
+        //        return Result.Fail(validateUserWorkProfileContextResult.Errors);
+        //    var workProfileHasActivePermissions = await _workProfilePermissionRepository.HasActivePermissionsAsync(currentWorkProfileId, asTracking, cancellationToken);
+        //    if (!workProfileHasActivePermissions)
+        //    {
+        //        _logger.LogWarning("ValidateWorkProfileContextAndPermissionsAsync: perfil de trabajo sin permisos activos. WorkProfileId={WorkProfileId}", 
+        //            currentWorkProfileId);
+        //        return Result.Fail(Error.Forbidden("El perfil de trabajo no tiene permisos activos asignados."));
+        //    }
+        //    return Result.Ok();
+        //}
         
-        public async Task<Result> ValidateCampusRoleContextAndPermissionsAsync(int currentUserId, int currentRoleId, int currentCampusId, bool asTracking = false,
-            CancellationToken cancellationToken = default)
-        {
-            var isUserRoleCampusActive = await _userRoleCampusRepository.IsActiveAsync(currentUserId, currentRoleId, currentCampusId, asTracking, cancellationToken);
-            if (!isUserRoleCampusActive)
-            {
-                _logger.LogWarning("ValidateCampusRoleContextAndPermissionsAsync: rol de sede no encontrado o eliminado. UserId={UserId}, RoleId={RoleId}, CampusId={CampusId}",
-                    currentUserId, currentRoleId, currentCampusId);
-                return Result.Fail(Error.NotFound("No se encontró un rol de sede activo asignado al usuario."));
-            }
-            var isRoleActive = await _roleRepository.IsActiveAsync(currentRoleId, asTracking, cancellationToken);
-            if (!isRoleActive)
-            {
-                _logger.LogWarning("ValidateCampusRoleContextAndPermissionsAsync: rol no encontrado o eliminado. RoleId={RoleId}", currentRoleId);
-                return Result.Fail(Error.BusinessRule("Rol no encontrado o eliminado."));
-            }
-            var isCampusActive = await _campusRepository.IsActiveAsync(currentCampusId, asTracking, cancellationToken);
-            if (!isCampusActive)
-            {
-                _logger.LogWarning("ValidateCampusRoleContextAndPermissionsAsync: sede no encontrado o eliminado. CampusId={CampusId}", currentRoleId);
-                return Result.Fail(Error.BusinessRule("Sede no encontrado o eliminado."));
-            }
-            var roleHasActivePermissions = await _rolePermissionRepository.HasActivePermissionsAsync(currentRoleId, asTracking, cancellationToken);
-            if (!roleHasActivePermissions)
-            {
-                _logger.LogWarning("ValidateCampusRoleContextAndPermissionsAsync: el rol no tiene permisos activos. RoleId={RoleId}", currentRoleId);
-                return Result.Fail(Error.Forbidden("El rol no tiene permisos activos asignados."));
-            }
-            return Result.Ok();
-        }
+        //public async Task<Result> ValidateCampusRoleContextAndPermissionsAsync(int currentUserId, int currentRoleId, int currentCampusId, bool asTracking = false,
+        //    CancellationToken cancellationToken = default)
+        //{
+        //    var isUserRoleCampusActive = await _userRoleCampusRepository.IsActiveAsync(currentUserId, currentRoleId, currentCampusId, asTracking, cancellationToken);
+        //    if (!isUserRoleCampusActive)
+        //    {
+        //        _logger.LogWarning("ValidateCampusRoleContextAndPermissionsAsync: rol de sede no encontrado o eliminado. UserId={UserId}, RoleId={RoleId}, CampusId={CampusId}",
+        //            currentUserId, currentRoleId, currentCampusId);
+        //        return Result.Fail(Error.NotFound("No se encontró un rol de sede activo asignado al usuario."));
+        //    }
+        //    var roleHasActivePermissions = await _rolePermissionRepository.HasActivePermissionsAsync(currentRoleId, asTracking, cancellationToken);
+        //    if (!roleHasActivePermissions)
+        //    {
+        //        _logger.LogWarning("ValidateCampusRoleContextAndPermissionsAsync: el rol no tiene permisos activos. RoleId={RoleId}", currentRoleId);
+        //        return Result.Fail(Error.Forbidden("El rol no tiene permisos activos asignados."));
+        //    }
+        //    return Result.Ok();
+        //}
     }
 }

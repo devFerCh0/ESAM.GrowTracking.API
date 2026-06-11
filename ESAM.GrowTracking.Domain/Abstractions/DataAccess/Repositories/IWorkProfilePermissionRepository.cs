@@ -4,6 +4,6 @@ namespace ESAM.GrowTracking.Domain.Abstractions.DataAccess.Repositories
 {
     public interface IWorkProfilePermissionRepository : IRepository<WorkProfilePermission>
     {
-        Task<bool> HasActivePermissionsAsync(int workProfileId, bool asTracking = false, CancellationToken cancellationToken = default);
+        Task<bool> HasActivePermissionsWithAccessAsync(int workProfileId, bool asTracking = false, CancellationToken cancellationToken = default);
     }
 }

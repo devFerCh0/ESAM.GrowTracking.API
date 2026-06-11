@@ -1,4 +1,5 @@
 ﻿using ESAM.GrowTracking.Domain.Entities;
+using ESAM.GrowTracking.Domain.Enums;
 
 namespace ESAM.GrowTracking.Domain.Abstractions.DataAccess.Repositories
 {
@@ -6,6 +7,6 @@ namespace ESAM.GrowTracking.Domain.Abstractions.DataAccess.Repositories
     {
         Task<UserWorkProfile?> GetByUserIdAndWorkProfileIdAsync(int userId, int workProfileId, bool asTracking = false, CancellationToken cancellationToken = default);
 
-        Task<bool> IsActiveAsync(int userId, int workProfileId, bool asTracking = false, CancellationToken cancellationToken = default);
+        Task<bool> IsActiveAndOfTypeAsync(int userId, int workProfileId, WorkProfileType workProfileType, bool asTracking = false, CancellationToken cancellationToken = default);
     }
 }

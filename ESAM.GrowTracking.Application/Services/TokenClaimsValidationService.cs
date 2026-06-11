@@ -17,9 +17,9 @@ namespace ESAM.GrowTracking.Application.Services
             _currentUserService = currentUserService;
         }
 
-        public bool GetIsAuthenticated => _currentUserService.IsAuthenticated;
+        public bool IsAuthenticated => _currentUserService.IsAuthenticated;
 
-        public AccessTokenType GetCurrentAccessTokenType
+        public AccessTokenType CurrentAccessTokenType
         {
             get
             {
@@ -30,7 +30,7 @@ namespace ESAM.GrowTracking.Application.Services
             }
         }
 
-        public int GetCurrentUserId
+        public int CurrentUserId
         {
             get
             {
@@ -43,7 +43,7 @@ namespace ESAM.GrowTracking.Application.Services
             }
         }
 
-        public string GetCurrentSecurityStamp
+        public string CurrentSecurityStamp
         {
             get
             {
@@ -54,7 +54,7 @@ namespace ESAM.GrowTracking.Application.Services
             }
         }
 
-        public int GetCurrentTokenVersion
+        public int CurrentTokenVersion
         {
             get
             {
@@ -67,7 +67,7 @@ namespace ESAM.GrowTracking.Application.Services
             }
         }
 
-        public string GetCurrentJti
+        public string CurrentJti
         {
             get
             {
@@ -78,7 +78,7 @@ namespace ESAM.GrowTracking.Application.Services
             }
         }
 
-        public DateTime GetCurrentAccessTokenExpiration
+        public DateTime CurrentAccessTokenExpiration
         {
             get
             {
@@ -89,7 +89,7 @@ namespace ESAM.GrowTracking.Application.Services
             }
         }
 
-        public int GetCurrentUserDeviceId
+        public int CurrentUserDeviceId
         {
             get
             {
@@ -102,7 +102,7 @@ namespace ESAM.GrowTracking.Application.Services
             }
         }
 
-        public int GetCurrentUserSessionId
+        public int CurrentUserSessionId
         {
             get
             {
@@ -115,7 +115,7 @@ namespace ESAM.GrowTracking.Application.Services
             }
         }
 
-        public bool GetCurrentIsPersistent
+        public bool CurrentIsPersistent
         {
             get
             {
@@ -126,7 +126,7 @@ namespace ESAM.GrowTracking.Application.Services
             }
         }
 
-        public int GetCurrentWorkProfileId
+        public int CurrentWorkProfileId
         {
             get
             {
@@ -139,7 +139,7 @@ namespace ESAM.GrowTracking.Application.Services
             }
         }
 
-        public int GetCurrentRoleId
+        public int CurrentRoleId
         {
             get
             {
@@ -152,7 +152,7 @@ namespace ESAM.GrowTracking.Application.Services
             }
         }
 
-        public int GetCurrentCampusId
+        public int CurrentCampusId
         {
             get
             {

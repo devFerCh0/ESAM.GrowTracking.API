@@ -6,6 +6,7 @@ using ESAM.GrowTracking.Application.Features.Auth.AssumeWorkProfile.Responses;
 using ESAM.GrowTracking.Application.Results;
 using ESAM.GrowTracking.Application.Settings;
 using ESAM.GrowTracking.Application.ValueObjects;
+using ESAM.GrowTracking.Domain.Abstractions.DataAccess.Repositories;
 using ESAM.GrowTracking.Domain.Enums;
 using FluentValidation;
 using MediatR;
@@ -21,6 +22,9 @@ namespace ESAM.GrowTracking.Application.Features.Auth.AssumeWorkProfile
         private readonly ITokenClaimsValidationService _tokenClaimsValidationService;
         private readonly IDateTimeService _dateTimeService;
         private readonly ICurrentSessionIntegrityValidationService _currentSessionIntegrityValidationService;
+        private readonly IUserWorkProfileRepository _userWorkProfileRepository;
+        private readonly IWorkProfilePermissionRepository _workProfilePermissionRepository;
+
 
 
         private readonly IUserSessionService _userSessionService;
@@ -31,7 +35,8 @@ namespace ESAM.GrowTracking.Application.Features.Auth.AssumeWorkProfile
 
         public AssumeWorkProfileCommandHandler(ILogger<AssumeWorkProfileCommandHandler> logger, IValidator<AssumeWorkProfileCommand> validator, 
             ITokenClaimsValidationService tokenClaimsValidationService, IDateTimeService dateTimeService, 
-            ICurrentSessionIntegrityValidationService currentSessionIntegrityValidationService, IUserSessionService userSessionService, 
+            ICurrentSessionIntegrityValidationService currentSessionIntegrityValidationService, IUserWorkProfileRepository userWorkProfileRepository,
+            IWorkProfilePermissionRepository workProfilePermissionRepository, IUserSessionService userSessionService, 
             ITokenService tokenService, IOptions<TokenLifetimeSettings> tokenLifetimeSettingsOptions, IUserQuery userQuery, IClientInfoService clientInfoService)
         {
             ArgumentNullException.ThrowIfNull(logger);
@@ -39,6 +44,9 @@ namespace ESAM.GrowTracking.Application.Features.Auth.AssumeWorkProfile
             ArgumentNullException.ThrowIfNull(tokenClaimsValidationService);
             ArgumentNullException.ThrowIfNull(dateTimeService);
             ArgumentNullException.ThrowIfNull(currentSessionIntegrityValidationService);
+            ArgumentNullException.ThrowIfNull(userWorkProfileRepository);
+            ArgumentNullException.ThrowIfNull(workProfilePermissionRepository);
+
             ArgumentNullException.ThrowIfNull(userSessionService);
             ArgumentNullException.ThrowIfNull(tokenService);
             ArgumentNullException.ThrowIfNull(tokenLifetimeSettingsOptions);
@@ -49,6 +57,9 @@ namespace ESAM.GrowTracking.Application.Features.Auth.AssumeWorkProfile
             _tokenClaimsValidationService = tokenClaimsValidationService;
             _dateTimeService = dateTimeService;
             _currentSessionIntegrityValidationService = currentSessionIntegrityValidationService;
+            _userWorkProfileRepository = userWorkProfileRepository;
+            _workProfilePermissionRepository = workProfilePermissionRepository;
+
             _userSessionService = userSessionService;
             _tokenService = tokenService;
             _tokenLifetimeSettings = tokenLifetimeSettingsOptions.Value ?? throw new ArgumentNullException(nameof(tokenLifetimeSettingsOptions));
@@ -65,47 +76,40 @@ namespace ESAM.GrowTracking.Application.Features.Auth.AssumeWorkProfile
                 _logger.LogWarning("AssumeWorkProfileCommand: validación fallida. Errores: {Errors}", string.Join(" | ", validation.Errors.Select(e => e.ErrorMessage)));
                 return Result<AssumeWorkProfileResponse>.Fail(validation.ToDomainErrors());
             }
-            if (!_tokenClaimsValidationService.IsAuthenticated())
+            if (!_tokenClaimsValidationService.IsAuthenticated)
             {
                 _logger.LogWarning("AssumeWorkProfileCommand: intento de acceso no autenticado.");
                 return Result<AssumeWorkProfileResponse>.Fail(Error.Unauthorized("Sesión inválida o expirada. Inicie sesión nuevamente."));
             }
-            var currentAccessTokenType = _tokenClaimsValidationService.CurrentAccessTokenType();
-            var currentUserId = _tokenClaimsValidationService.CurrentUserId();
-            var currentSecurityStamp = _tokenClaimsValidationService.CurrentSecurityStamp();
-            var currentTokenVersion = _tokenClaimsValidationService.CurrentTokenVersion();
-            var currentUserDeviceId = _tokenClaimsValidationService.CurrentUserDeviceId();
+            var currentAccessTokenType = _tokenClaimsValidationService.CurrentAccessTokenType;
+            var currentUserId = _tokenClaimsValidationService.CurrentUserId;
+            var currentSecurityStamp = _tokenClaimsValidationService.CurrentSecurityStamp;
+            var currentTokenVersion = _tokenClaimsValidationService.CurrentTokenVersion;
+            var currentUserDeviceId = _tokenClaimsValidationService.CurrentUserDeviceId;
             var utcNow = _dateTimeService.UtcNow;
             if (currentAccessTokenType != AccessTokenType.Temporary)
             {
                 _logger.LogWarning("AssumeWorkProfileCommand: tipo de token de acceso inválido. Esperado=Temporal, Actual={AccessTokenType}", currentAccessTokenType);
                 return Result<AssumeWorkProfileResponse>.Fail(Error.Unauthorized("Esta operación requiere un token de acceso temporal."));
             }
-            var validateUserContextResult = await _currentSessionIntegrityValidationService.ValidateUserContextAsync(currentUserId, currentSecurityStamp, currentTokenVersion, 
-                utcNow, asTracking,cancellationToken);
-            if (validateUserContextResult.IsFailure)
-                return Result<AssumeWorkProfileResponse>.Fail(validateUserContextResult.Errors);
+            var validateUserResult = await _currentSessionIntegrityValidationService.ValidateUserAsync(currentUserId, currentSecurityStamp, currentTokenVersion, utcNow, 
+                asTracking, cancellationToken);
+            if (validateUserResult.IsFailure)
+                return Result<AssumeWorkProfileResponse>.Fail(validateUserResult.Errors);
             var validateUserDeviceResult = await _currentSessionIntegrityValidationService.ValidateUserDeviceAsync(currentUserDeviceId, currentUserId, utcNow, asTracking, 
                 cancellationToken);
             if (validateUserDeviceResult.IsFailure)
                 return Result<AssumeWorkProfileResponse>.Fail(validateUserDeviceResult.Errors);
+            var isUserWorkProfileActiveAndOfType = await _userWorkProfileRepository.IsActiveAndOfTypeAsync(currentUserId, request.WorkProfileId!.Value, 
+                WorkProfileType.OnlyWorkProfile, asTracking, cancellationToken);
+            if (!isUserWorkProfileActiveAndOfType)
+            {
+                _logger.LogWarning("AssumeWorkProfileCommand: perfil de trabajo de usuario no encontrado o eliminado. UserId={UserId}, WorkProfileId={WorkProfileId}",
+                    currentUserId, request.WorkProfileId!.Value);
+                return Result<AssumeWorkProfileResponse>.Fail(Error.NotFound("No se encontró un perfil de trabajo activo del tipo especificado asignado al usuario."));
+            }
 
-            //var isUserWorkProfileActive = await _userWorkProfileRepository.IsActiveAsync(currentUserId, currentWorkProfileId, asTracking, cancellationToken);
-            //if (!isUserWorkProfileActive)
-            //{
-            //    _logger.LogWarning("AssumeWorkProfileCommand: perfil de trabajo de usuario no encontrado o eliminado. UserId={UserId}, WorkProfileId={WorkProfileId}",
-            //        currentUserId, currentWorkProfileId);
-            //    return Result.Fail(Error.NotFound("No se encontró un perfil de trabajo activo asignado al usuario."));
-            //}
-            //var isWorkProfileActiveAndOfType = await _workProfileRepository.IsActiveAndOfTypeAsync(currentWorkProfileId, workProfileType, asTracking, cancellationToken);
-            //if (!isWorkProfileActiveAndOfType)
-            //{
-            //    _logger.LogWarning("AssumeWorkProfileCommand: tipo de perfil de trabajo del usuario inválido. WorkProfileId={WorkProfileId}, TipoEsperado={ExpectedType}",
-            //        currentWorkProfileId, workProfileType);
-            //    return Result.Fail(Error.BusinessRule("El perfil de trabajo no corresponde al tipo esperado."));
-            //}
-
-
+            var a = await _workProfilePermissionRepository.HasActivePermissionsAsync
 
 
             var validateWorkProfileContextAndPermissionsResult = await _currentSessionIntegrityValidationService.ValidateWorkProfileContextAndPermissionsAsync(currentUserId, 

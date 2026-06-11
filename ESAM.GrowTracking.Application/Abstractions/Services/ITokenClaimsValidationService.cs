@@ -4,30 +4,30 @@ namespace ESAM.GrowTracking.Application.Abstractions.Services
 {
     public interface ITokenClaimsValidationService
     {
-        bool GetIsAuthenticated { get; }
+        bool IsAuthenticated { get; }
 
-        AccessTokenType GetCurrentAccessTokenType { get; }
+        AccessTokenType CurrentAccessTokenType { get; }
 
-        int GetCurrentUserId { get; }
+        int CurrentUserId { get; }
 
-        string GetCurrentSecurityStamp { get; }
+        string CurrentSecurityStamp { get; }
 
-        int GetCurrentTokenVersion { get; }
+        int CurrentTokenVersion { get; }
 
-        string GetCurrentJti { get; }
+        string CurrentJti { get; }
 
-        DateTime GetCurrentAccessTokenExpiration { get; }
+        DateTime CurrentAccessTokenExpiration { get; }
 
-        int GetCurrentUserDeviceId { get; }
+        int CurrentUserDeviceId { get; }
 
-        int GetCurrentUserSessionId { get; }
+        int CurrentUserSessionId { get; }
 
-        bool GetCurrentIsPersistent { get; }
+        bool CurrentIsPersistent { get; }
 
-        int GetCurrentWorkProfileId { get; }
+        int CurrentWorkProfileId { get; }
 
-        int GetCurrentRoleId { get; }
+        int CurrentRoleId { get; }
 
-        int GetCurrentCampusId { get; }
+        int CurrentCampusId { get; }
     }
 }
