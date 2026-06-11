@@ -24,15 +24,5 @@ namespace ESAM.GrowTracking.Domain.Entities
             Name = name;
             Description = description;
         }
-
-        //public void Update(string name, string? description)
-        //{
-        //    Name = name;
-        //    Description = description;
-        //}
-
-        //public void SoftDelete() => IsDeleted = true;
-
-        //public void Restore() => IsDeleted = false;
     }
 }

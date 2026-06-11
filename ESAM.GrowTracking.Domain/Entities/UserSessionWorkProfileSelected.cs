@@ -16,15 +16,15 @@
 
         public UserSessionRoleCampusSelected? UserSessionRoleCampusSelected { get; private set; }
 
-        public UserSessionWorkProfileSelected(int userId, int workProfileId)
-        {
-            UserId = userId;
-            WorkProfileId = workProfileId;
-        }
+        //public UserSessionWorkProfileSelected(int userId, int workProfileId)
+        //{
+        //    UserId = userId;
+        //    WorkProfileId = workProfileId;
+        //}
 
-        public void AddUserSessionId(int userSessionId)
-        {
-            UserSessionId = userSessionId;
-        }
+        //public void AddUserSessionId(int userSessionId)
+        //{
+        //    UserSessionId = userSessionId;
+        //}
     }
 }

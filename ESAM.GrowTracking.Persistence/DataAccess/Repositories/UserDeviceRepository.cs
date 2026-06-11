@@ -12,20 +12,20 @@ namespace ESAM.GrowTracking.Persistence.DataAccess.Repositories
             CancellationToken cancellationToken = default)
         {
             var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
-            return await query.FirstOrDefaultAsync(ud => ud.UserId == userId && ud.DeviceIdentifier == deviceIdentifier, cancellationToken).ConfigureAwait(false);
+            return await query.FirstOrDefaultAsync(ud => ud.UserId == userId && ud.DeviceIdentifier == deviceIdentifier, cancellationToken);
         }
 
-        public async Task<UserDevice?> GetByIdAndUserIdAsync(int id, int userId, bool asTracking = false, CancellationToken cancellationToken = default)
-        {
-            var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
-            return await query.FirstOrDefaultAsync(ud => ud.Id == id && ud.UserId == userId, cancellationToken).ConfigureAwait(false);
-        }
+        //public async Task<UserDevice?> GetByIdAndUserIdAsync(int id, int userId, bool asTracking = false, CancellationToken cancellationToken = default)
+        //{
+        //    var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
+        //    return await query.FirstOrDefaultAsync(ud => ud.Id == id && ud.UserId == userId, cancellationToken).ConfigureAwait(false);
+        //}
 
-        public async Task<bool> IsActiveAndUnlockedAsync(int id, int userId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
-        {
-            var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
-            return await query.AnyAsync(ud => ud.Id == id && ud.UserId == userId && !ud.IsDeleted && (ud.LockoutEndAt == null || ud.LockoutEndAt <= utcNow), cancellationToken)
-                .ConfigureAwait(false);
-        }
+        //public async Task<bool> IsActiveAndUnlockedAsync(int id, int userId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
+        //{
+        //    var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
+        //    return await query.AnyAsync(ud => ud.Id == id && ud.UserId == userId && !ud.IsDeleted && (ud.LockoutEndAt == null || ud.LockoutEndAt <= utcNow), cancellationToken)
+        //        .ConfigureAwait(false);
+        //}
     }
 }

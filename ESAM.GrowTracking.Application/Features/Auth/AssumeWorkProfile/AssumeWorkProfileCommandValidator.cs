@@ -8,7 +8,6 @@ namespace ESAM.GrowTracking.Application.Features.Auth.AssumeWorkProfile
         public AssumeWorkProfileCommandValidator()
         {
             RuleFor(awpc => awpc.WorkProfileId).Cascade(CascadeMode.Stop)
-                .NotNull().WithMessage(ValidationMessages.WorkProfileIdRequired)
                 .GreaterThan(0).WithMessage(ValidationMessages.WorkProfileIdInvalid);
         }
     }

@@ -25,11 +25,5 @@ namespace ESAM.GrowTracking.Domain.Entities
             HasAccess = hasAccess;
             SetCreatedAudit(createdBy, createdAt);
         }
-
-        //public void UpdateAccess(bool hasAccess, int updatedBy)
-        //{
-        //    HasAccess = hasAccess;
-        //    SetUpdatedAudit(updatedBy);
-        //}
     }
 }

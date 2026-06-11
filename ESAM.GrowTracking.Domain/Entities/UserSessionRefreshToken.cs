@@ -43,71 +43,40 @@ namespace ESAM.GrowTracking.Domain.Entities
 
         public IReadOnlyCollection<BlacklistedRefreshToken> BlacklistedRefreshTokens => _blacklistedRefreshTokens.AsReadOnly();
 
-        public UserSessionRefreshToken(string identifier, string salt, string tokenHash, DateTime expiresAt, int createdBy, int userSessionId = 0, int rotationCount = 0, 
-            DateTime? createdAt = null)
-        {
-            UserSessionId = userSessionId;
-            Identifier = identifier;
-            Salt = salt;
-            TokenHash = tokenHash;
-            ExpiresAt = expiresAt;
-            RotationCount = rotationCount;
-            SetCreatedAudit(createdBy, createdAt);
-        }
-
-        public void UpdateLastUsedAt(DateTime lastUsedAt, int updatedBy, DateTime? updatedAt = null)
-        {
-            LastUsedAt = lastUsedAt;
-            SetUpdatedAudit(updatedBy, updatedAt);
-        }
-
-        public void AddUserSessionId(int userSessionId)
-        {
-            UserSessionId = userSessionId;
-        }
-
-        public void Revoke(DateTime revokedAt, string revokedReason, int updatedBy, DateTime? updatedAt = null)
-        {
-            IsRevoked = true;
-            RevokedAt = revokedAt;
-            RevokedReason = revokedReason;
-            SetUpdatedAudit(updatedBy, updatedAt);
-        }
-
-        public void UpdateReplacedByUserSessionRefreshTokenId(int replacedByUserSessionRefreshTokenId)
-        {
-            ReplacedByUserSessionRefreshTokenId = replacedByUserSessionRefreshTokenId;
-        }
-
-        //public UserSessionRefreshToken(int userSessionId, string tokenIdentifier, string salt, string tokenHash, DateTime expiresAt, int createdBy)
+        //public UserSessionRefreshToken(string identifier, string salt, string tokenHash, DateTime expiresAt, int createdBy, int userSessionId = 0, int rotationCount = 0, 
+        //    DateTime? createdAt = null)
         //{
         //    UserSessionId = userSessionId;
-        //    TokenIdentifier = tokenIdentifier;
+        //    Identifier = identifier;
         //    Salt = salt;
         //    TokenHash = tokenHash;
         //    ExpiresAt = expiresAt;
-        //    SetCreatedAudit(createdBy);
+        //    RotationCount = rotationCount;
+        //    SetCreatedAudit(createdBy, createdAt);
         //}
 
-        //public void RegisterUse(int updatedBy)
+        //public void UpdateLastUsedAt(DateTime lastUsedAt, int updatedBy, DateTime? updatedAt = null)
         //{
-        //    LastUsedAt = DateTime.UtcNow;
-        //    RotationCount++;
-        //    SetUpdatedAudit(updatedBy);
+        //    LastUsedAt = lastUsedAt;
+        //    SetUpdatedAudit(updatedBy, updatedAt);
         //}
 
-        //public void Replace(int replacedByTokenId, int updatedBy)
+        //public void AddUserSessionId(int userSessionId)
         //{
-        //    ReplacedByUserSessionRefreshTokenId = replacedByTokenId;
-        //    SetUpdatedAudit(updatedBy);
+        //    UserSessionId = userSessionId;
         //}
 
-        //public void Revoke(string? reason, int updatedBy)
+        //public void Revoke(DateTime revokedAt, string revokedReason, int updatedBy, DateTime? updatedAt = null)
         //{
         //    IsRevoked = true;
-        //    RevokedAt = DateTime.UtcNow;
-        //    RevokedReason = reason;
-        //    SetUpdatedAudit(updatedBy);
+        //    RevokedAt = revokedAt;
+        //    RevokedReason = revokedReason;
+        //    SetUpdatedAudit(updatedBy, updatedAt);
+        //}
+
+        //public void UpdateReplacedByUserSessionRefreshTokenId(int replacedByUserSessionRefreshTokenId)
+        //{
+        //    ReplacedByUserSessionRefreshTokenId = replacedByUserSessionRefreshTokenId;
         //}
     }
 }

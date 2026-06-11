@@ -31,24 +31,5 @@ namespace ESAM.GrowTracking.Domain.Entities
             Description = description;
             SetCreatedAudit(createdBy, createdAt);
         }
-
-        //public void Update(string name, string? description, int updatedBy)
-        //{
-        //    Name = name;
-        //    Description = description;
-        //    SetUpdatedAudit(updatedBy);
-        //}
-
-        //public void SoftDelete(int updatedBy)
-        //{
-        //    IsDeleted = true;
-        //    SetUpdatedAudit(updatedBy);
-        //}
-
-        //public void Restore(int updatedBy)
-        //{
-        //    IsDeleted = false;
-        //    SetUpdatedAudit(updatedBy);
-        //}
     }
 }

@@ -6,9 +6,9 @@ namespace ESAM.GrowTracking.Application.Features.Auth.AssumeWorkProfile
 {
     public record AssumeWorkProfileCommand : IRequest<Result<AssumeWorkProfileResponse>>
     {
-        public int? WorkProfileId { get; init; }
+        public int WorkProfileId { get; init; }
 
-        public AssumeWorkProfileCommand(int? workProfileId)
+        public AssumeWorkProfileCommand(int workProfileId)
         {
             WorkProfileId = workProfileId;
         }

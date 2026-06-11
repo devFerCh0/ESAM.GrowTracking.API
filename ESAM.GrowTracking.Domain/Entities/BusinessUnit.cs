@@ -34,26 +34,5 @@ namespace ESAM.GrowTracking.Domain.Entities
             FoundingDate = foundingDate;
             SetCreatedAudit(createdBy, createdAt);
         }
-
-        //public void Update(string name, string abbreviation, string webSite, DateTime foundingDate, int updatedBy)
-        //{
-        //    Name = name;
-        //    Abbreviation = abbreviation;
-        //    WebSite = webSite;
-        //    FoundingDate = foundingDate;
-        //    SetUpdatedAudit(updatedBy);
-        //}
-
-        //public void SoftDelete(int updatedBy)
-        //{
-        //    IsDeleted = true;
-        //    SetUpdatedAudit(updatedBy);
-        //}
-
-        //public void Restore(int updatedBy)
-        //{
-        //    IsDeleted = false;
-        //    SetUpdatedAudit(updatedBy);
-        //}
     }
 }

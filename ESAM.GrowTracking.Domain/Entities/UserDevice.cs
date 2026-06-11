@@ -44,7 +44,7 @@ namespace ESAM.GrowTracking.Domain.Entities
 
         public IReadOnlyCollection<UserSession> UserSessions => _userSessions.AsReadOnly();
 
-        public UserDevice(int userId, string deviceIdentifier, string deviceName, ApiClientType apiClientType, string? lastIp, string? lastUserAgent, int createdBy, 
+        public UserDevice(int userId, string deviceIdentifier, string deviceName, ApiClientType apiClientType, string? lastIp, string? lastUserAgent, int createdBy,
             DateTime? createdAt = null)
         {
             UserId = userId;
@@ -56,6 +56,12 @@ namespace ESAM.GrowTracking.Domain.Entities
             SetCreatedAudit(createdBy, createdAt);
         }
 
+        public void Activate(int updatedBy, DateTime? updatedAt = null)
+        {
+            IsDeleted = false;
+            SetUpdatedAudit(updatedBy, updatedAt);
+        }
+
         public void Update(string deviceName, ApiClientType apiClientType, string? lastIp, string? lastUserAgent, int updatedBy, DateTime? updatedAt = null)
         {
             DeviceName = deviceName.Trim();
@@ -65,21 +71,13 @@ namespace ESAM.GrowTracking.Domain.Entities
             SetUpdatedAudit(updatedBy, updatedAt);
         }
 
-        public void Activate(int updatedBy, DateTime? updatedAt = null)
-        {
-            IsDeleted = false;
-            SetUpdatedAudit(updatedBy, updatedAt);
-        }
-
         public void UpdateLastSeenAt(DateTime lastSeenAt, int updatedBy, DateTime? updatedAt = null)
         {
             LastSeenAt = lastSeenAt;
             SetUpdatedAudit(updatedBy, updatedAt);
         }
 
-        public bool IsLocked(DateTime utcNow) => LockoutEndAt.HasValue && LockoutEndAt.Value > utcNow;
-
-        public bool ShouldResetFailedAttempts(TimeSpan failedAttemptsResetDuration, DateTime utcNow) => 
+        public bool ShouldResetFailedAttempts(TimeSpan failedAttemptsResetDuration, DateTime utcNow) =>
             LastFailedLoginAt.HasValue && (utcNow - LastFailedLoginAt.Value) > failedAttemptsResetDuration;
 
         public void ResetFailedLogin(int updatedBy, DateTime? updatedAt = null)
@@ -89,6 +87,9 @@ namespace ESAM.GrowTracking.Domain.Entities
             LockoutEndAt = null;
             SetUpdatedAudit(updatedBy, updatedAt);
         }
+
+        public bool IsLocked(DateTime utcNow) => LockoutEndAt.HasValue && LockoutEndAt.Value > utcNow;
+
 
         public void RegisterFailedLogin(int maxFailedAttempts, TimeSpan lockoutDuration, DateTime lastFailedLoginAt, int updatedBy, DateTime? updatedAt = null)
         {
@@ -104,57 +105,5 @@ namespace ESAM.GrowTracking.Domain.Entities
             LastLoginAt = lastLoginAt;
             SetUpdatedAudit(updatedBy, updatedAt);
         }
-
-        //public void SetTrusted(bool isTrusted, int updatedBy)
-        //{
-        //    IsTrusted = isTrusted;
-        //    SetUpdatedAudit(updatedBy);
-        //}
-
-        //public void UpdateLastSeen(string ip, string userAgent, int updatedBy)
-        //{
-        //    LastSeenAt = DateTime.UtcNow;
-        //    LastIp = ip;
-        //    LastUserAgent = userAgent;
-        //    SetUpdatedAudit(updatedBy);
-        //}
-
-        //public void RegisterFailedLogin(int updatedBy)
-        //{
-        //    FailedLoginCount++;
-        //    LastFailedLoginAt = DateTime.UtcNow;
-        //    SetUpdatedAudit(updatedBy);
-        //}
-
-        //public void ResetFailedLoginCount(int updatedBy)
-        //{
-        //    FailedLoginCount = 0;
-        //    LastFailedLoginAt = null;
-        //    SetUpdatedAudit(updatedBy);
-        //}
-
-        //public void SetLockout(DateTime lockoutEndAt, int updatedBy)
-        //{
-        //    LockoutEndAt = lockoutEndAt;
-        //    SetUpdatedAudit(updatedBy);
-        //}
-
-        //public void ClearLockout(int updatedBy)
-        //{
-        //    LockoutEndAt = null;
-        //    SetUpdatedAudit(updatedBy);
-        //}
-
-        //public void SetLastLogin(int updatedBy)
-        //{
-        //    LastLoginAt = DateTime.UtcNow;
-        //    SetUpdatedAudit(updatedBy);
-        //}
-
-        //public void SoftDelete(int updatedBy)
-        //{
-        //    IsDeleted = true;
-        //    SetUpdatedAudit(updatedBy);
-        //}
     }
 }

@@ -82,46 +82,50 @@ namespace ESAM.GrowTracking.Application.Features.Auth.AssumeWorkProfile
                 return Result<AssumeWorkProfileResponse>.Fail(Error.Unauthorized("Sesión inválida o expirada. Inicie sesión nuevamente."));
             }
             var currentAccessTokenType = _tokenClaimsValidationService.CurrentAccessTokenType;
-            var currentUserId = _tokenClaimsValidationService.CurrentUserId;
-            var currentSecurityStamp = _tokenClaimsValidationService.CurrentSecurityStamp;
-            var currentTokenVersion = _tokenClaimsValidationService.CurrentTokenVersion;
-            var currentUserDeviceId = _tokenClaimsValidationService.CurrentUserDeviceId;
-            var utcNow = _dateTimeService.UtcNow;
             if (currentAccessTokenType != AccessTokenType.Temporary)
             {
                 _logger.LogWarning("AssumeWorkProfileCommand: tipo de token de acceso inválido. Esperado=Temporal, Actual={AccessTokenType}", currentAccessTokenType);
                 return Result<AssumeWorkProfileResponse>.Fail(Error.Unauthorized("Esta operación requiere un token de acceso temporal."));
             }
-            var validateUserResult = await _currentSessionIntegrityValidationService.ValidateUserAsync(currentUserId, currentSecurityStamp, currentTokenVersion, utcNow, 
-                asTracking, cancellationToken);
+            var currentUserId = _tokenClaimsValidationService.CurrentUserId;
+            var currentSecurityStamp = _tokenClaimsValidationService.CurrentSecurityStamp;
+            var currentTokenVersion = _tokenClaimsValidationService.CurrentTokenVersion;
+            var utcNow = _dateTimeService.UtcNow;
+            var validateUserResult = await _currentSessionIntegrityValidationService.ValidateUserAsync(currentUserId, currentSecurityStamp, currentTokenVersion, utcNow, asTracking,
+                cancellationToken);
             if (validateUserResult.IsFailure)
                 return Result<AssumeWorkProfileResponse>.Fail(validateUserResult.Errors);
+            var currentUserDeviceId = _tokenClaimsValidationService.CurrentUserDeviceId;
             var validateUserDeviceResult = await _currentSessionIntegrityValidationService.ValidateUserDeviceAsync(currentUserDeviceId, currentUserId, utcNow, asTracking, 
                 cancellationToken);
             if (validateUserDeviceResult.IsFailure)
                 return Result<AssumeWorkProfileResponse>.Fail(validateUserDeviceResult.Errors);
-            var isUserWorkProfileActiveAndOfType = await _userWorkProfileRepository.IsActiveAndOfTypeAsync(currentUserId, request.WorkProfileId!.Value, 
-                WorkProfileType.OnlyWorkProfile, asTracking, cancellationToken);
+            var currentJti = _tokenClaimsValidationService.CurrentJti;
+            var validateAccessTokenTemporaryResult = await _currentSessionIntegrityValidationService.ValidateAccessTokenTemporaryAsync(currentJti, asTracking, cancellationToken);
+            if (validateAccessTokenTemporaryResult.IsFailure)
+                return Result<AssumeWorkProfileResponse>.Fail(validateAccessTokenTemporaryResult.Errors);
+            var isUserWorkProfileActiveAndOfType = await _userWorkProfileRepository.IsActiveAndOfTypeAsync(currentUserId, request.WorkProfileId, WorkProfileType.OnlyWorkProfile, 
+                asTracking, cancellationToken);
             if (!isUserWorkProfileActiveAndOfType)
             {
                 _logger.LogWarning("AssumeWorkProfileCommand: perfil de trabajo de usuario no encontrado o eliminado. UserId={UserId}, WorkProfileId={WorkProfileId}",
-                    currentUserId, request.WorkProfileId!.Value);
+                    currentUserId, request.WorkProfileId);
                 return Result<AssumeWorkProfileResponse>.Fail(Error.NotFound("No se encontró un perfil de trabajo activo del tipo especificado asignado al usuario."));
             }
-
-            var a = await _workProfilePermissionRepository.HasActivePermissionsAsync
-
-
-            var validateWorkProfileContextAndPermissionsResult = await _currentSessionIntegrityValidationService.ValidateWorkProfileContextAndPermissionsAsync(currentUserId, 
-                request.WorkProfileId!.Value, WorkProfileType.OnlyWorkProfile, asTracking, cancellationToken);
-            if (validateWorkProfileContextAndPermissionsResult.IsFailure)
-                return Result<AssumeWorkProfileResponse>.Fail(validateWorkProfileContextAndPermissionsResult.Errors);
-
+            var workProfileHasActivePermissionsWithAccess = await _workProfilePermissionRepository.HasActivePermissionsWithAccessAsync(request.WorkProfileId, asTracking, 
+                cancellationToken);
+            if (!workProfileHasActivePermissionsWithAccess)
+            {
+                _logger.LogWarning("AssumeWorkProfileCommand: el perfil de trabajo no tiene permisos activos con acceso. WorkProfileId={WorkProfileId}", request.WorkProfileId);
+                return Result<AssumeWorkProfileResponse>.Fail(Error.Forbidden("El perfil de trabajo no tiene permisos activos con acceso."));
+            }
             var ipAddress = _clientInfoService.GetIpAddress();
             var userAgent = _clientInfoService.GetUserAgent();
-            var (refreshToken, userSession) = await _userSessionService.CreateUserSessionAsync(currentUserId, currentUserDeviceId, ipAddress, userAgent,
-                request.WorkProfileId!.Value, utcNow, WorkProfileType.OnlyWorkProfile, _currentUserService.Jti!, _currentUserService.AccessTokenExpiration!.Value,
-                _currentUserService.IsPersistent!.Value, asTracking: asTracking, cancellationToken: cancellationToken);
+            var (refreshToken, userSession) = await _userSessionService.CreateUserSessionAsync(currentUserId, currentUserDeviceId, ipAddress, userAgent, request.WorkProfileId, 
+                utcNow, WorkProfileType.OnlyWorkProfile, currentJti, _tokenClaimsValidationService.CurrentAccessTokenExpiration, _tokenClaimsValidationService.CurrentIsPersistent, 
+                asTracking: asTracking, cancellationToken: cancellationToken);
+
+
             var accessToken = _tokenService.GenerateSessionAccessToken(currentUserId, user.SecurityStamp, user.TokenVersion, currentUserDeviceId, userSession.Id, utcNow,
                 _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, request.WorkProfileId!.Value);
             var assumeWorkProfileUser = await _userQuery.GetAssumeWorkProfileUserByUserIdAndUserSessionIdAsync(user.Id, userSession.Id, asTracking, cancellationToken);

@@ -7,6 +7,43 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Controllers\Auth\AssumeRoleCampus\**" />
+    <Compile Remove="Controllers\Auth\AssumeWorkProfile\**" />
+    <Compile Remove="Controllers\Auth\GetCurrentUserRoleCampus\**" />
+    <Compile Remove="Controllers\Auth\GetCurrentUserWorkProfile\**" />
+    <Compile Remove="Controllers\Auth\GetUserRoleCampuses\**" />
+    <Compile Remove="Controllers\Auth\Logout\**" />
+    <Compile Remove="Controllers\Auth\Refresh\**" />
+    <Content Remove="Controllers\Auth\AssumeRoleCampus\**" />
+    <Content Remove="Controllers\Auth\AssumeWorkProfile\**" />
+    <Content Remove="Controllers\Auth\GetCurrentUserRoleCampus\**" />
+    <Content Remove="Controllers\Auth\GetCurrentUserWorkProfile\**" />
+    <Content Remove="Controllers\Auth\GetUserRoleCampuses\**" />
+    <Content Remove="Controllers\Auth\Logout\**" />
+    <Content Remove="Controllers\Auth\Refresh\**" />
+    <EmbeddedResource Remove="Controllers\Auth\AssumeRoleCampus\**" />
+    <EmbeddedResource Remove="Controllers\Auth\AssumeWorkProfile\**" />
+    <EmbeddedResource Remove="Controllers\Auth\GetCurrentUserRoleCampus\**" />
+    <EmbeddedResource Remove="Controllers\Auth\GetCurrentUserWorkProfile\**" />
+    <EmbeddedResource Remove="Controllers\Auth\GetUserRoleCampuses\**" />
+    <EmbeddedResource Remove="Controllers\Auth\Logout\**" />
+    <EmbeddedResource Remove="Controllers\Auth\Refresh\**" />
+    <None Remove="Controllers\Auth\AssumeRoleCampus\**" />
+    <None Remove="Controllers\Auth\AssumeWorkProfile\**" />
+    <None Remove="Controllers\Auth\GetCurrentUserRoleCampus\**" />
+    <None Remove="Controllers\Auth\GetCurrentUserWorkProfile\**" />
+    <None Remove="Controllers\Auth\GetUserRoleCampuses\**" />
+    <None Remove="Controllers\Auth\Logout\**" />
+    <None Remove="Controllers\Auth\Refresh\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Controllers\Auth\AuthController.cs" />
+    <Compile Remove="Converters\JsonEnumConverter.cs" />
+    <Compile Remove="Converters\JsonEnumConverterFactory.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AutoMapper" Version="16.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.26" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.25">
@@ -20,6 +57,10 @@
     <ProjectReference Include="..\ESAM.GrowTracking.Application\ESAM.GrowTracking.Application.csproj" />
     <ProjectReference Include="..\ESAM.GrowTracking.Infrastructure\ESAM.GrowTracking.Infrastructure.csproj" />
     <ProjectReference Include="..\ESAM.GrowTracking.Persistence\ESAM.GrowTracking.Persistence.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Converters\" />
   </ItemGroup>
 
 </Project>

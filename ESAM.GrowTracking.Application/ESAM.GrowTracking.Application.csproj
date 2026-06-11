@@ -7,12 +7,52 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Features\Auth\GetCurrentUserProfile\**" />
+    <Compile Remove="Features\Auth\AssumeRoleCampus\**" />
+    <Compile Remove="Features\Auth\AssumeWorkProfile\**" />
+    <Compile Remove="Features\Auth\GetCurrentUserRoleCampus\**" />
+    <Compile Remove="Features\Auth\GetCurrentUserWorkProfile\**" />
+    <Compile Remove="Features\Auth\GetUserRoleCampuses\**" />
+    <Compile Remove="Features\Auth\Logout\**" />
+    <Compile Remove="Features\Auth\Refresh\**" />
     <Compile Remove="ValueObjects\**" />
-    <EmbeddedResource Remove="Features\Auth\GetCurrentUserProfile\**" />
+    <EmbeddedResource Remove="Features\Auth\AssumeRoleCampus\**" />
+    <EmbeddedResource Remove="Features\Auth\AssumeWorkProfile\**" />
+    <EmbeddedResource Remove="Features\Auth\GetCurrentUserRoleCampus\**" />
+    <EmbeddedResource Remove="Features\Auth\GetCurrentUserWorkProfile\**" />
+    <EmbeddedResource Remove="Features\Auth\GetUserRoleCampuses\**" />
+    <EmbeddedResource Remove="Features\Auth\Logout\**" />
+    <EmbeddedResource Remove="Features\Auth\Refresh\**" />
     <EmbeddedResource Remove="ValueObjects\**" />
-    <None Remove="Features\Auth\GetCurrentUserProfile\**" />
+    <None Remove="Features\Auth\AssumeRoleCampus\**" />
+    <None Remove="Features\Auth\AssumeWorkProfile\**" />
+    <None Remove="Features\Auth\GetCurrentUserRoleCampus\**" />
+    <None Remove="Features\Auth\GetCurrentUserWorkProfile\**" />
+    <None Remove="Features\Auth\GetUserRoleCampuses\**" />
+    <None Remove="Features\Auth\Logout\**" />
+    <None Remove="Features\Auth\Refresh\**" />
     <None Remove="ValueObjects\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Abstractions\Services\IBlacklistedTokenService.cs" />
+    <Compile Remove="Abstractions\Services\ICurrentSessionIntegrityValidationService.cs" />
+    <Compile Remove="Abstractions\Services\IPurgeExpiredTokensService.cs" />
+    <Compile Remove="Abstractions\Services\ITokenClaimsValidationService.cs" />
+    <Compile Remove="Abstractions\Services\ITokenSessionValidationService.cs" />
+    <Compile Remove="Abstractions\Services\IUserSessionService.cs" />
+    <Compile Remove="Abstractions\Services\Results\PurgeExpiredTokensResult.cs" />
+    <Compile Remove="Abstractions\Services\Results\TokenSessionValidationResult.cs" />
+    <Compile Remove="Helpers\RefreshTokenHelper.cs" />
+    <Compile Remove="Services\BlacklistedTokenService.cs" />
+    <Compile Remove="Services\CurrentSessionIntegrityValidationService.cs" />
+    <Compile Remove="Services\PurgeExpiredTokensHostedService.cs" />
+    <Compile Remove="Services\PurgeExpiredTokensService.cs" />
+    <Compile Remove="Services\TokenClaimsValidationService.cs" />
+    <Compile Remove="Services\TokenSessionValidationService.cs" />
+    <Compile Remove="Services\UserSessionService.cs" />
+    <Compile Remove="Settings\CleanupSettings.cs" />
+    <Compile Remove="Utilities\EnumHelper.cs" />
+    <Compile Remove="Utilities\EnumMetadata.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -30,6 +70,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ESAM.GrowTracking.Domain\ESAM.GrowTracking.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Abstractions\Services\Results\" />
+    <Folder Include="Helpers\" />
+    <Folder Include="Services\" />
+    <Folder Include="Utilities\" />
   </ItemGroup>
 
 </Project>

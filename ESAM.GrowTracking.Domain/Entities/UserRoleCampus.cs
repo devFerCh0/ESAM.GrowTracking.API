@@ -33,17 +33,5 @@ namespace ESAM.GrowTracking.Domain.Entities
             CampusId = campusId;
             SetCreatedAudit(createdBy, createdAt);
         }
-
-        //public void SoftDelete(int updatedBy)
-        //{
-        //    IsDeleted = true;
-        //    SetUpdatedAudit(updatedBy);
-        //}
-
-        //public void Restore(int updatedBy)
-        //{
-        //    IsDeleted = false;
-        //    SetUpdatedAudit(updatedBy);
-        //}
     }
 }

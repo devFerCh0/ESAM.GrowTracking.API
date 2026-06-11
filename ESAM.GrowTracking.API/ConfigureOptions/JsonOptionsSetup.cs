@@ -1,5 +1,4 @@
-﻿using ESAM.GrowTracking.API.Converters;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
 
@@ -9,7 +8,7 @@ namespace ESAM.GrowTracking.API.ConfigureOptions
     {
         public void Configure(JsonOptions options)
         {
-            options.JsonSerializerOptions.Converters.Add(new JsonEnumConverterFactory());
+            //options.JsonSerializerOptions.Converters.Add(new JsonEnumConverterFactory());
             options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
         }
     }

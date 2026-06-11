@@ -35,16 +35,5 @@ namespace ESAM.GrowTracking.Domain.Entities
             Description = description;
             Code = code;
         }
-
-        //public void Update(string name, string? description, string? code)
-        //{
-        //    Name = name;
-        //    Description = description;
-        //    Code = code;
-        //}
-
-        //public void SoftDelete() => IsDeleted = true;
-
-        //public void Restore() => IsDeleted = false;
     }
 }

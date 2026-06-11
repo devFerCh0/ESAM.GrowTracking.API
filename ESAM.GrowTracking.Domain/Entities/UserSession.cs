@@ -50,54 +50,38 @@ namespace ESAM.GrowTracking.Domain.Entities
 
         public IReadOnlyCollection<BlacklistedAccessTokenPermanent> BlacklistedAccessTokensPermanent => _blacklistedAccessTokensPermanent.AsReadOnly();
 
-        public UserSession(int userId, int userDeviceId, string? ipAddress, string? userAgent, DateTime expiresAt, DateTime absoluteExpiresAt, bool isPersistent, int createdBy, 
-            DateTime? createdAt = null)
-        {
-            UserId = userId;
-            UserDeviceId = userDeviceId;
-            IpAddress = ipAddress;
-            UserAgent = userAgent;
-            ExpiresAt = expiresAt;
-            AbsoluteExpiresAt = absoluteExpiresAt;
-            IsPersistent = isPersistent;
-            SetCreatedAudit(createdBy, createdAt);
-        }
-
-        public void UpdateLastActivity(DateTime lastActivityAt, int updatedBy, DateTime? updatedAt = null)
-        {
-            LastActivityAt = lastActivityAt;
-            SetUpdatedAudit(updatedBy, updatedAt);
-        }
-
-        public void Revoke(DateTime revokedAt, string revokedReason, int closedByUserId, int updatedBy, DateTime? updatedAt = null)
-        {
-            IsRevoked = true;
-            RevokedAt = revokedAt;
-            RevokedReason = revokedReason;
-            ClosedByUserId = closedByUserId;
-            SetUpdatedAudit(updatedBy, updatedAt);
-        }
-
-        public void UpdateExpiresAt(DateTime expiresAt, int updatedBy, DateTime? updatedAt = null)
-        {
-            ExpiresAt = expiresAt;
-            SetUpdatedAudit(updatedBy, updatedAt);
-        }
-
-        //public void Revoke(string? reason, int? closedByUserId, int updatedBy)
+        //public UserSession(int userId, int userDeviceId, string? ipAddress, string? userAgent, DateTime expiresAt, DateTime absoluteExpiresAt, bool isPersistent, int createdBy, 
+        //    DateTime? createdAt = null)
         //{
-        //    IsRevoked = true;
-        //    RevokedAt = DateTime.UtcNow;
-        //    RevokedReason = reason;
-        //    ClosedByUserId = closedByUserId;
-        //    SetUpdatedAudit(updatedBy);
+        //    UserId = userId;
+        //    UserDeviceId = userDeviceId;
+        //    IpAddress = ipAddress;
+        //    UserAgent = userAgent;
+        //    ExpiresAt = expiresAt;
+        //    AbsoluteExpiresAt = absoluteExpiresAt;
+        //    IsPersistent = isPersistent;
+        //    SetCreatedAudit(createdBy, createdAt);
         //}
 
-        //public void UpdateLastActivity(DateTime newExpiresAt, int updatedBy)
+        //public void UpdateLastActivity(DateTime lastActivityAt, int updatedBy, DateTime? updatedAt = null)
         //{
-        //    LastActivityAt = DateTime.UtcNow;
-        //    ExpiresAt = newExpiresAt;
-        //    SetUpdatedAudit(updatedBy);
+        //    LastActivityAt = lastActivityAt;
+        //    SetUpdatedAudit(updatedBy, updatedAt);
+        //}
+
+        //public void Revoke(DateTime revokedAt, string revokedReason, int closedByUserId, int updatedBy, DateTime? updatedAt = null)
+        //{
+        //    IsRevoked = true;
+        //    RevokedAt = revokedAt;
+        //    RevokedReason = revokedReason;
+        //    ClosedByUserId = closedByUserId;
+        //    SetUpdatedAudit(updatedBy, updatedAt);
+        //}
+
+        //public void UpdateExpiresAt(DateTime expiresAt, int updatedBy, DateTime? updatedAt = null)
+        //{
+        //    ExpiresAt = expiresAt;
+        //    SetUpdatedAudit(updatedBy, updatedAt);
         //}
     }
 }

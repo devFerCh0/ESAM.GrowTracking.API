@@ -1,13 +1,6 @@
 ﻿using ESAM.GrowTracking.API.Abstractions.Mappers;
 using ESAM.GrowTracking.API.Adapters;
 using ESAM.GrowTracking.API.ConfigureOptions;
-using ESAM.GrowTracking.API.Controllers.Auth.AssumeRoleCampus;
-using ESAM.GrowTracking.API.Controllers.Auth.AssumeWorkProfile;
-using ESAM.GrowTracking.API.Controllers.Auth.GetCurrentUserRoleCampus;
-using ESAM.GrowTracking.API.Controllers.Auth.GetCurrentUserWorkProfile;
-using ESAM.GrowTracking.API.Controllers.Auth.GetUserRoleCampuses;
-using ESAM.GrowTracking.API.Controllers.Auth.Login;
-using ESAM.GrowTracking.API.Controllers.Auth.Refresh;
 using ESAM.GrowTracking.API.Filters;
 using ESAM.GrowTracking.API.HealthChecks;
 using ESAM.GrowTracking.API.Mappers;
@@ -230,17 +223,17 @@ namespace ESAM.GrowTracking.API
 
         public static IServiceCollection AddMappingProfiles(this IServiceCollection services)
         {
-            ArgumentNullException.ThrowIfNull(services);
-            services.AddAutoMapper(mce =>
-            {
-                mce.AddMaps(typeof(LoginMappingProfile).Assembly);
-                mce.AddMaps(typeof(AssumeWorkProfileMappingProfile).Assembly);
-                mce.AddMaps(typeof(GetUserRoleCampusMappingProfile).Assembly);
-                mce.AddMaps(typeof(AssumeRoleCampusMappingProfile).Assembly);
-                mce.AddMaps(typeof(RefreshMappingProfile).Assembly);
-                mce.AddMaps(typeof(GetCurrentUserWorkProfileMappingProfile).Assembly);
-                mce.AddMaps(typeof(GetCurrentUserRoleCampusMappingProfile).Assembly);
-            });
+            //ArgumentNullException.ThrowIfNull(services);
+            //services.AddAutoMapper(mce =>
+            //{
+            //    mce.AddMaps(typeof(LoginMappingProfile).Assembly);
+            //    mce.AddMaps(typeof(AssumeWorkProfileMappingProfile).Assembly);
+            //    mce.AddMaps(typeof(GetUserRoleCampusMappingProfile).Assembly);
+            //    mce.AddMaps(typeof(AssumeRoleCampusMappingProfile).Assembly);
+            //    mce.AddMaps(typeof(RefreshMappingProfile).Assembly);
+            //    mce.AddMaps(typeof(GetCurrentUserWorkProfileMappingProfile).Assembly);
+            //    mce.AddMaps(typeof(GetCurrentUserRoleCampusMappingProfile).Assembly);
+            //});
             return services;
         }
     }

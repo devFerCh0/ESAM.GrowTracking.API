@@ -4,16 +4,15 @@ using ESAM.GrowTracking.Application.Extensions;
 using ESAM.GrowTracking.Application.Features.Auth.Login.Responses;
 using ESAM.GrowTracking.Application.Results;
 using ESAM.GrowTracking.Application.Settings;
-using ESAM.GrowTracking.Application.Utilities;
 using ESAM.GrowTracking.Application.ValueObjects;
 using ESAM.GrowTracking.Domain.Abstractions.DataAccess;
 using ESAM.GrowTracking.Domain.Abstractions.DataAccess.Repositories;
 using ESAM.GrowTracking.Domain.Entities;
-using ESAM.GrowTracking.Domain.Enums;
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Globalization;
 
 namespace ESAM.GrowTracking.Application.Features.Auth.Login
 {
@@ -71,82 +70,79 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Login
                 _logger.LogWarning("LoginCommand: validación fallida. Errores: {Errors}", string.Join(" | ", validation.Errors.Select(e => e.ErrorMessage)));
                 return Result<LoginResponse>.Fail(validation.ToDomainErrors());
             }
-            var apiClientType = EnumHelper.ParseFromString<ApiClientType>(request.ApiClientType);
             var utcNow = _dateTimeService.UtcNow;
-            var user = await _userRepository.GetByCredentialAsync(request.Credential!, asTracking, cancellationToken);
+            var user = await _userRepository.GetByCredentialAsync(request.Credential, asTracking, cancellationToken);
             if (user is null)
             {
-                _logger.LogWarning("LoginCommand: autenticación fallida, usuario no encontrado para la credencial proporcionada.");
+                _logger.LogWarning("LoginCommand: autenticación fallida, credencial inválida.");
                 return Result<LoginResponse>.Fail(Error.Unauthorized("Credenciales inválidas."));
             }
             if (user.IsDeleted)
             {
-                _logger.LogWarning("LoginCommand: intento de inicio de sesión para usuario eliminado. UserId={UserId}", user.Id);
-                return Result<LoginResponse>.Fail(Error.Forbidden("La cuenta está desactivada. Contacte con el administrador."));
+                _logger.LogWarning("LoginCommand: intento de inicio de sesión para usuario desactivado. UserId={UserId}", user.Id);
+                return Result<LoginResponse>.Fail(Error.Forbidden("La cuenta está desactivada o eliminada. Contacte con el administrador."));
             }
             if (user.IsLocked(utcNow))
             {
+                var lockoutUntil = user.LockoutEndAt!.Value.ToString("yyyy-MM-dd HH:mm:ss 'UTC'", CultureInfo.InvariantCulture);
                 _logger.LogWarning("LoginCommand: intento de inicio de sesión para usuario bloqueado. UserId={UserId}, BloqueadoHasta={LockoutEndAt}", user.Id, user.LockoutEndAt);
-                return Result<LoginResponse>.Fail(Error.Locked($"Cuenta bloqueada hasta {user.LockoutEndAt}."));
+                return Result<LoginResponse>.Fail(Error.Locked($"La cuenta permanecerá bloqueada hasta {lockoutUntil}."));
             }
-            var userDevice = await _userDeviceRepository.GetByUserIdAndDeviceIdentifierAsync(user.Id, request.DeviceIdentifier!, asTracking, cancellationToken);
             var ipAddress = _clientInfoService.GetIpAddress();
             var userAgent = _clientInfoService.GetUserAgent();
+            var userDevice = await _userDeviceRepository.GetByUserIdAndDeviceIdentifierAsync(user.Id, request.DeviceIdentifier, asTracking, cancellationToken);
             if (userDevice is null)
-                userDevice = new UserDevice(user.Id, request.DeviceIdentifier!, request.DeviceName!, apiClientType, ipAddress, userAgent, user.Id, utcNow);
+                userDevice = new UserDevice(user.Id, request.DeviceIdentifier, request.DeviceName, request.ApiClientType, ipAddress, userAgent, user.Id, utcNow);
             else
             {
-                userDevice.Update(request.DeviceName!, apiClientType, ipAddress, userAgent, user.Id, utcNow);
                 if (userDevice.IsDeleted)
                     userDevice.Activate(user.Id, utcNow);
+                userDevice.Update(request.DeviceName, request.ApiClientType, ipAddress, userAgent, user.Id, utcNow);
             }
             userDevice.UpdateLastSeenAt(utcNow, user.Id, utcNow);
-            var wasFailedLoginReset = false;
             if (userDevice.ShouldResetFailedAttempts(_authSecuritySettings.FailedAttemptsResetDuration, utcNow) && userDevice.FailedLoginCount > 0)
-            {
                 userDevice.ResetFailedLogin(user.Id, utcNow);
-                wasFailedLoginReset = true;
-            }
             if (userDevice.IsLocked(utcNow))
             {
                 await PersistDeviceAsync(userDevice, cancellationToken);
-                _logger.LogWarning("LoginCommand: intento de inicio de sesión desde dispositivo bloqueado. UserId={UserId}, UserDeviceId={UserDeviceId}, " +
+                var deviceLockoutUntil = userDevice.LockoutEndAt!.Value.ToString("yyyy-MM-dd HH:mm:ss 'UTC'", CultureInfo.InvariantCulture);
+                _logger.LogWarning( "LoginCommand: intento de inicio de sesión desde dispositivo bloqueado. UserId={UserId}, UserDeviceId={UserDeviceId}, " + 
                     "BloqueadoHasta={LockoutEndAt}", user.Id, userDevice.Id, userDevice.LockoutEndAt);
-                return Result<LoginResponse>.Fail(Error.Locked($"Dispositivo bloqueado hasta {userDevice.LockoutEndAt}."));
+                return Result<LoginResponse>.Fail(Error.Locked($"El dispositivo permanecerá bloqueado hasta {deviceLockoutUntil}."));
             }
-            var isPasswordValid = _hashService.VerifyHash(request.Password!, user.Salt, user.PasswordHash);
+            var isPasswordValid = _hashService.VerifyHash(request.Password, user.Salt, user.PasswordHash);
             if (!isPasswordValid)
             {
                 userDevice.RegisterFailedLogin(_authSecuritySettings.MaxFailedAttempts, _authSecuritySettings.LockoutDuration, utcNow, user.Id, utcNow);
                 await PersistDeviceAsync(userDevice, cancellationToken);
-                var remainingAttempts = Math.Max(0, _authSecuritySettings.MaxFailedAttempts - userDevice.FailedLoginCount);
-                if (remainingAttempts > 0)
+                if (userDevice.LockoutEndAt.HasValue)
                 {
-                    _logger.LogWarning("LoginCommand: contraseña incorrecta. UserId={UserId}, UserDeviceId={UserDeviceId}, IntentosFallidos={FailedLoginCount}, " +
-                        "IntentosRestantes={RemainingAttempts}", user.Id, userDevice.Id, userDevice.FailedLoginCount, remainingAttempts);
-                    return Result<LoginResponse>.Fail(Error.Unauthorized($"Contraseña incorrecta. Le quedan {remainingAttempts} intento(s)."));
+                    var until = userDevice.LockoutEndAt.Value.ToString("yyyy-MM-dd HH:mm:ss 'UTC'", CultureInfo.InvariantCulture);
+                    _logger.LogWarning("LoginCommand: dispositivo bloqueado por demasiados intentos fallidos. UserId={UserId}, UserDeviceId={UserDeviceId}, " + 
+                        "BloqueadoHasta={LockoutEndAt}", user.Id, userDevice.Id, userDevice.LockoutEndAt);
+                    return Result<LoginResponse>.Fail(Error.Locked($"El dispositivo ha sido bloqueado temporalmente hasta {until}."));
                 }
-                _logger.LogWarning("LoginCommand: dispositivo bloqueado por demasiados intentos fallidos. UserId={UserId}, UserDeviceId={UserDeviceId}, " +
-                    "BloqueadoHasta={LockoutEndAt}", user.Id, userDevice.Id, userDevice.LockoutEndAt);
-                return Result<LoginResponse>.Fail(Error.Locked("Se ha superado el número de intentos permitidos. Dispositivo bloqueado temporalmente."));
+                _logger.LogWarning("LoginCommand: contraseña incorrecta. UserId={UserId}, UserDeviceId={UserDeviceId}, IntentosFallidos={FailedLoginCount}", user.Id, userDevice.Id, 
+                    userDevice.FailedLoginCount);
+                return Result<LoginResponse>.Fail(Error.Unauthorized("Credenciales inválidas."));
             }
-            if (!wasFailedLoginReset && userDevice.FailedLoginCount > 0)
+            if (userDevice.FailedLoginCount > 0)
                 userDevice.ResetFailedLogin(user.Id, utcNow);
             userDevice.UpdateLastLogin(utcNow, user.Id, utcNow);
             await PersistDeviceAsync(userDevice, cancellationToken);
-            var accessToken = _tokenService.GenerateTemporaryAccessToken(user.Id, user.SecurityStamp, user.TokenVersion, userDevice.Id, request.IsPersistent!.Value, utcNow,
-                _tokenLifetimeSettings.TemporaryAccessTokenLifetimeMinutes);
             var loginUser = await _userQuery.GetLoginUserByIdAsync(user.Id, asTracking, cancellationToken);
             if (loginUser is null)
             {
                 _logger.LogError("LoginCommand: datos del usuario no encontrados tras autenticación exitosa. UserId={UserId}", user.Id);
-                return Result<LoginResponse>.Fail(Error.ServerError("Usuario no encontrado."));
+                return Result<LoginResponse>.Fail(Error.ServerError("No fue posible cargar los datos del usuario autenticado."));
             }
             if (loginUser.UserWorkProfiles is null || loginUser.UserWorkProfiles.Count == 0)
             {
                 _logger.LogWarning("LoginCommand: el usuario no tiene perfiles de trabajo asignados. UserId={UserId}", user.Id);
-                return Result<LoginResponse>.Fail(Error.BusinessRule("Usuario sin perfiles de trabajo asignados."));
+                return Result<LoginResponse>.Fail(Error.BusinessRule("El usuario no tiene perfiles de trabajo asignados."));
             }
+            var accessToken = _tokenService.GenerateTemporaryAccessToken(user.Id, user.SecurityStamp, user.TokenVersion, userDevice.Id, request.IsPersistent, utcNow,
+                _tokenLifetimeSettings.TemporaryAccessTokenLifetimeMinutes);
             return Result<LoginResponse>.Ok(new LoginResponse(accessToken.Token, accessToken.ExpiresIn, accessToken.ExpiresAt, loginUser));
         }
 

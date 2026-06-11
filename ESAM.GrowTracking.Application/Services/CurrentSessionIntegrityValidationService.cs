@@ -17,11 +17,12 @@ namespace ESAM.GrowTracking.Application.Services
         private readonly IWorkProfilePermissionRepository _workProfilePermissionRepository;
         private readonly IUserRoleCampusRepository _userRoleCampusRepository;
         private readonly IRolePermissionRepository _rolePermissionRepository;
+        private readonly IBlacklistedAccessTokenTemporaryRepository _blacklistedAccessTokenTemporaryRepository;
 
         public CurrentSessionIntegrityValidationService(ILogger<CurrentSessionIntegrityValidationService> logger, IUserRepository userRepository, 
             IUserDeviceRepository userDeviceRepository, IUserWorkProfileRepository userWorkProfileRepository, IWorkProfileRepository workProfileRepository, 
             IWorkProfilePermissionRepository workProfilePermissionRepository, IUserRoleCampusRepository userRoleCampusRepository, 
-            IRolePermissionRepository rolePermissionRepository)
+            IRolePermissionRepository rolePermissionRepository, IBlacklistedAccessTokenTemporaryRepository blacklistedAccessTokenTemporaryRepository)
         {
             ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(userRepository);
@@ -31,6 +32,7 @@ namespace ESAM.GrowTracking.Application.Services
             ArgumentNullException.ThrowIfNull(workProfilePermissionRepository);
             ArgumentNullException.ThrowIfNull(userRoleCampusRepository);
             ArgumentNullException.ThrowIfNull(rolePermissionRepository);
+            ArgumentNullException.ThrowIfNull(blacklistedAccessTokenTemporaryRepository);
             _logger = logger;
             _userRepository = userRepository;
             _userDeviceRepository = userDeviceRepository;
@@ -39,6 +41,7 @@ namespace ESAM.GrowTracking.Application.Services
             _workProfilePermissionRepository = workProfilePermissionRepository;
             _userRoleCampusRepository = userRoleCampusRepository;
             _rolePermissionRepository = rolePermissionRepository;
+            _blacklistedAccessTokenTemporaryRepository = blacklistedAccessTokenTemporaryRepository;
         }
 
         public async Task<Result> ValidateUserAsync(int currentUserId, string currentSecurityStamp, int currentTokenVersion, DateTime utcNow, bool asTracking = false, 
@@ -82,6 +85,17 @@ namespace ESAM.GrowTracking.Application.Services
                 _logger.LogWarning("ValidateWorkProfileAsync: perfil de trabajo de usuario no encontrado o eliminado. UserId={UserId}, WorkProfileId={WorkProfileId}", 
                     currentUserId, currentWorkProfileId);
                 return Result.Fail(Error.NotFound("No se encontró un perfil de trabajo activo del tipo especificado asignado al usuario."));
+            }
+            return Result.Ok();
+        }
+
+        public async Task<Result> ValidateAccessTokenTemporaryAsync(string currentJti, bool asTracking = false, CancellationToken cancellationToken = default)
+        {
+            var doesBlacklistedAccessTokenTemporaryNotExist = await _blacklistedAccessTokenTemporaryRepository.DoesNotExistAsync(currentJti, asTracking, cancellationToken);
+            if (!doesBlacklistedAccessTokenTemporaryNotExist)
+            {
+                _logger.LogWarning("ValidateAccessTokenTemporaryAsync: pel jti del token temporal es inválido. Jti={Jti}", currentJti);
+                return Result.Fail(Error.NotFound("El jti del token temporal es inválido."));
             }
             return Result.Ok();
         }

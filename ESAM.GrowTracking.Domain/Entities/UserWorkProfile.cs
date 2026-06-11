@@ -28,17 +28,5 @@ namespace ESAM.GrowTracking.Domain.Entities
             WorkProfileId = workProfileId;
             SetCreatedAudit(createdBy, createdAt);
         }
-
-        //public void SoftDelete(int updatedBy)
-        //{
-        //    IsDeleted = true;
-        //    SetUpdatedAudit(updatedBy);
-        //}
-
-        //public void Restore(int updatedBy)
-        //{
-        //    IsDeleted = false;
-        //    SetUpdatedAudit(updatedBy);
-        //}
     }
 }

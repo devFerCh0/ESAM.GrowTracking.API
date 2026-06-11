@@ -13,6 +13,8 @@ namespace ESAM.GrowTracking.Application.Abstractions.Services
         Task<Result> ValidateUserWorkProfileAsync(int currentUserId, int currentWorkProfileId, WorkProfileType workProfileType, bool asTracking = false, 
             CancellationToken cancellationToken = default);
 
+        Task<Result> ValidateAccessTokenTemporaryAsync(string currentJti, bool asTracking = false, CancellationToken cancellationToken = default);
+
         //Task<Result> ValidateUserWorkProfileAndPermissionsAsync(int currentUserId, int currentWorkProfileId, WorkProfileType workProfileType, bool asTracking = false, 
         //    CancellationToken cancellationToken = default);
 
