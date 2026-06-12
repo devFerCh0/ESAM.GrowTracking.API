@@ -14,7 +14,7 @@ namespace ESAM.GrowTracking.API.Responses
                 throw new ArgumentException("Debe existir al menos un error.", nameof(errors));
             context.Response.StatusCode = statusCode;
             context.Response.ContentType = "application/json; charset=utf-8";
-            var payload = ApiErrorResponse.From(errors, ApiErrorSource.System, context.TraceIdentifier);
+            var payload = ApiErrorResponse.From(errors, context.TraceIdentifier, ApiErrorSource.System);
             return context.Response.WriteAsJsonAsync(payload, s_jsonOptions);
         }
 

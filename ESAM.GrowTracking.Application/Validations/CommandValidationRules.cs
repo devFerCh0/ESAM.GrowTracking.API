@@ -2,7 +2,7 @@
 
 namespace ESAM.GrowTracking.Application.Validations
 {
-    internal static partial class ValidationRules
+    public static partial class CommandValidationRules
     {
         [GeneratedRegex(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", RegexOptions.CultureInvariant)]
         private static partial Regex EmailRegex();
@@ -29,10 +29,5 @@ namespace ESAM.GrowTracking.Application.Validations
         {
             return !value.Any(char.IsControl);
         }
-
-        //public static bool BeAValidEnum<TEnum>(string? value) where TEnum : struct, Enum
-        //{
-        //    return EnumHelper.IsValidFromString<TEnum>(value);
-        //}
     }
 }

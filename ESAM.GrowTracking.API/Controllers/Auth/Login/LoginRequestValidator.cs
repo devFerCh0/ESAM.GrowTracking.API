@@ -1,4 +1,6 @@
-﻿using ESAM.GrowTracking.Domain.Enums;
+﻿using ESAM.GrowTracking.API.Serialization;
+using ESAM.GrowTracking.API.Validations;
+using ESAM.GrowTracking.Domain.Enums;
 using FluentValidation;
 
 namespace ESAM.GrowTracking.API.Controllers.Auth.Login
@@ -8,42 +10,18 @@ namespace ESAM.GrowTracking.API.Controllers.Auth.Login
         public LoginRequestValidator()
         {
             RuleFor(lc => lc.Credential).Cascade(CascadeMode.Stop)
-                .NotNull().WithMessage(ValidationMessages.CredentialRequired);
-
+                .NotNull().WithMessage(RequestValidationMessages.CredentialRequired);
             RuleFor(lc => lc.Password).Cascade(CascadeMode.Stop)
-                .NotNull().WithMessage(ValidationMessages.PasswordRequired);
-
+                .NotNull().WithMessage(RequestValidationMessages.PasswordRequired);
             RuleFor(lc => lc.IsPersistent)
-                .NotNull().WithMessage(ValidationMessages.IsPersistentRequired);
-
+                .NotNull().WithMessage(RequestValidationMessages.IsPersistentRequired);
             RuleFor(lc => lc.DeviceIdentifier).Cascade(CascadeMode.Stop)
-                .NotNull().WithMessage(ValidationMessages.DeviceIdentifierRequired);
-
+                .NotNull().WithMessage(RequestValidationMessages.DeviceIdentifierRequired);
             RuleFor(lc => lc.DeviceName).Cascade(CascadeMode.Stop)
-                .NotNull().WithMessage(ValidationMessages.DeviceNameRequired);
-
+                .NotNull().WithMessage(RequestValidationMessages.DeviceNameRequired);
             RuleFor(lc => lc.ApiClientType).Cascade(CascadeMode.Stop)
-                .NotEmpty().WithMessage(ValidationMessages.ApiClientTypeRequired)
-                .Must(ValidationRules.BeAValidEnum<ApiClientType>).WithMessage(ValidationMessages.ApiClientTypeInvalid);
-
-
-            //RuleFor(x => x.Credential)
-            //    .NotNull().WithMessage("La credencial es obligatoria.");
-
-            //RuleFor(x => x.Password)
-            //    .NotNull().WithMessage("La contraseña es obligatoria.");
-
-            //RuleFor(x => x.IsPersistent)
-            //    .NotNull().WithMessage("El campo IsPersistent es obligatorio.");
-
-            //RuleFor(x => x.DeviceIdentifier)
-            //    .NotNull().WithMessage("El identificador del dispositivo es obligatorio.");
-
-            //RuleFor(x => x.DeviceName)
-            //    .NotNull().WithMessage("El nombre del dispositivo es obligatorio.");
-
-            RuleFor(x => x.ApiClientType)
-                .NotNull().WithMessage("El tipo de cliente es obligatorio.");
+                .NotNull().WithMessage(RequestValidationMessages.ApiClientTypeRequired)
+                .Must(EnumHelper.IsValidFromString<ApiClientType>).WithMessage(RequestValidationMessages.ApiClientTypeInvalid);
         }
     }
 }

@@ -8,27 +8,27 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Login
         public LoginCommandValidator()
         {
             RuleFor(lc => lc.Credential).Cascade(CascadeMode.Stop)
-                .NotEmpty().WithMessage(ValidationMessages.CredentialRequired)
-                .MinimumLength(5).WithMessage(ValidationMessages.CredentialMinLength)
-                .MaximumLength(50).WithMessage(ValidationMessages.CredentialMaxLength)
-                .Must(ValidationRules.IsValidCredential).WithMessage((_, credential) => credential!.Contains('@')
-                    ? ValidationMessages.CredentialValidatedEmail : ValidationMessages.CredentialValidatedUsername);
+                .NotEmpty().WithMessage(CommandValidationMessages.CredentialRequired)
+                .MinimumLength(5).WithMessage(CommandValidationMessages.CredentialMinLength)
+                .MaximumLength(50).WithMessage(CommandValidationMessages.CredentialMaxLength)
+                .Must(CommandValidationRules.IsValidCredential).WithMessage((_, credential) => credential!.Contains('@')
+                    ? CommandValidationMessages.CredentialValidatedEmail : CommandValidationMessages.CredentialValidatedUsername);
             RuleFor(lc => lc.Password).Cascade(CascadeMode.Stop)
-                .NotEmpty().WithMessage(ValidationMessages.PasswordRequired)
-                .MinimumLength(5).WithMessage(ValidationMessages.PasswordMinLength)
-                .MaximumLength(100).WithMessage(ValidationMessages.PasswordMaxLength);
+                .NotEmpty().WithMessage(CommandValidationMessages.PasswordRequired)
+                .MinimumLength(5).WithMessage(CommandValidationMessages.PasswordMinLength)
+                .MaximumLength(100).WithMessage(CommandValidationMessages.PasswordMaxLength);
             RuleFor(lc => lc.DeviceIdentifier).Cascade(CascadeMode.Stop)
-                .NotEmpty().WithMessage(ValidationMessages.DeviceIdentifierRequired)
-                .MinimumLength(3).WithMessage(ValidationMessages.DeviceIdentifierMinLength)
-                .MaximumLength(256).WithMessage(ValidationMessages.DeviceIdentifierMaxLength)
-                .Must(ValidationRules.IsValidGuid).WithMessage(ValidationMessages.DeviceIdentifierInvalid);
+                .NotEmpty().WithMessage(CommandValidationMessages.DeviceIdentifierRequired)
+                .MinimumLength(3).WithMessage(CommandValidationMessages.DeviceIdentifierMinLength)
+                .MaximumLength(256).WithMessage(CommandValidationMessages.DeviceIdentifierMaxLength)
+                .Must(CommandValidationRules.IsValidGuid).WithMessage(CommandValidationMessages.DeviceIdentifierInvalid);
             RuleFor(lc => lc.DeviceName).Cascade(CascadeMode.Stop)
-                .NotEmpty().WithMessage(ValidationMessages.DeviceNameRequired)
-                .MinimumLength(2).WithMessage(ValidationMessages.DeviceNameMinLength)
-                .MaximumLength(100).WithMessage(ValidationMessages.DeviceNameMaxLength)
-                .Must(ValidationRules.HasNoControlChars).WithMessage(ValidationMessages.DeviceNameInvalid);
+                .NotEmpty().WithMessage(CommandValidationMessages.DeviceNameRequired)
+                .MinimumLength(2).WithMessage(CommandValidationMessages.DeviceNameMinLength)
+                .MaximumLength(100).WithMessage(CommandValidationMessages.DeviceNameMaxLength)
+                .Must(CommandValidationRules.HasNoControlChars).WithMessage(CommandValidationMessages.DeviceNameInvalid);
             RuleFor(lc => lc.ApiClientType).Cascade(CascadeMode.Stop)
-                .IsInEnum().WithMessage(ValidationMessages.ApiClientTypeInvalid);
+                .IsInEnum().WithMessage(CommandValidationMessages.ApiClientTypeInvalid);
         }
     }
 }

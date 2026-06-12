@@ -1,6 +1,6 @@
 ﻿using System.Globalization;
 
-namespace ESAM.GrowTracking.Application.Utilities
+namespace ESAM.GrowTracking.API.Serialization
 {
     public static class EnumHelper
     {

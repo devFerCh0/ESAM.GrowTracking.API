@@ -38,12 +38,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="Controllers\Auth\AuthController.cs" />
-    <Compile Remove="Converters\JsonEnumConverter.cs" />
-    <Compile Remove="Converters\JsonEnumConverterFactory.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="AutoMapper" Version="16.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.26" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.25">
@@ -57,10 +51,6 @@
     <ProjectReference Include="..\ESAM.GrowTracking.Application\ESAM.GrowTracking.Application.csproj" />
     <ProjectReference Include="..\ESAM.GrowTracking.Infrastructure\ESAM.GrowTracking.Infrastructure.csproj" />
     <ProjectReference Include="..\ESAM.GrowTracking.Persistence\ESAM.GrowTracking.Persistence.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Converters\" />
   </ItemGroup>
 
 </Project>

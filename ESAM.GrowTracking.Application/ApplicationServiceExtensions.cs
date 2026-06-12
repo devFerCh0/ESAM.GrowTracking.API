@@ -1,4 +1,7 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using ESAM.GrowTracking.Application.Features.Auth.Login;
+using ESAM.GrowTracking.Application.Settings;
+using FluentValidation;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -12,12 +15,12 @@ namespace ESAM.GrowTracking.Application
             ArgumentNullException.ThrowIfNull(configuration);
             ArgumentNullException.ThrowIfNull(environment);
             var isProduction = environment.IsProduction();
-            //services.AddOptions<AuthSecuritySettings>().Bind(configuration.GetSection(nameof(AuthSecuritySettings)))
-            //    .Validate(authSecuritySettings => { authSecuritySettings.Validate(isProduction); return true; }).ValidateOnStart();
+            services.AddOptions<AuthSecuritySettings>().Bind(configuration.GetSection(nameof(AuthSecuritySettings)))
+                .Validate(authSecuritySettings => { authSecuritySettings.Validate(isProduction); return true; }).ValidateOnStart();
             //services.AddOptions<CleanupSettings>().Bind(configuration.GetSection(nameof(CleanupSettings)))
             //    .Validate(cleanupSettings => { cleanupSettings.Validate(); return true; }).ValidateOnStart();
-            //services.AddOptions<TokenLifetimeSettings>().Bind(configuration.GetSection(nameof(TokenLifetimeSettings)))
-            //    .Validate(tokenLifetimeSettings => { tokenLifetimeSettings.Validate(isProduction); return true; }).ValidateOnStart();
+            services.AddOptions<TokenLifetimeSettings>().Bind(configuration.GetSection(nameof(TokenLifetimeSettings)))
+                .Validate(tokenLifetimeSettings => { tokenLifetimeSettings.Validate(isProduction); return true; }).ValidateOnStart();
             return services;
         }
 
@@ -42,15 +45,15 @@ namespace ESAM.GrowTracking.Application
 
         private static void RegisterCommandMediatR(IServiceCollection services)
         {
-            //services.AddMediatR(mrsc =>
-            //{
-            //    mrsc.RegisterServicesFromAssembly(typeof(LoginCommand).Assembly);
+            services.AddMediatR(mrsc =>
+            {
+                mrsc.RegisterServicesFromAssembly(typeof(LoginCommand).Assembly);
             //    mrsc.RegisterServicesFromAssembly(typeof(AssumeWorkProfileCommand).Assembly);
             //    mrsc.RegisterServicesFromAssembly(typeof(AssumeRoleCampusCommand).Assembly);
             //    mrsc.RegisterServicesFromAssembly(typeof(RefreshCommand).Assembly);
             //    mrsc.RegisterServicesFromAssembly(typeof(LogoutCommand).Assembly);
-            //});
-            //services.AddValidatorsFromAssemblyContaining<LoginCommandValidator>()
+            });
+            services.AddValidatorsFromAssemblyContaining<LoginCommandValidator>();
             //.AddValidatorsFromAssemblyContaining<AssumeWorkProfileCommandValidator>()
             //.AddValidatorsFromAssemblyContaining<AssumeRoleCampusCommandValidator>()
             //.AddValidatorsFromAssemblyContaining<RefreshCommandValidator>()

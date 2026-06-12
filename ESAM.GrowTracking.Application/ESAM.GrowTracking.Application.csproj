@@ -51,8 +51,6 @@
     <Compile Remove="Services\TokenSessionValidationService.cs" />
     <Compile Remove="Services\UserSessionService.cs" />
     <Compile Remove="Settings\CleanupSettings.cs" />
-    <Compile Remove="Utilities\EnumHelper.cs" />
-    <Compile Remove="Utilities\EnumMetadata.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -76,7 +74,6 @@
     <Folder Include="Abstractions\Services\Results\" />
     <Folder Include="Helpers\" />
     <Folder Include="Services\" />
-    <Folder Include="Utilities\" />
   </ItemGroup>
 
 </Project>
