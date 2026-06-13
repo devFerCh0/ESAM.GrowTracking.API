@@ -8,8 +8,8 @@ namespace ESAM.GrowTracking.Application.Features.Auth.GetUserRoleCampuses
         public GetUserRoleCampusesQueryValidator()
         {
             RuleFor(gurcq => gurcq.WorkProfileId).Cascade(CascadeMode.Stop)
-                .NotNull().WithMessage(ValidationMessages.WorkProfileIdRequired)
-                .GreaterThan(0).WithMessage(ValidationMessages.WorkProfileIdInvalid);
+                .NotEmpty().WithMessage(CommandValidationMessages.WorkProfileIdRequired)
+                .GreaterThan(0).WithMessage(CommandValidationMessages.WorkProfileIdInvalid);
         }
     }
 }

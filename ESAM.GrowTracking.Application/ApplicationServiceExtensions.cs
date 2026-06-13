@@ -28,8 +28,8 @@ namespace ESAM.GrowTracking.Application
         {
             ArgumentNullException.ThrowIfNull(services);
             RegisterServices(services);
-            RegisterCommandMediatR(services);
-            RegisterQueriesMediatR(services);
+            RegisterMediatR(services);
+            RegisterValidators(services);
             return services;
         }
 
@@ -43,7 +43,7 @@ namespace ESAM.GrowTracking.Application
             //services.AddHostedService<PurgeExpiredTokensHostedService>();
         }
 
-        private static void RegisterCommandMediatR(IServiceCollection services)
+        private static void RegisterMediatR(IServiceCollection services)
         {
             services.AddMediatR(mrsc =>
             {
@@ -53,19 +53,19 @@ namespace ESAM.GrowTracking.Application
             //    mrsc.RegisterServicesFromAssembly(typeof(RefreshCommand).Assembly);
             //    mrsc.RegisterServicesFromAssembly(typeof(LogoutCommand).Assembly);
             });
+            //services.AddMediatR(mrsc =>
+            //{
+            //    mrsc.RegisterServicesFromAssembly(typeof(GetUserRoleCampusesQuery).Assembly);
+            //});
+        }
+
+        private static void RegisterValidators(IServiceCollection services)
+        {
             services.AddValidatorsFromAssemblyContaining<LoginCommandValidator>();
             //.AddValidatorsFromAssemblyContaining<AssumeWorkProfileCommandValidator>()
             //.AddValidatorsFromAssemblyContaining<AssumeRoleCampusCommandValidator>()
             //.AddValidatorsFromAssemblyContaining<RefreshCommandValidator>()
             //.AddValidatorsFromAssemblyContaining<LogoutCommandValidator>();
-        }
-
-        private static void RegisterQueriesMediatR(IServiceCollection services)
-        {
-            //services.AddMediatR(mrsc =>
-            //{
-            //    mrsc.RegisterServicesFromAssembly(typeof(GetUserRoleCampusesQuery).Assembly);
-            //});
             //services.AddValidatorsFromAssemblyContaining<GetUserRoleCampusesQueryValidator>();
         }
     }

@@ -12,21 +12,20 @@ namespace ESAM.GrowTracking.Persistence.DataAccess.Repositories
         {
             var normalizedCredential = credential.Trim().ToUpperInvariant();
             var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
-            return await query.FirstOrDefaultAsync(u => u.NormalizedUserName == normalizedCredential || u.NormalizedEmail == normalizedCredential, cancellationToken)
-                .ConfigureAwait(false);
+            return await query.FirstOrDefaultAsync(u => u.NormalizedUserName == normalizedCredential || u.NormalizedEmail == normalizedCredential, cancellationToken);
         }
 
-        //public async Task<bool> IsActiveAndUnlockedAsync(int id, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
-        //{
-        //    var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
-        //    return await query.AnyAsync(u => u.Id == id && !u.IsDeleted && (u.LockoutEndAt == null || u.LockoutEndAt <= utcNow), cancellationToken).ConfigureAwait(false);
-        //}
+        public async Task<bool> IsActiveAndUnlockedAsync(int id, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
+        {
+            var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
+            return await query.AnyAsync(u => u.Id == id && !u.IsDeleted && (u.LockoutEndAt == null || u.LockoutEndAt <= utcNow), cancellationToken);
+        }
 
-        //public async Task<bool> HasValidSecurityCredentialsAsync(int id, string securityStamp, int tokenVersion, bool asTracking = false, 
-        //    CancellationToken cancellationToken = default)
-        //{
-        //    var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
-        //    return await query.AnyAsync(u => u.Id == id && u.SecurityStamp == securityStamp && u.TokenVersion == tokenVersion, cancellationToken).ConfigureAwait(false);
-        //}
+        public async Task<bool> HasValidSecurityCredentialsAsync(int id, string securityStamp, int tokenVersion, bool asTracking = false, 
+            CancellationToken cancellationToken = default)
+        {
+            var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
+            return await query.AnyAsync(u => u.Id == id && u.SecurityStamp == securityStamp && u.TokenVersion == tokenVersion, cancellationToken);
+        }
     }
 }

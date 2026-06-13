@@ -1,6 +1,7 @@
 ﻿using ESAM.GrowTracking.API.Abstractions.Mappers;
 using ESAM.GrowTracking.API.Adapters;
 using ESAM.GrowTracking.API.ConfigureOptions;
+using ESAM.GrowTracking.API.Controllers.Auth.Login;
 using ESAM.GrowTracking.API.Filters;
 using ESAM.GrowTracking.API.HealthChecks;
 using ESAM.GrowTracking.API.Mappers;
@@ -9,6 +10,7 @@ using ESAM.GrowTracking.API.Settings;
 using ESAM.GrowTracking.Infrastructure.Abstractions.Http;
 using ESAM.GrowTracking.Infrastructure.Abstractions.Security;
 using ESAM.GrowTracking.Infrastructure.Settings;
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -221,19 +223,26 @@ namespace ESAM.GrowTracking.API
             return services;
         }
 
-        public static IServiceCollection AddMappingProfiles(this IServiceCollection services)
+        public static IServiceCollection AddAPIMappingProfiles(this IServiceCollection services)
         {
-            //ArgumentNullException.ThrowIfNull(services);
-            //services.AddAutoMapper(mce =>
-            //{
-            //    mce.AddMaps(typeof(LoginMappingProfile).Assembly);
+            ArgumentNullException.ThrowIfNull(services);
+            services.AddAutoMapper(mce =>
+            {
+                mce.AddMaps(typeof(LoginMappingProfile).Assembly);
             //    mce.AddMaps(typeof(AssumeWorkProfileMappingProfile).Assembly);
             //    mce.AddMaps(typeof(GetUserRoleCampusMappingProfile).Assembly);
             //    mce.AddMaps(typeof(AssumeRoleCampusMappingProfile).Assembly);
             //    mce.AddMaps(typeof(RefreshMappingProfile).Assembly);
             //    mce.AddMaps(typeof(GetCurrentUserWorkProfileMappingProfile).Assembly);
             //    mce.AddMaps(typeof(GetCurrentUserRoleCampusMappingProfile).Assembly);
-            //});
+            });
+            return services;
+        }
+
+        public static IServiceCollection AddAPIValidators(this IServiceCollection services)
+        {
+            ArgumentNullException.ThrowIfNull(services);
+            services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
             return services;
         }
     }

@@ -10,6 +10,7 @@
         public const string PasswordRequired = "La contraseña es obligatoria.";
         public const string PasswordMinLength = "La contraseña debe tener al menos 5 caracteres.";
         public const string PasswordMaxLength = "La contraseña no debe exceder de 100 caracteres.";
+        public const string IsPersistentRequired = "La opción 'Recuérdame' es obligatoria.";
         public const string DeviceIdentifierRequired = "El identificador del dispositivo es obligatorio.";
         public const string DeviceIdentifierMinLength = "El identificador del dispositivo debe de tener al menos 3 caracteres.";
         public const string DeviceIdentifierMaxLength = "El identificador del dispositivo no puede exceder los 256 caracteres.";
@@ -18,9 +19,10 @@
         public const string DeviceNameMinLength = "El nombre del dispositivo debe tener al menos 2 caracteres.";
         public const string DeviceNameMaxLength = "El nombre del dispositivo no puede exceder de 100 caracteres.";
         public const string DeviceNameInvalid = "El nombre del dispositivo contiene caracteres no permitidos.";
+        public const string ApiClientTypeRequired = "El tipo de cliente es obligatorio.";
         public const string ApiClientTypeInvalid = "El tipo de cliente no es válido.";
-        //public const string WorkProfileIdRequired = "El perfil de trabajo es obligatorio.";
-        //public const string WorkProfileIdInvalid = "El perfil de trabajo no es válido.";
+        public const string WorkProfileIdRequired = "El perfil de trabajo es obligatorio.";
+        public const string WorkProfileIdInvalid = "El perfil de trabajo no es válido.";
         //public const string RoleIdRequired = "El rol es obligatorio.";
         //public const string RoleIdInvalid = "El rol no es válido.";
         //public const string CampusIdRequired = "La sede es obligatoria.";

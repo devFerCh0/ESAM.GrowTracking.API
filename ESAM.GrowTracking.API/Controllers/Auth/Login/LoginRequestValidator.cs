@@ -9,17 +9,17 @@ namespace ESAM.GrowTracking.API.Controllers.Auth.Login
     {
         public LoginRequestValidator()
         {
-            RuleFor(lc => lc.Credential).Cascade(CascadeMode.Stop)
+            RuleFor(lr => lr.Credential).Cascade(CascadeMode.Stop)
                 .NotNull().WithMessage(RequestValidationMessages.CredentialRequired);
-            RuleFor(lc => lc.Password).Cascade(CascadeMode.Stop)
+            RuleFor(lr => lr.Password).Cascade(CascadeMode.Stop)
                 .NotNull().WithMessage(RequestValidationMessages.PasswordRequired);
-            RuleFor(lc => lc.IsPersistent)
+            RuleFor(lr => lr.IsPersistent)
                 .NotNull().WithMessage(RequestValidationMessages.IsPersistentRequired);
-            RuleFor(lc => lc.DeviceIdentifier).Cascade(CascadeMode.Stop)
+            RuleFor(lr => lr.DeviceIdentifier).Cascade(CascadeMode.Stop)
                 .NotNull().WithMessage(RequestValidationMessages.DeviceIdentifierRequired);
-            RuleFor(lc => lc.DeviceName).Cascade(CascadeMode.Stop)
+            RuleFor(lr => lr.DeviceName).Cascade(CascadeMode.Stop)
                 .NotNull().WithMessage(RequestValidationMessages.DeviceNameRequired);
-            RuleFor(lc => lc.ApiClientType).Cascade(CascadeMode.Stop)
+            RuleFor(lr => lr.ApiClientType).Cascade(CascadeMode.Stop)
                 .NotNull().WithMessage(RequestValidationMessages.ApiClientTypeRequired)
                 .Must(EnumHelper.IsValidFromString<ApiClientType>).WithMessage(RequestValidationMessages.ApiClientTypeInvalid);
         }

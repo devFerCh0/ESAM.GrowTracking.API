@@ -17,6 +17,8 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Login
                 .NotEmpty().WithMessage(CommandValidationMessages.PasswordRequired)
                 .MinimumLength(5).WithMessage(CommandValidationMessages.PasswordMinLength)
                 .MaximumLength(100).WithMessage(CommandValidationMessages.PasswordMaxLength);
+            RuleFor(lc => lc.IsPersistent).Cascade(CascadeMode.Stop)
+                .NotEmpty().WithMessage(CommandValidationMessages.IsPersistentRequired);
             RuleFor(lc => lc.DeviceIdentifier).Cascade(CascadeMode.Stop)
                 .NotEmpty().WithMessage(CommandValidationMessages.DeviceIdentifierRequired)
                 .MinimumLength(3).WithMessage(CommandValidationMessages.DeviceIdentifierMinLength)
@@ -28,6 +30,7 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Login
                 .MaximumLength(100).WithMessage(CommandValidationMessages.DeviceNameMaxLength)
                 .Must(CommandValidationRules.HasNoControlChars).WithMessage(CommandValidationMessages.DeviceNameInvalid);
             RuleFor(lc => lc.ApiClientType).Cascade(CascadeMode.Stop)
+                .NotEmpty().WithMessage(CommandValidationMessages.DeviceNameRequired)
                 .IsInEnum().WithMessage(CommandValidationMessages.ApiClientTypeInvalid);
         }
     }
