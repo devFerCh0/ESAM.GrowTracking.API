@@ -1,6 +1,6 @@
-﻿using ESAM.GrowTracking.Application.Utilities;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using ESAM.GrowTracking.API.Serialization;
 
 namespace ESAM.GrowTracking.API.Converters
 {
@@ -43,9 +43,14 @@ namespace ESAM.GrowTracking.API.Converters
             if (reader.TokenType == JsonTokenType.String)
             {
                 var raw = reader.GetString() ?? string.Empty;
-                if (EnumHelper.TryParseFromString<TEnum>(raw, out var parsed))
-                    return parsed;
-                throw new JsonException($"'{raw}' no es un valor válido para el tipo de enumeración {typeof(TEnum).Name}.");
+                try
+                {
+                    return EnumHelper.ParseFromString<TEnum>(raw);
+                }
+                catch (FormatException ex)
+                {
+                    throw new JsonException($"'{raw}' no es un valor válido para el tipo de enumeración {typeof(TEnum).Name}.", ex);
+                }
             }
             throw new JsonException($"Token inesperado al parsear el tipo de enumeración. Token: {reader.TokenType}.");
         }
@@ -54,7 +59,8 @@ namespace ESAM.GrowTracking.API.Converters
         {
             if (EnumMetadata<TEnum>.IsFlags && Convert.ToUInt64(value) == 0UL)
             {
-                if (EnumHelper.TryGetZeroFlagStringValue<TEnum>(out var zeroStr))
+                var zeroStr = EnumHelper.GetZeroFlagStringValue<TEnum>();
+                if (zeroStr is not null)
                     writer.WriteStringValue(zeroStr);
                 else
                     writer.WriteNumberValue(0);
