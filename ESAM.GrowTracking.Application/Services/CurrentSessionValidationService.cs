@@ -1,8 +1,9 @@
 ﻿using ESAM.GrowTracking.Application.Abstractions.Services;
+using ESAM.GrowTracking.Application.Enums;
+using ESAM.GrowTracking.Application.Features.Auth.GetUserRoleCampuses;
 using ESAM.GrowTracking.Application.Results;
 using ESAM.GrowTracking.Application.ValueObjects;
 using ESAM.GrowTracking.Domain.Abstractions.DataAccess.Repositories;
-using ESAM.GrowTracking.Domain.Enums;
 using Microsoft.Extensions.Logging;
 
 namespace ESAM.GrowTracking.Application.Services
@@ -12,6 +13,8 @@ namespace ESAM.GrowTracking.Application.Services
         private readonly ILogger<CurrentSessionValidationService> _logger;
         private readonly IUserRepository _userRepository;
         private readonly IUserDeviceRepository _userDeviceRepository;
+        private readonly IBlacklistedAccessTokenTemporaryRepository _blacklistedAccessTokenTemporaryRepository;
+
         //private readonly IUserWorkProfileRepository _userWorkProfileRepository;
         //private readonly IWorkProfileRepository _workProfileRepository;
         //private readonly IWorkProfilePermissionRepository _workProfilePermissionRepository;
@@ -19,7 +22,8 @@ namespace ESAM.GrowTracking.Application.Services
         //private readonly IRolePermissionRepository _rolePermissionRepository;
         //private readonly IBlacklistedAccessTokenTemporaryRepository _blacklistedAccessTokenTemporaryRepository;
 
-        public CurrentSessionValidationService(ILogger<CurrentSessionValidationService> logger, IUserRepository userRepository, IUserDeviceRepository userDeviceRepository
+        public CurrentSessionValidationService(ILogger<CurrentSessionValidationService> logger, IUserRepository userRepository, IUserDeviceRepository userDeviceRepository, 
+            IBlacklistedAccessTokenTemporaryRepository blacklistedAccessTokenTemporaryRepository
             //IUserWorkProfileRepository userWorkProfileRepository, IWorkProfileRepository workProfileRepository, IWorkProfilePermissionRepository workProfilePermissionRepository, 
             //IUserRoleCampusRepository userRoleCampusRepository, IRolePermissionRepository rolePermissionRepository, 
             //IBlacklistedAccessTokenTemporaryRepository blacklistedAccessTokenTemporaryRepository
@@ -28,6 +32,7 @@ namespace ESAM.GrowTracking.Application.Services
             ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(userRepository);
             ArgumentNullException.ThrowIfNull(userDeviceRepository);
+            ArgumentNullException.ThrowIfNull(blacklistedAccessTokenTemporaryRepository);
             //ArgumentNullException.ThrowIfNull(userWorkProfileRepository);
             //ArgumentNullException.ThrowIfNull(workProfileRepository);
             //ArgumentNullException.ThrowIfNull(workProfilePermissionRepository);
@@ -37,6 +42,7 @@ namespace ESAM.GrowTracking.Application.Services
             _logger = logger;
             _userRepository = userRepository;
             _userDeviceRepository = userDeviceRepository;
+            _blacklistedAccessTokenTemporaryRepository = blacklistedAccessTokenTemporaryRepository;
             //_userWorkProfileRepository = userWorkProfileRepository;
             //_workProfileRepository = workProfileRepository;
             //_workProfilePermissionRepository = workProfilePermissionRepository;
@@ -44,6 +50,48 @@ namespace ESAM.GrowTracking.Application.Services
             //_rolePermissionRepository = rolePermissionRepository;
             //_blacklistedAccessTokenTemporaryRepository = blacklistedAccessTokenTemporaryRepository;
         }
+
+        public async Task<Result> ValidateCurrentTemporaryAsync(string currentJti, AccessTokenType currentAccessTokenType, int currentUserId, string currentSecurityStamp, 
+            int currentTokenVersion, int currentUserDeviceId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
+        {
+            if (currentAccessTokenType != AccessTokenType.Temporary)
+            {
+                _logger.LogWarning("ValidateCurrentTemporaryAsync: tipo de token de acceso inválido. Esperado=Temporal, Actual={AccessTokenType}", currentAccessTokenType);
+                return Result.Fail(Error.Unauthorized("Esta operación requiere un token de acceso temporal."));
+            }
+            var doesBlacklistedAccessTokenTemporaryNotExist = await _blacklistedAccessTokenTemporaryRepository.DoesNotExistAsync(currentJti, asTracking, cancellationToken);
+            if (!doesBlacklistedAccessTokenTemporaryNotExist)
+            {
+                _logger.LogWarning("ValidateCurrentTemporaryAsync: el jti del token temporal es inválido. Jti={Jti}", currentJti);
+                return Result.Fail(Error.NotFound("El jti del token temporal es inválido."));
+            }
+        }
+
+        public async Task<Result> ValidateCurrentSessionAsync(string currentJti, AccessTokenType currentAccessTokenType, int currentUserId, string currentSecurityStamp,
+            int currentTokenVersion, int currentUserDeviceId, int currentWorkProfileId, int currentRoleId, int currentCampusId, int currentUserSessionid, DateTime utcNow, 
+            bool asTracking = false, CancellationToken cancellationToken = default)
+        {
+            if (currentAccessTokenType != AccessTokenType.Session)
+            {
+                _logger.LogWarning("ValidateCurrentSessionAsync: tipo de token de acceso inválido. Esperado=Sesión, Actual={AccessTokenType}", currentAccessTokenType);
+                return Result.Fail(Error.Unauthorized("Esta operación requiere un token de acceso de sesión."));
+            }
+            var doesBlacklistedAccessTokenTemporaryNotExist = await _blacklistedAccessTokenPermanentRepository.DoesNotExistAsync(currentJti, asTracking, cancellationToken);
+            if (!doesBlacklistedAccessTokenTemporaryNotExist)
+            {
+                _logger.LogWarning("ValidateCurrentSessionAsync: el jti del token se sesión es inválido. Jti={Jti}", currentJti);
+                return Result.Fail(Error.NotFound("El jti del token de sesión es inválido."));
+            }
+        }
+
+
+
+
+
+
+
+
+
 
         public async Task<Result> ValidateCurrentUserAsync(int currentUserId, string currentSecurityStamp, int currentTokenVersion, DateTime utcNow, bool asTracking = false, 
             CancellationToken cancellationToken = default)

@@ -3,19 +3,24 @@ using ESAM.GrowTracking.Domain.Entities;
 using ESAM.GrowTracking.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System.Threading;
 
 namespace ESAM.GrowTracking.Persistence.DataAccess.Repositories
 {
     public class BlacklistedAccessTokenTemporaryRepository(ILogger<BlacklistedAccessTokenTemporaryRepository> logger, AppDbContext context) 
         : Repository<BlacklistedAccessTokenTemporary, int>(logger, context), IBlacklistedAccessTokenTemporaryRepository
     {
+        public async Task<bool> DoesNotExistAsync(string jti, bool asTracking = false, CancellationToken cancellationToken = default)
+        {
+            var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
+            return !await query.AnyAsync(batt => batt.Jti == jti, cancellationToken).ConfigureAwait(false);
+        }
+
         //public async Task<bool> ExistsAsync(string jti, bool asTracking = false, CancellationToken cancellationToken = default)
         //{
         //    var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
         //    return await query.AnyAsync(batt => batt.Jti == jti, cancellationToken).ConfigureAwait(false);
         //}
-        
+
         //public async Task<int> PurgeExpiredBlacklistedAccessTokensTemporaryAsync(int batchSize, DateTime utcNow, CancellationToken cancellationToken = default)
         //{
         //    if (batchSize <= 0)
@@ -30,12 +35,6 @@ namespace ESAM.GrowTracking.Persistence.DataAccess.Repositories
         //            break;
         //    }
         //    return totalDeleted;
-        //}
-
-        //public async Task<bool> DoesNotExistAsync(string jti, bool asTracking = false, CancellationToken cancellationToken = default)
-        //{
-        //    var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
-        //    return !await query.AnyAsync(batt => batt.Jti == jti, cancellationToken).ConfigureAwait(false);
         //}
     }
 }
