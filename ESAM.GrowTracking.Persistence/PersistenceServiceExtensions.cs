@@ -72,7 +72,7 @@ namespace ESAM.GrowTracking.Persistence
         {
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
-            services.AddScoped<IBlacklistedAccessTokenPermanentRepository, BlacklistedAccessTokenPermanentRepository>();
+            services.AddScoped<IBlacklistedAccessTokenSessionRepository, BlacklistedAccessTokenSessionRepository>();
             services.AddScoped<IBlacklistedAccessTokenTemporaryRepository, BlacklistedAccessTokenTemporaryRepository>();
             services.AddScoped<IBlacklistedRefreshTokenRepository, BlacklistedRefreshTokenRepository>();
             services.AddScoped<IRolePermissionRepository, RolePermissionRepository>();

@@ -2,9 +2,9 @@
 
 namespace ESAM.GrowTracking.Domain.Entities
 {
-    public sealed class BlacklistedAccessTokenPermanent : IEntity<int>
+    public sealed class BlacklistedAccessTokenSession : IEntity<int>
     {
-        private BlacklistedAccessTokenPermanent() { }
+        private BlacklistedAccessTokenSession() { }
 
         public int Id { get; private set; }
 
@@ -26,7 +26,7 @@ namespace ESAM.GrowTracking.Domain.Entities
 
         public UserSession UserSession { get; private set; } = null!;
 
-        //public BlacklistedAccessTokenPermanent(int userSessionId, string jti, DateTime expiresAt, DateTime blacklistedAt, string reason, int createdBy, DateTime? createdAt = null)
+        //public BlacklistedAccessTokenSession(int userSessionId, string jti, DateTime expiresAt, DateTime blacklistedAt, string reason, int createdBy, DateTime? createdAt = null)
         //{
         //    UserSessionId = userSessionId;
         //    Jti = jti;

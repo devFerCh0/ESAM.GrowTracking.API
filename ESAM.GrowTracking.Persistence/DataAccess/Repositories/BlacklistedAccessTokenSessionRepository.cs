@@ -6,15 +6,21 @@ using Microsoft.Extensions.Logging;
 
 namespace ESAM.GrowTracking.Persistence.DataAccess.Repositories
 {
-    public class BlacklistedAccessTokenPermanentRepository(ILogger<BlacklistedAccessTokenPermanentRepository> logger, AppDbContext context) 
-        : Repository<BlacklistedAccessTokenPermanent, int>(logger, context), IBlacklistedAccessTokenPermanentRepository
+    public class BlacklistedAccessTokenSessionRepository(ILogger<BlacklistedAccessTokenSessionRepository> logger, AppDbContext context) 
+        : Repository<BlacklistedAccessTokenSession, int>(logger, context), IBlacklistedAccessTokenSessionRepository
     {
+        public async Task<bool> DoesNotExistAsync(string jti, bool asTracking = false, CancellationToken cancellationToken = default)
+        {
+            var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
+            return !await query.AnyAsync(bats => bats.Jti == jti, cancellationToken);
+        }
+
         //public async Task<bool> ExistsAsync(string jti, bool asTracking = false, CancellationToken cancellationToken = default)
         //{
         //    var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
         //    return await query.AnyAsync(batp => batp.Jti == jti, cancellationToken).ConfigureAwait(false);
         //}
-        
+
         //public async Task<int> PurgeExpiredBlacklistedAccessTokensPermanentAsync(int batchSize, DateTime utcNow, CancellationToken cancellationToken = default)
         //{
         //    if (batchSize <= 0)

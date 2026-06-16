@@ -12,7 +12,7 @@ namespace ESAM.GrowTracking.Persistence.DataAccess.Repositories
         public async Task<bool> DoesNotExistAsync(string jti, bool asTracking = false, CancellationToken cancellationToken = default)
         {
             var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
-            return !await query.AnyAsync(batt => batt.Jti == jti, cancellationToken).ConfigureAwait(false);
+            return !await query.AnyAsync(batt => batt.Jti == jti, cancellationToken);
         }
 
         //public async Task<bool> ExistsAsync(string jti, bool asTracking = false, CancellationToken cancellationToken = default)

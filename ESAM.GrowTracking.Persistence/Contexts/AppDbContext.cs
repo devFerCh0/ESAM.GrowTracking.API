@@ -6,7 +6,7 @@ namespace ESAM.GrowTracking.Persistence.Contexts
 {
     public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
     {
-        public DbSet<BlacklistedAccessTokenPermanent> BlacklistedAccessTokensPermanent => Set<BlacklistedAccessTokenPermanent>();
+        public DbSet<BlacklistedAccessTokenSession> BlacklistedAccessTokensSession => Set<BlacklistedAccessTokenSession>();
 
         public DbSet<BlacklistedAccessTokenTemporary> BlacklistedAccessTokensTemporary => Set<BlacklistedAccessTokenTemporary>();
 

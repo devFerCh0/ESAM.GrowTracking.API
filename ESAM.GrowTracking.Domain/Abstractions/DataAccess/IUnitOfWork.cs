@@ -7,7 +7,7 @@ namespace ESAM.GrowTracking.Domain.Abstractions.DataAccess
     {
         bool HasActiveTransaction { get; }
 
-        IBlacklistedAccessTokenPermanentRepository BlacklistedAccessTokensPermanent { get; }
+        IBlacklistedAccessTokenSessionRepository BlacklistedAccessTokensSession { get; }
 
         IBlacklistedAccessTokenTemporaryRepository BlacklistedAccessTokensTemporary { get; }
 

@@ -8,6 +8,14 @@ namespace ESAM.GrowTracking.Persistence.DataAccess.Repositories
 {
     public class UserSessionRepository(ILogger<UserSessionRepository> logger, AppDbContext context) : Repository<UserSession, int>(logger, context), IUserSessionRepository
     {
+        public async Task<bool> IsUnRevokedAndUnExpiredAsync(int currentUserSessionId, int currentUserId, DateTime utcNow, bool asTracking = false, 
+            CancellationToken cancellationToken = default)
+        {
+            var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
+            return await query.AnyAsync(us => us.Id == currentUserSessionId && us.UserId == currentUserId && !us.IsRevoked && us.ExpiresAt > utcNow && 
+                us.AbsoluteExpiresAt > utcNow, cancellationToken);
+        }
+
         //public async Task<UserSession?> GetByIdAndUserIdAndUserDeviceIdAsync(int id, int userId, int userDeviceId, bool asTracking = false, 
         //    CancellationToken cancellationToken = default)
         //{

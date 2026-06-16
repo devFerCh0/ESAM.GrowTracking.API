@@ -6,7 +6,7 @@ namespace ESAM.GrowTracking.Domain.Entities
     public sealed class UserSession : AuditableEntity, IEntity<int>
     {
         private readonly List<UserSessionRefreshToken> _userSessionRefreshTokens = [];
-        private readonly List<BlacklistedAccessTokenPermanent> _blacklistedAccessTokensPermanent = [];
+        private readonly List<BlacklistedAccessTokenSession> _blacklistedAccessTokensSession = [];
 
         private UserSession() { }
 
@@ -48,7 +48,7 @@ namespace ESAM.GrowTracking.Domain.Entities
 
         public IReadOnlyCollection<UserSessionRefreshToken> UserSessionRefreshTokens => _userSessionRefreshTokens.AsReadOnly();
 
-        public IReadOnlyCollection<BlacklistedAccessTokenPermanent> BlacklistedAccessTokensPermanent => _blacklistedAccessTokensPermanent.AsReadOnly();
+        public IReadOnlyCollection<BlacklistedAccessTokenSession> BlacklistedAccessTokensSession => _blacklistedAccessTokensSession.AsReadOnly();
 
         //public UserSession(int userId, int userDeviceId, string? ipAddress, string? userAgent, DateTime expiresAt, DateTime absoluteExpiresAt, bool isPersistent, int createdBy, 
         //    DateTime? createdAt = null)

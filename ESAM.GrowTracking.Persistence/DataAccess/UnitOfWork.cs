@@ -12,7 +12,7 @@ namespace ESAM.GrowTracking.Persistence.DataAccess
     {
         private readonly ILogger<UnitOfWork> _logger;
         private readonly AppDbContext _context;
-        private readonly IBlacklistedAccessTokenPermanentRepository _blacklistedAccessTokensPermanent;
+        private readonly IBlacklistedAccessTokenSessionRepository _blacklistedAccessTokensSession;
         private readonly IBlacklistedAccessTokenTemporaryRepository _blacklistedAccessTokensTemporary;
         private readonly IBlacklistedRefreshTokenRepository _blacklistedRefreshTokens;
         private readonly IRolePermissionRepository _rolePermissions;
@@ -30,7 +30,7 @@ namespace ESAM.GrowTracking.Persistence.DataAccess
         private IDbContextTransaction? _transaction;
         private bool _disposed;
 
-        public UnitOfWork(ILogger<UnitOfWork> logger, AppDbContext context, IBlacklistedAccessTokenPermanentRepository blacklistedAccessTokensPermanent,
+        public UnitOfWork(ILogger<UnitOfWork> logger, AppDbContext context, IBlacklistedAccessTokenSessionRepository blacklistedAccessTokensSession,
             IBlacklistedAccessTokenTemporaryRepository blacklistedAccessTokensTemporary, IBlacklistedRefreshTokenRepository blacklistedRefreshTokens,
             IRolePermissionRepository rolePermissions, IUserRepository users, IUserDeviceRepository userDevices, IUserRoleCampusRepository userRoleCampuses,
             IUserSessionRepository userSessions, IUserSessionRefreshTokenRepository userSessionRefreshTokens, 
@@ -39,7 +39,7 @@ namespace ESAM.GrowTracking.Persistence.DataAccess
         {
             ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(context);
-            ArgumentNullException.ThrowIfNull(blacklistedAccessTokensPermanent);
+            ArgumentNullException.ThrowIfNull(blacklistedAccessTokensSession);
             ArgumentNullException.ThrowIfNull(blacklistedAccessTokensTemporary);
             ArgumentNullException.ThrowIfNull(blacklistedRefreshTokens);
             ArgumentNullException.ThrowIfNull(rolePermissions);
@@ -55,7 +55,7 @@ namespace ESAM.GrowTracking.Persistence.DataAccess
             ArgumentNullException.ThrowIfNull(workProfilePermissions);
             _logger = logger;
             _context = context;
-            _blacklistedAccessTokensPermanent = blacklistedAccessTokensPermanent;
+            _blacklistedAccessTokensSession = blacklistedAccessTokensSession;
             _blacklistedAccessTokensTemporary = blacklistedAccessTokensTemporary;
             _blacklistedRefreshTokens = blacklistedRefreshTokens;
             _rolePermissions = rolePermissions;
@@ -74,7 +74,7 @@ namespace ESAM.GrowTracking.Persistence.DataAccess
 
         public bool HasActiveTransaction => _transaction is not null;
 
-        public IBlacklistedAccessTokenPermanentRepository BlacklistedAccessTokensPermanent => _blacklistedAccessTokensPermanent;
+        public IBlacklistedAccessTokenSessionRepository BlacklistedAccessTokensSession => _blacklistedAccessTokensSession;
 
         public IBlacklistedAccessTokenTemporaryRepository BlacklistedAccessTokensTemporary => _blacklistedAccessTokensTemporary;
 
