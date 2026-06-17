@@ -1,6 +1,6 @@
-﻿using ESAM.GrowTracking.API.Responses;
-using ESAM.GrowTracking.Application.Abstractions.Services;
-using ESAM.GrowTracking.Infrastructure.Extensions;
+﻿using ESAM.GrowTracking.API.Abstractions.Security;
+using ESAM.GrowTracking.API.Responses;
+using ESAM.GrowTracking.API.Security;
 using ESAM.GrowTracking.Infrastructure.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -47,31 +47,15 @@ namespace ESAM.GrowTracking.API.ConfigureOptions
                 var isAnonymous = endpoint?.Metadata?.GetMetadata<IAllowAnonymous>() != null;
                 if (isAnonymous)
                     return;
-                var principal = context.Principal;
-                if (principal is null)
+                var handler = context.HttpContext.RequestServices.GetRequiredService<IJwtTokenValidatedHandler>();
+                var result = await handler.HandleAsync(context.Principal, context.HttpContext.RequestAborted);
+                if (result.IsFailure)
                 {
-                    context.Fail("Token inválido.");
-                    return;
-                }
-                var accessTokenType = principal.GetAccessTokenType();
-                var jti = principal.GetJti();
-                var userId = principal.GetUserId();
-                var securityStamp = principal.GetSecurityStamp();
-                var tokenVersion = principal.GetTokenVersion();
-                var userDeviceId = principal.GetUserDeviceId();
-                var userSessionId = principal.GetUserSessionId();
-                var workProfileId = principal.GetWorkProfileId();
-                var roleId = principal.GetRoleId();
-                var campusId = principal.GetCampusId();
-                var accessTokenValidationService = context.HttpContext.RequestServices.GetRequiredService<IAccessTokenValidationService>();
-                var ValidateAccessTokenResult = await accessTokenValidationService.ValidateAccessTokenAsync(accessTokenType.Value, jti, userId.Value, securityStamp, 
-                    tokenVersion.Value, userDeviceId.Value, userSessionId, workProfileId, roleId, campusId);
-                if (ValidateAccessTokenResult.IsFailure)
-                {
-                    var apiErrors = ValidateAccessTokenResult.Errors.Select(e => new ApiErrorItem { Message = e.Message, Fields = e.Fields })
-                        .ToList();
-                    context.HttpContext.Items["AuthErrors"] = apiErrors;
-                    context.Fail("Business Rule Validation Failed");
+                    var authErrors = result.Errors.Select(e => new ApiErrorItem { Message = e.Message, Fields = e.Fields }).ToList();
+                    context.HttpContext.Items[JwtAuthenticationItemKeys.AuthErrors] = authErrors;
+                    context.Fail("Token validation failed.");
+                    //context.HttpContext.Items[JwtAuthenticationItemKeys.AuthErrors] = result.Errors; // Almacena IReadOnlyList<Error> (Application); la conversión a ApiErrorItem ocurre en OnChallenge
+                    //context.Fail("Token validation failed.");
                 }
             };
             jwtBearerOptions.Events.OnChallenge = async context =>
@@ -79,7 +63,26 @@ namespace ESAM.GrowTracking.API.ConfigureOptions
                 context.HandleResponse();
                 if (context.Response.HasStarted)
                     return;
+                if (context.HttpContext.Items.TryGetValue(JwtAuthenticationItemKeys.AuthErrors, out var stored) && stored is IReadOnlyList<ApiErrorItem> authErrors
+                && authErrors.Count > 0)
+                {
+                    await ApiErrorWriter.WriteAsync(context.HttpContext, StatusCodes.Status401Unauthorized, authErrors);
+                    return;
+                }
                 await ApiErrorWriter.WriteAsync(context.HttpContext, StatusCodes.Status401Unauthorized, "Unauthorized.");
+                //context.HandleResponse();
+                //if (context.Response.HasStarted)
+                //    return;
+                //if (context.HttpContext.Items.TryGetValue(JwtAuthenticationItemKeys.AuthErrors, out var stored)
+                //    && stored is IReadOnlyList<Error> authErrors && authErrors.Count > 0)
+                //{
+                //    var errorItems = authErrors // Conversión Error → ApiErrorItem centralizada aquí, en la capa HTTP
+                //        .Select(e => new ApiErrorItem { Message = e.Message, Fields = e.Fields })
+                //        .ToList();
+                //    await ApiErrorWriter.WriteAsync(context.HttpContext, StatusCodes.Status401Unauthorized, errorItems);
+                //    return;
+                //}
+                //await ApiErrorWriter.WriteAsync(context.HttpContext, StatusCodes.Status401Unauthorized, "Unauthorized.");
             };
             jwtBearerOptions.Events.OnForbidden = async context =>
             {

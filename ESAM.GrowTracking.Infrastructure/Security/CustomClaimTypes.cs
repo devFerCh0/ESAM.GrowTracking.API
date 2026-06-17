@@ -10,6 +10,7 @@
         public const string UserSessionId = "UserSessionId";
         public const string IsPersistent = "IsPersistent";
         public const string WorkProfileId = "WorkProfileId";
+        public const string WorkProfileType = "WorkProfileType";
         public const string RoleId = "RoleId";
         public const string CampusId = "CampusId";
         public const string Permissions = "Permissions";

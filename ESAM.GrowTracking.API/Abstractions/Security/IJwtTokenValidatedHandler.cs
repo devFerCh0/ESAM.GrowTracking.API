@@ -5,6 +5,6 @@ namespace ESAM.GrowTracking.API.Abstractions.Security
 {
     public interface IJwtTokenValidatedHandler
     {
-        Task<Result> HandleAsync(ClaimsPrincipal principal, CancellationToken cancellationToken = default);
+        Task<Result> HandleAsync(ClaimsPrincipal? principal, CancellationToken cancellationToken = default);
     }
 }

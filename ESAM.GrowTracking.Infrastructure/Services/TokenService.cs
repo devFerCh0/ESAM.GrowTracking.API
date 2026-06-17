@@ -1,4 +1,8 @@
-﻿using ESAM.GrowTracking.Application.DTOs;
+﻿using ESAM.GrowTracking.Application.Abstractions.Services;
+using ESAM.GrowTracking.Application.DTOs;
+using ESAM.GrowTracking.Application.Enums;
+using ESAM.GrowTracking.Domain.Enums;
+using ESAM.GrowTracking.Infrastructure.Security;
 using ESAM.GrowTracking.Infrastructure.Settings;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -7,9 +11,6 @@ using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using ESAM.GrowTracking.Application.Enums;
-using ESAM.GrowTracking.Application.Abstractions.Services;
-using ESAM.GrowTracking.Infrastructure.Security;
 
 namespace ESAM.GrowTracking.Infrastructure.Services
 {
@@ -41,12 +42,12 @@ namespace ESAM.GrowTracking.Infrastructure.Services
         }
 
         public AccessTokenDTO GenerateSessionAccessToken(int userId, string securityStamp, int tokenVersion, int userDeviceId, int userSessionId, DateTime utcNow,
-            int lifetimeMinutes, int? workProfileId = null, int? roleId = null, int? campusId = null)
+            int lifetimeMinutes, int workProfileId, WorkProfileType workProfileType, int? roleId = null, int? campusId = null)
         {
             ValidateCommonParams(userId, securityStamp, tokenVersion, userDeviceId, lifetimeMinutes);
             if (userSessionId <= 0)
                 throw new ArgumentOutOfRangeException(nameof(userSessionId), $"{nameof(userSessionId)} debe ser mayor a cero.");
-            if (workProfileId is not null && workProfileId <= 0)
+            if (workProfileId <= 0)
                 throw new ArgumentOutOfRangeException(nameof(workProfileId), $"{nameof(workProfileId)} debe ser mayor a cero.");
             if (roleId is not null && roleId <= 0)
                 throw new ArgumentOutOfRangeException(nameof(roleId), $"{nameof(roleId)} debe ser mayor a cero.");
@@ -56,12 +57,14 @@ namespace ESAM.GrowTracking.Infrastructure.Services
             var jti = Guid.NewGuid().ToString();
             var claims = BuildBaseAccessTokenClaims(jti, userId, securityStamp, tokenVersion, userDeviceId, AccessTokenType.Session, utcNow, expiresAt);
             claims.Add(new Claim(CustomClaimTypes.UserSessionId, userSessionId.ToString(), ClaimValueTypes.Integer64));
-            if (workProfileId is not null)
-                claims.Add(new Claim(CustomClaimTypes.WorkProfileId, workProfileId.Value.ToString(), ClaimValueTypes.Integer64));
-            if (roleId is not null)
-                claims.Add(new Claim(CustomClaimTypes.RoleId, roleId.Value.ToString(), ClaimValueTypes.Integer64));
-            if (campusId is not null)
-                claims.Add(new Claim(CustomClaimTypes.CampusId, campusId.Value.ToString(), ClaimValueTypes.Integer64));
+            claims.Add(new Claim(CustomClaimTypes.WorkProfileId, workProfileId.ToString(), ClaimValueTypes.Integer64));
+            claims.Add(new Claim(CustomClaimTypes.WorkProfileType, ((byte)workProfileType).ToString(), ClaimValueTypes.Integer64));
+            if (workProfileType == WorkProfileType.WithRoles)
+                if (roleId is not null && campusId is not null)
+                {
+                    claims.Add(new Claim(CustomClaimTypes.RoleId, roleId.Value.ToString(), ClaimValueTypes.Integer64));
+                    claims.Add(new Claim(CustomClaimTypes.CampusId, campusId.Value.ToString(), ClaimValueTypes.Integer64));
+                }
             return CreateToken(claims, userId, utcNow, expiresAt);
         }
 

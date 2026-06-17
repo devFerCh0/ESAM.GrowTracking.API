@@ -1,4 +1,5 @@
 ﻿using ESAM.GrowTracking.Application.Enums;
+using ESAM.GrowTracking.Domain.Enums;
 using ESAM.GrowTracking.Infrastructure.Security;
 using Microsoft.IdentityModel.JsonWebTokens;
 using System.Security.Claims;
@@ -21,8 +22,8 @@ namespace ESAM.GrowTracking.Infrastructure.Extensions
                 return null;
             if (!byte.TryParse(raw, out var value))
                 return null;
-            var tokenType = (AccessTokenType)value;
-            return Enum.IsDefined(tokenType) ? tokenType : null;
+            var accessTokenType = (AccessTokenType)value;
+            return Enum.IsDefined(accessTokenType) ? accessTokenType : null;
         }
 
         public static int? GetUserId(this ClaimsPrincipal user)
@@ -86,6 +87,18 @@ namespace ESAM.GrowTracking.Infrastructure.Extensions
             ArgumentNullException.ThrowIfNull(user);
             var raw = user.FindFirst(CustomClaimTypes.WorkProfileId)?.Value;
             return int.TryParse(raw, out var value) ? value : null;
+        }
+
+        public static WorkProfileType? GetWorkProfileType(this ClaimsPrincipal user)
+        {
+            ArgumentNullException.ThrowIfNull(user);
+            var raw = user.FindFirst(CustomClaimTypes.WorkProfileType)?.Value;
+            if (string.IsNullOrWhiteSpace(raw))
+                return null;
+            if (!byte.TryParse(raw, out var value))
+                return null;
+            var workProfileType = (WorkProfileType)value;
+            return Enum.IsDefined(workProfileType) ? workProfileType : null;
         }
 
         public static int? GetRoleId(this ClaimsPrincipal user)

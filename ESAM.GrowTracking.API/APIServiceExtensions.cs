@@ -1,4 +1,5 @@
 ﻿using ESAM.GrowTracking.API.Abstractions.Mappers;
+using ESAM.GrowTracking.API.Abstractions.Security;
 using ESAM.GrowTracking.API.Adapters;
 using ESAM.GrowTracking.API.ConfigureOptions;
 using ESAM.GrowTracking.API.Controllers.Auth.Login;
@@ -11,6 +12,7 @@ using ESAM.GrowTracking.API.Settings;
 using ESAM.GrowTracking.Application.Enums;
 using ESAM.GrowTracking.Infrastructure.Abstractions.Http;
 using ESAM.GrowTracking.Infrastructure.Abstractions.Security;
+using ESAM.GrowTracking.Infrastructure.Security;
 using ESAM.GrowTracking.Infrastructure.Settings;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -175,13 +177,11 @@ namespace ESAM.GrowTracking.API
         public static IServiceCollection AddAPIAuthorization(this IServiceCollection services)
         {
             ArgumentNullException.ThrowIfNull(services);
-            services.AddAuthorization(options =>
-            {
-                options.AddPolicy("RequireSessionTypeAccessToken", policy =>
-                    policy.RequireClaim("AccessTokenType", AccessTokenType.Session.GetStringValue()));
-                options.AddPolicy("RequireTemporaryTypeAccessToken", policy =>
-                    policy.RequireClaim("AccessTokenType", AccessTokenType.Temporary.GetStringValue()));
-            });
+            services.AddAuthorizationBuilder()
+                .AddPolicy(AuthorizationPolicies.RequireSessionTypeAccessToken, policy => policy.RequireClaim(CustomClaimTypes.AccessTokenType, 
+                    AccessTokenType.Session.GetStringValue()))
+                .AddPolicy(AuthorizationPolicies.RequireTemporaryTypeAccessToken, policy => policy.RequireClaim(CustomClaimTypes.AccessTokenType, 
+                    AccessTokenType.Temporary.GetStringValue()));
             return services;
         }
 

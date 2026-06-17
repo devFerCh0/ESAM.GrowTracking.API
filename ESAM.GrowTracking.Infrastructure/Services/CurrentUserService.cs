@@ -1,8 +1,9 @@
-﻿using ESAM.GrowTracking.Infrastructure.Extensions;
-using System.Security.Claims;
+﻿using ESAM.GrowTracking.Application.Abstractions.Services;
 using ESAM.GrowTracking.Application.Enums;
-using ESAM.GrowTracking.Application.Abstractions.Services;
+using ESAM.GrowTracking.Domain.Enums;
 using ESAM.GrowTracking.Infrastructure.Abstractions.Http;
+using ESAM.GrowTracking.Infrastructure.Extensions;
+using System.Security.Claims;
 
 namespace ESAM.GrowTracking.Infrastructure.Services
 {
@@ -41,6 +42,8 @@ namespace ESAM.GrowTracking.Infrastructure.Services
         public bool? IsPersistent => _user?.GetIsPersistent();
 
         public int? WorkProfileId => _user?.GetWorkProfileId();
+
+        public WorkProfileType? WorkProfileType => _user?.GetWorkProfileType();
 
         public int? RoleId => _user?.GetRoleId();
 
