@@ -3,6 +3,7 @@ using ESAM.GrowTracking.Application.Abstractions.Services;
 using ESAM.GrowTracking.Infrastructure.Extensions;
 using ESAM.GrowTracking.Infrastructure.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -42,52 +43,36 @@ namespace ESAM.GrowTracking.API.ConfigureOptions
             jwtBearerOptions.Events ??= new JwtBearerEvents();
             jwtBearerOptions.Events.OnTokenValidated = async context =>
             {
+                var endpoint = context.HttpContext.GetEndpoint();
+                var isAnonymous = endpoint?.Metadata?.GetMetadata<IAllowAnonymous>() != null;
+                if (isAnonymous)
+                    return;
                 var principal = context.Principal;
-                if (principal == null)
+                if (principal is null)
                 {
                     context.Fail("Token inválido.");
                     return;
                 }
+                var accessTokenType = principal.GetAccessTokenType();
                 var jti = principal.GetJti();
                 var userId = principal.GetUserId();
                 var securityStamp = principal.GetSecurityStamp();
                 var tokenVersion = principal.GetTokenVersion();
                 var userDeviceId = principal.GetUserDeviceId();
-                if (string.IsNullOrEmpty(jti) || userId is null || string.IsNullOrEmpty(securityStamp) || tokenVersion is null || userDeviceId is null)
+                var userSessionId = principal.GetUserSessionId();
+                var workProfileId = principal.GetWorkProfileId();
+                var roleId = principal.GetRoleId();
+                var campusId = principal.GetCampusId();
+                var accessTokenValidationService = context.HttpContext.RequestServices.GetRequiredService<IAccessTokenValidationService>();
+                var ValidateAccessTokenResult = await accessTokenValidationService.ValidateAccessTokenAsync(accessTokenType.Value, jti, userId.Value, securityStamp, 
+                    tokenVersion.Value, userDeviceId.Value, userSessionId, workProfileId, roleId, campusId);
+                if (ValidateAccessTokenResult.IsFailure)
                 {
-                    context.HttpContext.Items["AuthError"] = "Faltan claims obligatorios.";
-                    context.Fail("Claims faltantes");
-                    return;
-                }
-                var sessionValidationService = context.HttpContext.RequestServices.GetRequiredService<ICurrentSessionValidationService>();
-
-                var userValidationResult = await sessionValidationService.ValidateCurrentUserAsync(userId.Value, securityStamp, tokenVersion.Value, DateTime.UtcNow);
-                if (userValidationResult.IsFailure)
-                {
-                    var apiErrors = userValidationResult.Errors.Select(e => new ApiErrorItem { Message = e.Message, Fields = e.Fields }).ToList();
+                    var apiErrors = ValidateAccessTokenResult.Errors.Select(e => new ApiErrorItem { Message = e.Message, Fields = e.Fields })
+                        .ToList();
                     context.HttpContext.Items["AuthErrors"] = apiErrors;
-                    context.Fail("User Validation Failed");
-                    return;
+                    context.Fail("Business Rule Validation Failed");
                 }
-
-                var deviceValidationResult = await sessionValidationService.ValidateCurrentUserDeviceAsync(userDeviceId.Value, userId.Value, DateTime.UtcNow);
-                if (deviceValidationResult.IsFailure)
-                {
-                    var apiErrors = deviceValidationResult.Errors.Select(e => new ApiErrorItem { Message = e.Message, Fields = e.Fields }).ToList();
-                    context.HttpContext.Items["AuthErrors"] = apiErrors;
-                    context.Fail("Device Validation Failed");
-                    return;
-                }
-
-                var accesstokenValidationResult = await sessionValidationService.ValidateCurrentAccessTokenTemporaryAsync(jti);
-                if (accesstokenValidationResult.IsFailure)
-                {
-                    var apiErrors = accesstokenValidationResult.Errors.Select(e => new ApiErrorItem { Message = e.Message, Fields = e.Fields }).ToList();
-                    context.HttpContext.Items["AuthErrors"] = apiErrors;
-                    context.Fail("Token Inválido");
-                    return;
-                }
-
             };
             jwtBearerOptions.Events.OnChallenge = async context =>
             {

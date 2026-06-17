@@ -62,7 +62,7 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
             return Ok(ApiSuccessResponse<LoginHttpResponse>.From(login, HttpContext.TraceIdentifier));
         }
 
-        //[Authorize]
+        //[Authorize(Policy = "RequireSessionTypeAccessToken")]
         //[HttpPost("assume-work-profile")]
         //[Consumes("application/json")]
         //[ProducesResponseType(typeof(ApiSuccessResponse<AssumeWorkProfileHttpResponse>), StatusCodes.Status200OK)]
