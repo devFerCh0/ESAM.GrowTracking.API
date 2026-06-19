@@ -4,12 +4,12 @@ using Microsoft.Extensions.Logging;
 
 namespace ESAM.GrowTracking.Application.Services
 {
-    public class TokenClaimsValidationService : ITokenClaimsValidationService
+    public class AccessTokenClaimsValidatorService : IAccessTokenClaimsValidatorService
     {
-        private readonly ILogger<TokenClaimsValidationService> _logger;
+        private readonly ILogger<AccessTokenClaimsValidatorService> _logger;
         private readonly ICurrentUserService _currentUserService;
 
-        public TokenClaimsValidationService(ILogger<TokenClaimsValidationService> logger, ICurrentUserService currentUserService)
+        public AccessTokenClaimsValidatorService(ILogger<AccessTokenClaimsValidatorService> logger, ICurrentUserService currentUserService)
         {
             ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(currentUserService);

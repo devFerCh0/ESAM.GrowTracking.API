@@ -42,7 +42,7 @@ namespace ESAM.GrowTracking.Application
             //services.AddScoped<IPurgeExpiredTokensService, PurgeExpiredTokensService>();
             //services.AddScoped<ITokenSessionValidationService, TokenSessionValidationService>();
             //services.AddScoped<IUserSessionService, UserSessionService>();
-            services.AddScoped<IAccessTokenValidationService, AccessTokenValidationService>();
+            services.AddScoped<ISecurityValidatorService, SecurityValidatorService>();
             //services.AddHostedService<PurgeExpiredTokensHostedService>();
         }
 

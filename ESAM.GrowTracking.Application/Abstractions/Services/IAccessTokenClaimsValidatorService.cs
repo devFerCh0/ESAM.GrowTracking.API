@@ -2,7 +2,7 @@
 
 namespace ESAM.GrowTracking.Application.Abstractions.Services
 {
-    public interface ITokenClaimsValidationService
+    public interface IAccessTokenClaimsValidatorService
     {
         bool IsAuthenticated { get; }
 

@@ -2,6 +2,7 @@
 using ESAM.GrowTracking.Application.Abstractions.Services;
 using ESAM.GrowTracking.Application.Enums;
 using ESAM.GrowTracking.Application.Results;
+using ESAM.GrowTracking.Application.Services;
 using ESAM.GrowTracking.Application.ValueObjects;
 using ESAM.GrowTracking.Infrastructure.Extensions;
 using System.Security.Claims;
@@ -11,14 +12,14 @@ namespace ESAM.GrowTracking.API.Security
     public sealed class JwtTokenValidatedHandler : IJwtTokenValidatedHandler
     {
         private readonly ILogger<JwtTokenValidatedHandler> _logger;
-        private readonly IAccessTokenValidationService _accessTokenValidationService;
+        private readonly ISecurityValidatorService _securityValidatorService;
 
-        public JwtTokenValidatedHandler(ILogger<JwtTokenValidatedHandler> logger, IAccessTokenValidationService accessTokenValidationService)
+        public JwtTokenValidatedHandler(ILogger<JwtTokenValidatedHandler> logger, ISecurityValidatorService securityValidatorService)
         {
             ArgumentNullException.ThrowIfNull(logger);
-            ArgumentNullException.ThrowIfNull(accessTokenValidationService);
+            ArgumentNullException.ThrowIfNull(securityValidatorService);
             _logger = logger;
-            _accessTokenValidationService = accessTokenValidationService;
+            _securityValidatorService = securityValidatorService;
         }
 
         public async Task<Result> HandleAsync(ClaimsPrincipal? principal, CancellationToken cancellationToken = default)
@@ -65,7 +66,7 @@ namespace ESAM.GrowTracking.API.Security
                 return Result.Fail(Error.Unauthorized("El identificador del dispositivo no es válido o no está presente."));
             }
             if (accessTokenType == AccessTokenType.Temporary)
-                return await _accessTokenValidationService.ValidateCurrentTemporaryAsync(jti, userId.Value, securityStamp, tokenVersion.Value, userDeviceId.Value, 
+                return await _securityValidatorService.ValidateAccessTokenTemporaryAsync(jti, userId.Value, securityStamp, tokenVersion.Value, userDeviceId.Value, 
                     cancellationToken);
             var userSessionId = principal.GetUserSessionId();
             if (userSessionId is null)
@@ -97,7 +98,7 @@ namespace ESAM.GrowTracking.API.Security
                 _logger.LogWarning("JwtTokenValidatedHandler: identificador de la sede ausente o inválido en los claims.");
                 return Result.Fail(Error.Unauthorized("El identificador de la sede no es válido o no está presente."));
             }
-            return await _accessTokenValidationService.ValidateCurrentSessionAsync(jti, userId.Value, securityStamp, tokenVersion.Value, userDeviceId.Value, userSessionId.Value, 
+            return await _securityValidatorService.ValidateAccessTokenSessionAsync(jti, userId.Value, securityStamp, tokenVersion.Value, userDeviceId.Value, userSessionId.Value, 
                 workProfileId.Value, workProfileType.Value, roleId.Value, campusId.Value, cancellationToken);
         }
     }
