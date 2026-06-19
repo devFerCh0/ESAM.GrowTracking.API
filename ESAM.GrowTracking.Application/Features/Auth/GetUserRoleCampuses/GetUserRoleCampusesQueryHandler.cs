@@ -55,34 +55,11 @@ namespace ESAM.GrowTracking.Application.Features.Auth.GetUserRoleCampuses
                 _logger.LogWarning("GetUserRoleCampusesQuery: validación fallida. Errores: {Errors}", string.Join(" | ", validation.Errors.Select(e => e.ErrorMessage)));
                 return Result<List<GetUserRoleCampusResponse>>.Fail(validation.ToCommandErrors());
             }
-            if (!_tokenClaimsValidationService.IsAuthenticated)
-            {
-                _logger.LogWarning("GetUserRoleCampusesQuery: intento de acceso no autenticado.");
-                return Result<List<GetUserRoleCampusResponse>>.Fail(Error.Unauthorized("Sesión inválida o expirada. Inicie sesión nuevamente."));
-            }
-            var currentAccessTokenType = _tokenClaimsValidationService.CurrentAccessTokenType;
-            if (currentAccessTokenType != AccessTokenType.Temporary)
-            {
-                _logger.LogWarning("GetUserRoleCampusesQuery: tipo de token de acceso inválido. Esperado=Temporal, Actual={AccessTokenType}", currentAccessTokenType);
-                return Result<List<GetUserRoleCampusResponse>>.Fail(Error.Unauthorized("Esta operación requiere un token de acceso temporal."));
-            }
-            var currentUserId = _tokenClaimsValidationService.CurrentUserId;
-            var currentSecurityStamp = _tokenClaimsValidationService.CurrentSecurityStamp;
-            var currentTokenVersion = _tokenClaimsValidationService.CurrentTokenVersion;
             var utcNow =_dateTimeService.UtcNow;
-            var validateCurrentUserResult = await _currentSessionValidationService.ValidateCurrentUserAsync(currentUserId, currentSecurityStamp, currentTokenVersion, utcNow, 
-                asTracking,
-                cancellationToken);
-            if (validateCurrentUserResult.IsFailure)
-                return Result<List<GetUserRoleCampusResponse>>.Fail(validateCurrentUserResult.Errors);
-            var currentUserDeviceId = _tokenClaimsValidationService.CurrentUserDeviceId;
-            var validateUserDeviceResult = await _currentSessionValidationService.ValidateCurrentUserDeviceAsync(currentUserDeviceId, currentUserId, utcNow, asTracking,
-                cancellationToken);
-            if (validateUserDeviceResult.IsFailure)
-                return Result<List<GetUserRoleCampusResponse>>.Fail(validateUserDeviceResult.Errors);
 
 
-            
+
+
             //var workProfileTypeValidationResult = await _currentUserValidatorService.ValidateUserWorkProfileAndTypeAsync(currentUserId, request.WorkProfileId!.Value, 
             //    WorkProfileType.WithRoles, asTracking, cancellationToken);
             //if (workProfileTypeValidationResult.IsFailure)
@@ -94,6 +71,28 @@ namespace ESAM.GrowTracking.Application.Features.Auth.GetUserRoleCampuses
             //    return Result<List<GetUserRoleCampusResponse>>.Fail(Error.NotFound("No se encontraron roles asignados para el usuario."));
             //}
             //return Result<List<GetUserRoleCampusResponse>>.Ok(userRoleCampuses);
+
+
+            ////var asTracking = false;
+            ////var validation = await _validator.ValidateAsync(request, cancellationToken);
+            ////if (!validation.IsValid)
+            ////{
+            ////    _logger.LogWarning("GetUserRoleCampusesQuery: validación fallida. Errores: {Errors}", string.Join(" | ", validation.Errors.Select(e => e.ErrorMessage)));
+            ////    return Result<List<GetUserRoleCampusResponse>>.Fail(validation.ToDomainErrors());
+            ////}
+            ////var utcNow = _dateTimeService.UtcNow;
+
+            ////var workProfileTypeValidationResult = await _currentUserValidatorService.ValidateUserWorkProfileAndTypeAsync(currentUserId, request.WorkProfileId!.Value,
+            ////    WorkProfileType.WithRoles, asTracking, cancellationToken);
+            ////if (workProfileTypeValidationResult.IsFailure)
+            ////    return Result<List<GetUserRoleCampusResponse>>.Fail(workProfileTypeValidationResult.Errors);
+            ////var userRoleCampuses = await _userRoleCampusQuery.GetUserRoleCampusesByUserIdAsync(currentUserId, asTracking, cancellationToken);
+            ////if (userRoleCampuses is null || userRoleCampuses.Count == 0)
+            ////{
+            ////    _logger.LogWarning("GetUserRoleCampusesQuery: no se encontraron roles de sede asignados al usuario. UserId={UserId}", currentUserId);
+            ////    return Result<List<GetUserRoleCampusResponse>>.Fail(Error.NotFound("No se encontraron roles asignados para el usuario."));
+            ////}
+            ////return Result<List<GetUserRoleCampusResponse>>.Ok(userRoleCampuses);
         }
     }
 }
