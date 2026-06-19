@@ -6,7 +6,7 @@ namespace ESAM.GrowTracking.API.Responses
     {
         private static readonly JsonSerializerOptions s_jsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
-        public static Task WriteAsync(HttpContext context, int statusCode, IReadOnlyList<ApiErrorItem> errors)
+        public static Task WriteAsync(HttpContext context, int statusCode, IReadOnlyList<ApiErrorItem> errors, string source = ApiErrorSource.System)
         {
             ArgumentNullException.ThrowIfNull(context);
             ArgumentNullException.ThrowIfNull(errors);
@@ -14,7 +14,7 @@ namespace ESAM.GrowTracking.API.Responses
                 throw new ArgumentException("Debe existir al menos un error.", nameof(errors));
             context.Response.StatusCode = statusCode;
             context.Response.ContentType = "application/json; charset=utf-8";
-            var payload = ApiErrorResponse.From(errors, context.TraceIdentifier, ApiErrorSource.System);
+            var payload = ApiErrorResponse.From(errors, context.TraceIdentifier, source);
             return context.Response.WriteAsJsonAsync(payload, s_jsonOptions);
         }
 

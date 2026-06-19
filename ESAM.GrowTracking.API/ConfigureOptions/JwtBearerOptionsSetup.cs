@@ -44,18 +44,15 @@ namespace ESAM.GrowTracking.API.ConfigureOptions
             jwtBearerOptions.Events.OnTokenValidated = async context =>
             {
                 var endpoint = context.HttpContext.GetEndpoint();
-                var isAnonymous = endpoint?.Metadata?.GetMetadata<IAllowAnonymous>() != null;
-                if (isAnonymous)
+                if (endpoint?.Metadata?.GetMetadata<IAllowAnonymous>() is not null)
                     return;
-                var handler = context.HttpContext.RequestServices.GetRequiredService<IJwtTokenValidatedHandler>();
-                var result = await handler.HandleAsync(context.Principal, context.HttpContext.RequestAborted);
+                var jwtTokenValidatedHandler = context.HttpContext.RequestServices.GetRequiredService<IJwtTokenValidatedHandler>();
+                var result = await jwtTokenValidatedHandler.HandleAsync(context.Principal, context.HttpContext.RequestAborted);
                 if (result.IsFailure)
                 {
-                    var authErrors = result.Errors.Select(e => new ApiErrorItem { Message = e.Message, Fields = e.Fields }).ToList();
+                    var authErrors = (IReadOnlyList<ApiErrorItem>)[.. result.Errors.Select(e => new ApiErrorItem { Message = e.Message, Fields = e.Fields })];
                     context.HttpContext.Items[JwtAuthenticationItemKeys.AuthErrors] = authErrors;
                     context.Fail("Token validation failed.");
-                    //context.HttpContext.Items[JwtAuthenticationItemKeys.AuthErrors] = result.Errors; // Almacena IReadOnlyList<Error> (Application); la conversión a ApiErrorItem ocurre en OnChallenge
-                    //context.Fail("Token validation failed.");
                 }
             };
             jwtBearerOptions.Events.OnChallenge = async context =>
@@ -63,26 +60,13 @@ namespace ESAM.GrowTracking.API.ConfigureOptions
                 context.HandleResponse();
                 if (context.Response.HasStarted)
                     return;
-                if (context.HttpContext.Items.TryGetValue(JwtAuthenticationItemKeys.AuthErrors, out var stored) && stored is IReadOnlyList<ApiErrorItem> authErrors
-                && authErrors.Count > 0)
+                if (context.HttpContext.Items.TryGetValue(JwtAuthenticationItemKeys.AuthErrors, out var stored) && stored is IReadOnlyList<ApiErrorItem> authErrors 
+                    && authErrors.Count > 0)
                 {
-                    await ApiErrorWriter.WriteAsync(context.HttpContext, StatusCodes.Status401Unauthorized, authErrors);
+                    await ApiErrorWriter.WriteAsync(context.HttpContext, StatusCodes.Status401Unauthorized, authErrors, ApiErrorSource.Validation);
                     return;
                 }
                 await ApiErrorWriter.WriteAsync(context.HttpContext, StatusCodes.Status401Unauthorized, "Unauthorized.");
-                //context.HandleResponse();
-                //if (context.Response.HasStarted)
-                //    return;
-                //if (context.HttpContext.Items.TryGetValue(JwtAuthenticationItemKeys.AuthErrors, out var stored)
-                //    && stored is IReadOnlyList<Error> authErrors && authErrors.Count > 0)
-                //{
-                //    var errorItems = authErrors // Conversión Error → ApiErrorItem centralizada aquí, en la capa HTTP
-                //        .Select(e => new ApiErrorItem { Message = e.Message, Fields = e.Fields })
-                //        .ToList();
-                //    await ApiErrorWriter.WriteAsync(context.HttpContext, StatusCodes.Status401Unauthorized, errorItems);
-                //    return;
-                //}
-                //await ApiErrorWriter.WriteAsync(context.HttpContext, StatusCodes.Status401Unauthorized, "Unauthorized.");
             };
             jwtBearerOptions.Events.OnForbidden = async context =>
             {

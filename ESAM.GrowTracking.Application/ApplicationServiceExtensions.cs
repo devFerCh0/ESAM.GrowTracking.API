@@ -1,4 +1,6 @@
-﻿using ESAM.GrowTracking.Application.Features.Auth.Login;
+﻿using ESAM.GrowTracking.Application.Abstractions.Services;
+using ESAM.GrowTracking.Application.Features.Auth.Login;
+using ESAM.GrowTracking.Application.Services;
 using ESAM.GrowTracking.Application.Settings;
 using FluentValidation;
 using Microsoft.Extensions.Configuration;
@@ -40,6 +42,7 @@ namespace ESAM.GrowTracking.Application
             //services.AddScoped<IPurgeExpiredTokensService, PurgeExpiredTokensService>();
             //services.AddScoped<ITokenSessionValidationService, TokenSessionValidationService>();
             //services.AddScoped<IUserSessionService, UserSessionService>();
+            services.AddScoped<IAccessTokenValidationService, AccessTokenValidationService>();
             //services.AddHostedService<PurgeExpiredTokensHostedService>();
         }
 

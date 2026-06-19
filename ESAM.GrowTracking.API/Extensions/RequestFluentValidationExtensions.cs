@@ -17,7 +17,7 @@ namespace ESAM.GrowTracking.API.Extensions
                 Fields = string.IsNullOrWhiteSpace(group.Key) ? [] : [group.Key]
             }).ToList();
             var payload = ApiErrorResponse.From(errorItems, traceId, ApiErrorSource.Request);
-            return new BadRequestObjectResult(payload);
+            return new BadRequestObjectResult(payload) { ContentTypes = { "application/json" } };
         }
     }
 }

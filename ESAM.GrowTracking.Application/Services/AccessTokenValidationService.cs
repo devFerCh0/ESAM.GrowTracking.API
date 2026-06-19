@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace ESAM.GrowTracking.Application.Services
 {
-    public class AccessTokenValidationService : IAccessTokenValidationService
+    public sealed class AccessTokenValidationService : IAccessTokenValidationService
     {
         private readonly ILogger<AccessTokenValidationService> _logger;
         private readonly IDateTimeService _dateTimeService;
@@ -46,7 +46,7 @@ namespace ESAM.GrowTracking.Application.Services
             if (!doesBlacklistedAccessTokenTemporaryNotExist)
             {
                 _logger.LogWarning("ValidateCurrentTemporaryAsync: el jti del token temporal es inválido. Jti={Jti}", currentJti);
-                return Result.Fail(Error.NotFound("El jti del token temporal es inválido."));
+                return Result.Fail(Error.Unauthorized("El jti del token temporal es inválido."));
             }
             return await ValidateCurrentUserAndCurrentUserDeviceAsync(currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId, utcNow, asTracking, 
                 cancellationToken);
@@ -62,7 +62,7 @@ namespace ESAM.GrowTracking.Application.Services
             if (!doesBlacklistedAccessTokenSessionNotExist)
             {
                 _logger.LogWarning("ValidateCurrentSessionAsync: el jti del token de sesión es inválido. Jti={Jti}", currentJti);
-                return Result.Fail(Error.NotFound("El jti del token de sesión es inválido."));
+                return Result.Fail(Error.Unauthorized("El jti del token de sesión es inválido."));
             }
             var validateUserAndUserDevice = await ValidateCurrentUserAndCurrentUserDeviceAsync(currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId, 
                 utcNow, asTracking, cancellationToken);
@@ -72,7 +72,7 @@ namespace ESAM.GrowTracking.Application.Services
                 cancellationToken);
             if (!isUserSessionUnRevokedAndUnExpired)
             {
-                _logger.LogWarning("ValidateCurrentSessionAsync: sesión de usuario revocada o caducada. UserId={UserId}, UserSessionId={userSessionId}", currentUserId,
+                _logger.LogWarning("ValidateCurrentSessionAsync: sesión de usuario revocada o caducada. UserId={UserId}, UserSessionId={UserSessionId}", currentUserId,
                     currentUserSessionId);
                 return Result.Fail(Error.Unauthorized("Sesión de Usuario revocada o caducada."));
             }

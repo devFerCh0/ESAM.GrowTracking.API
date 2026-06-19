@@ -65,19 +65,19 @@ namespace ESAM.GrowTracking.API.Security
                 return Result.Fail(Error.Unauthorized("El identificador del dispositivo no es válido o no está presente."));
             }
             if (accessTokenType == AccessTokenType.Temporary)
-                return await _accessTokenValidationService.ValidateCurrentTemporaryAsync(jti, userId.Value, securityStamp, tokenVersion.Value, userDeviceId.Value,
+                return await _accessTokenValidationService.ValidateCurrentTemporaryAsync(jti, userId.Value, securityStamp, tokenVersion.Value, userDeviceId.Value, 
                     cancellationToken);
             var userSessionId = principal.GetUserSessionId();
             if (userSessionId is null)
             {
                 _logger.LogWarning("JwtTokenValidatedHandler: identificador de la sesión de usuario ausente o inválido en los claims.");
-                return Result.Fail(Error.Unauthorized("El identificado de la sesión de usuario no es válido o no está presente."));
+                return Result.Fail(Error.Unauthorized("El identificador de la sesión de usuario no es válido o no está presente."));
             }
             var workProfileId = principal.GetWorkProfileId();
             if (workProfileId is null)
             {
                 _logger.LogWarning("JwtTokenValidatedHandler: identificador de perfil de trabajo ausente o inválido en los claims.");
-                return Result.Fail(Error.Unauthorized("El Identificador de perfil de trabajo no es válido o no está presente."));
+                return Result.Fail(Error.Unauthorized("El identificador de perfil de trabajo no es válido o no está presente."));
             }
             var workProfileType = principal.GetWorkProfileType();
             if (workProfileType is null)
@@ -97,8 +97,8 @@ namespace ESAM.GrowTracking.API.Security
                 _logger.LogWarning("JwtTokenValidatedHandler: identificador de la sede ausente o inválido en los claims.");
                 return Result.Fail(Error.Unauthorized("El identificador de la sede no es válido o no está presente."));
             }
-            return await _accessTokenValidationService.ValidateCurrentSessionAsync(jti, userId.Value, securityStamp, tokenVersion.Value, userDeviceId.Value,
-                userSessionId.Value, workProfileId.Value, workProfileType.Value, roleId.Value, campusId.Value, cancellationToken);
+            return await _accessTokenValidationService.ValidateCurrentSessionAsync(jti, userId.Value, securityStamp, tokenVersion.Value, userDeviceId.Value, userSessionId.Value, 
+                workProfileId.Value, workProfileType.Value, roleId.Value, campusId.Value, cancellationToken);
         }
     }
 }

@@ -170,6 +170,7 @@ namespace ESAM.GrowTracking.API
                 authenticationOptions.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 authenticationOptions.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             }).AddJwtBearer();
+            services.AddScoped<IJwtTokenValidatedHandler, JwtTokenValidatedHandler>();
             services.ConfigureOptions<JwtBearerOptionsSetup>();
             return services;
         }
