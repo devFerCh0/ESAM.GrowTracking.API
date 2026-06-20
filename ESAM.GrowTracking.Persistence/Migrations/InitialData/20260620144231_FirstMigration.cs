@@ -456,7 +456,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                 });
 
             migrationBuilder.CreateTable(
-                name: "BlacklistedAccessTokensPermanent",
+                name: "BlacklistedAccessTokensSession",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -472,9 +472,9 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_BlacklistedAccessTokensPermanent", x => x.Id);
+                    table.PrimaryKey("PK_BlacklistedAccessTokensSession", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_BlacklistedAccessTokensPermanent_UserSessions_UserSessionId",
+                        name: "FK_BlacklistedAccessTokensSession_UserSessions_UserSessionId",
                         column: x => x.UserSessionId,
                         principalTable: "UserSessions",
                         principalColumn: "Id",
@@ -723,23 +723,23 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                 values: [3, 3, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 1, true, null, null]);
 
             migrationBuilder.CreateIndex(
-                name: "IX_BlacklistedAccessTokensPermanent_ExpiresAt",
-                table: "BlacklistedAccessTokensPermanent",
+                name: "IX_BlacklistedAccessTokensSession_ExpiresAt",
+                table: "BlacklistedAccessTokensSession",
                 column: "ExpiresAt");
 
             migrationBuilder.CreateIndex(
-                name: "IX_BlacklistedAccessTokensPermanent_Jti",
-                table: "BlacklistedAccessTokensPermanent",
+                name: "IX_BlacklistedAccessTokensSession_Jti",
+                table: "BlacklistedAccessTokensSession",
                 column: "Jti");
 
             migrationBuilder.CreateIndex(
-                name: "IX_BlacklistedAccessTokensPermanent_UserSessionId",
-                table: "BlacklistedAccessTokensPermanent",
+                name: "IX_BlacklistedAccessTokensSession_UserSessionId",
+                table: "BlacklistedAccessTokensSession",
                 column: "UserSessionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_BlacklistedAccessTokensPermanent_UserSessionId_ExpiresAt",
-                table: "BlacklistedAccessTokensPermanent",
+                name: "IX_BlacklistedAccessTokensSession_UserSessionId_ExpiresAt",
+                table: "BlacklistedAccessTokensSession",
                 columns: ["UserSessionId", "ExpiresAt"]);
 
             migrationBuilder.CreateIndex(
@@ -1049,7 +1049,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "BlacklistedAccessTokensPermanent");
+                name: "BlacklistedAccessTokensSession");
 
             migrationBuilder.DropTable(
                 name: "BlacklistedAccessTokensTemporary");

@@ -1,10 +1,13 @@
 ﻿using AutoMapper;
 using ESAM.GrowTracking.API.Abstractions.Mappers;
+using ESAM.GrowTracking.API.Controllers.Auth.GetUserRoleCampuses;
 using ESAM.GrowTracking.API.Controllers.Auth.Login;
 using ESAM.GrowTracking.API.Controllers.Auth.Login.HttpResponses;
 using ESAM.GrowTracking.API.Extensions;
 using ESAM.GrowTracking.API.Responses;
+using ESAM.GrowTracking.API.Security;
 using ESAM.GrowTracking.Application.Abstractions.Services;
+using ESAM.GrowTracking.Application.Features.Auth.GetUserRoleCampuses;
 using ESAM.GrowTracking.Application.Features.Auth.Login;
 using FluentValidation;
 using MediatR;
@@ -62,6 +65,25 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
             return Ok(ApiSuccessResponse<LoginHttpResponse>.From(login, HttpContext.TraceIdentifier));
         }
 
+        [Authorize(Policy = AuthorizationPolicies.RequireTemporaryTypeAccessToken)]
+        [HttpGet("work-profile/{workProfileId:int}/user-role-campuses")]
+        [ProducesResponseType(typeof(ApiSuccessResponse<List<GetUserRoleCampusHttpResponse>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<ApiSuccessResponse<List<GetUserRoleCampusHttpResponse>>>> GetUserRoleCampusesAsync([FromRoute] int workProfileId, 
+            CancellationToken cancellationToken)
+        {
+            var query = new GetUserRoleCampusesQuery(workProfileId);
+            var userRoleCampusesResult = await _sender.Send(query, cancellationToken);
+            if (userRoleCampusesResult.IsFailure)
+                return userRoleCampusesResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
+            var userRoleCampuses = _mapper.Map<List<GetUserRoleCampusHttpResponse>>(userRoleCampusesResult.Value);
+            return Ok(ApiSuccessResponse<List<GetUserRoleCampusHttpResponse>>.From(userRoleCampuses, HttpContext.TraceIdentifier));
+        }
+
         //[Authorize(Policy = "RequireSessionTypeAccessToken")]
         //[HttpPost("assume-work-profile")]
         //[Consumes("application/json")]
@@ -84,24 +106,7 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
         //    return Ok(ApiSuccessResponse<AssumeWorkProfileHttpResponse>.From(assumeWorkProfile, HttpContext.TraceIdentifier));
         //}
 
-        //[Authorize]
-        //[HttpGet("work-profile/{workProfileId:int}/user-role-campuses")]
-        //[ProducesResponseType(typeof(ApiSuccessResponse<List<GetUserRoleCampusHttpResponse>>), StatusCodes.Status200OK)]
-        //[ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
-        //[ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
-        //[ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
-        //[ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
-        //[ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
-        //public async Task<ActionResult<ApiSuccessResponse<List<GetUserRoleCampusHttpResponse>>>> GetUserRoleCampusesAsync([FromRoute] int workProfileId,
-        //    CancellationToken cancellationToken)
-        //{
-        //    var query = new GetUserRoleCampusesQuery(workProfileId);
-        //    var userRoleCampusesResult = await _sender.Send(query, cancellationToken);
-        //    if (userRoleCampusesResult.IsFailure)
-        //        return userRoleCampusesResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
-        //    var userRoleCampuses = _mapper.Map<List<GetUserRoleCampusHttpResponse>>(userRoleCampusesResult.Value);
-        //    return Ok(ApiSuccessResponse<List<GetUserRoleCampusHttpResponse>>.From(userRoleCampuses, HttpContext.TraceIdentifier));
-        //}
+
 
         //[Authorize]
         //[HttpPost("assume-role-campus")]

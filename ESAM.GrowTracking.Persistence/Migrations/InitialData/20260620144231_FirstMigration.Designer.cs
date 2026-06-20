@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260602182831_FirstMigration")]
+    [Migration("20260620144231_FirstMigration")]
     partial class FirstMigration
     {
         /// <inheritdoc />
@@ -25,7 +25,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.BlacklistedAccessTokenPermanent", b =>
+            modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.BlacklistedAccessTokenSession", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -77,7 +77,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
 
                     b.HasIndex("UserSessionId", "ExpiresAt");
 
-                    b.ToTable("BlacklistedAccessTokensPermanent", (string)null);
+                    b.ToTable("BlacklistedAccessTokensSession", (string)null);
                 });
 
             modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.BlacklistedAccessTokenTemporary", b =>
@@ -1514,10 +1514,10 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         });
                 });
 
-            modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.BlacklistedAccessTokenPermanent", b =>
+            modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.BlacklistedAccessTokenSession", b =>
                 {
                     b.HasOne("ESAM.GrowTracking.Domain.Entities.UserSession", "UserSession")
-                        .WithMany("BlacklistedAccessTokensPermanent")
+                        .WithMany("BlacklistedAccessTokensSession")
                         .HasForeignKey("UserSessionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -1832,7 +1832,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
 
             modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.UserSession", b =>
                 {
-                    b.Navigation("BlacklistedAccessTokensPermanent");
+                    b.Navigation("BlacklistedAccessTokensSession");
 
                     b.Navigation("UserSessionRefreshTokens");
 

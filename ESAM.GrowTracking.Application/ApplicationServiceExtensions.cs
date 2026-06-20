@@ -1,4 +1,5 @@
 ﻿using ESAM.GrowTracking.Application.Abstractions.Services;
+using ESAM.GrowTracking.Application.Features.Auth.GetUserRoleCampuses;
 using ESAM.GrowTracking.Application.Features.Auth.Login;
 using ESAM.GrowTracking.Application.Services;
 using ESAM.GrowTracking.Application.Settings;
@@ -37,12 +38,13 @@ namespace ESAM.GrowTracking.Application
 
         private static void RegisterServices(IServiceCollection services)
         {
+            services.AddScoped<IAccessTokenClaimsValidatorService, AccessTokenClaimsValidatorService>();
+            services.AddScoped<ISecurityValidatorService, SecurityValidatorService>();
             //services.AddScoped<IBlacklistedTokenService, BlacklistedTokenService>();
             //services.AddScoped<ICurrentUserValidatorService, CurrentUserValidatorService>();
             //services.AddScoped<IPurgeExpiredTokensService, PurgeExpiredTokensService>();
             //services.AddScoped<ITokenSessionValidationService, TokenSessionValidationService>();
             //services.AddScoped<IUserSessionService, UserSessionService>();
-            services.AddScoped<ISecurityValidatorService, SecurityValidatorService>();
             //services.AddHostedService<PurgeExpiredTokensHostedService>();
         }
 
@@ -50,26 +52,23 @@ namespace ESAM.GrowTracking.Application
         {
             services.AddMediatR(mrsc =>
             {
-                mrsc.RegisterServicesFromAssembly(typeof(LoginCommand).Assembly);
-            //    mrsc.RegisterServicesFromAssembly(typeof(AssumeWorkProfileCommand).Assembly);
-            //    mrsc.RegisterServicesFromAssembly(typeof(AssumeRoleCampusCommand).Assembly);
-            //    mrsc.RegisterServicesFromAssembly(typeof(RefreshCommand).Assembly);
-            //    mrsc.RegisterServicesFromAssembly(typeof(LogoutCommand).Assembly);
+                mrsc.RegisterServicesFromAssembly(typeof(LoginCommand).Assembly)
+                    .RegisterServicesFromAssembly(typeof(GetUserRoleCampusesQuery).Assembly);
+                //    mrsc.RegisterServicesFromAssembly(typeof(AssumeWorkProfileCommand).Assembly);
+                //    mrsc.RegisterServicesFromAssembly(typeof(AssumeRoleCampusCommand).Assembly);
+                //    mrsc.RegisterServicesFromAssembly(typeof(RefreshCommand).Assembly);
+                //    mrsc.RegisterServicesFromAssembly(typeof(LogoutCommand).Assembly);
             });
-            //services.AddMediatR(mrsc =>
-            //{
-            //    mrsc.RegisterServicesFromAssembly(typeof(GetUserRoleCampusesQuery).Assembly);
-            //});
         }
 
         private static void RegisterValidators(IServiceCollection services)
         {
-            services.AddValidatorsFromAssemblyContaining<LoginCommandValidator>();
+            services.AddValidatorsFromAssemblyContaining<LoginCommandValidator>()
+                .AddValidatorsFromAssemblyContaining<GetUserRoleCampusesQueryValidator>();
             //.AddValidatorsFromAssemblyContaining<AssumeWorkProfileCommandValidator>()
             //.AddValidatorsFromAssemblyContaining<AssumeRoleCampusCommandValidator>()
             //.AddValidatorsFromAssemblyContaining<RefreshCommandValidator>()
             //.AddValidatorsFromAssemblyContaining<LogoutCommandValidator>();
-            //services.AddValidatorsFromAssemblyContaining<GetUserRoleCampusesQueryValidator>();
         }
     }
 }
