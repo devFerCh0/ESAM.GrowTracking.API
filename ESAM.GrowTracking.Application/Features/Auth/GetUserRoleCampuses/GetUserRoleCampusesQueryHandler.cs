@@ -44,7 +44,6 @@ namespace ESAM.GrowTracking.Application.Features.Auth.GetUserRoleCampuses
                 return Result<List<GetUserRoleCampusResponse>>.Fail(validation.ToCommandErrors());
             }
             var currentUserId = _accessTokenClaimsValidatorService.CurrentUserId;
-
             var isUserWorkProfileActiveAndOfType = await _userWorkProfileRepository.IsActiveAndOfTypeAsync(currentUserId, request.WorkProfileId, WorkProfileType.WithRoles, 
                 asTracking, cancellationToken);
             if (!isUserWorkProfileActiveAndOfType)

@@ -43,6 +43,15 @@ namespace ESAM.GrowTracking.Domain.Entities
 
         public IReadOnlyCollection<BlacklistedRefreshToken> BlacklistedRefreshTokens => _blacklistedRefreshTokens.AsReadOnly();
 
+        public UserSessionRefreshToken(string identifier, string salt, string tokenHash, DateTime expiresAt, int createdBy, DateTime? createdAt = null)
+        {
+            Identifier = identifier;
+            Salt = salt;
+            TokenHash = tokenHash;
+            ExpiresAt = expiresAt;
+            SetCreatedAudit(createdBy, createdAt);
+        }
+
         //public UserSessionRefreshToken(string identifier, string salt, string tokenHash, DateTime expiresAt, int createdBy, int userSessionId = 0, int rotationCount = 0, 
         //    DateTime? createdAt = null)
         //{
@@ -55,16 +64,16 @@ namespace ESAM.GrowTracking.Domain.Entities
         //    SetCreatedAudit(createdBy, createdAt);
         //}
 
-        //public void UpdateLastUsedAt(DateTime lastUsedAt, int updatedBy, DateTime? updatedAt = null)
-        //{
-        //    LastUsedAt = lastUsedAt;
-        //    SetUpdatedAudit(updatedBy, updatedAt);
-        //}
+        public void UpdateLastUsedAt(DateTime lastUsedAt, int updatedBy, DateTime? updatedAt = null)
+        {
+            LastUsedAt = lastUsedAt;
+            SetUpdatedAudit(updatedBy, updatedAt);
+        }
 
-        //public void AddUserSessionId(int userSessionId)
-        //{
-        //    UserSessionId = userSessionId;
-        //}
+        public void AddUserSessionId(int userSessionId)
+        {
+            UserSessionId = userSessionId;
+        }
 
         //public void Revoke(DateTime revokedAt, string revokedReason, int updatedBy, DateTime? updatedAt = null)
         //{

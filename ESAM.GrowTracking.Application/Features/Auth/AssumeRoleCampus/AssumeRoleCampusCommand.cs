@@ -6,13 +6,13 @@ namespace ESAM.GrowTracking.Application.Features.Auth.AssumeRoleCampus
 {
     public record AssumeRoleCampusCommand : IRequest<Result<AssumeRoleCampusResponse>>
     {
-        public int? WorkProfileId { get; init; }
+        public int WorkProfileId { get; init; }
 
-        public int? RoleId { get; init; }
+        public int RoleId { get; init; }
 
-        public int? CampusId { get; init; }
+        public int CampusId { get; init; }
 
-        public AssumeRoleCampusCommand(int? workProfileId, int? roleId, int? campusId)
+        public AssumeRoleCampusCommand(int workProfileId, int roleId, int campusId)
         {
             WorkProfileId = workProfileId;
             RoleId = roleId;

@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Reflection;
 using System.Runtime.Serialization;
 
-namespace ESAM.GrowTracking.API.Serialization
+namespace ESAM.GrowTracking.Infrastructure.Utilities
 {
     public static class EnumMetadata<TEnum> where TEnum : struct, Enum
     {

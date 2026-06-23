@@ -50,24 +50,24 @@ namespace ESAM.GrowTracking.Domain.Entities
 
         public IReadOnlyCollection<BlacklistedAccessTokenSession> BlacklistedAccessTokensSession => _blacklistedAccessTokensSession.AsReadOnly();
 
-        //public UserSession(int userId, int userDeviceId, string? ipAddress, string? userAgent, DateTime expiresAt, DateTime absoluteExpiresAt, bool isPersistent, int createdBy, 
-        //    DateTime? createdAt = null)
-        //{
-        //    UserId = userId;
-        //    UserDeviceId = userDeviceId;
-        //    IpAddress = ipAddress;
-        //    UserAgent = userAgent;
-        //    ExpiresAt = expiresAt;
-        //    AbsoluteExpiresAt = absoluteExpiresAt;
-        //    IsPersistent = isPersistent;
-        //    SetCreatedAudit(createdBy, createdAt);
-        //}
+        public UserSession(int userId, int userDeviceId, string? ipAddress, string? userAgent, DateTime expiresAt, DateTime absoluteExpiresAt, bool isPersistent, int createdBy,
+            DateTime? createdAt = null)
+        {
+            UserId = userId;
+            UserDeviceId = userDeviceId;
+            IpAddress = ipAddress;
+            UserAgent = userAgent;
+            ExpiresAt = expiresAt;
+            AbsoluteExpiresAt = absoluteExpiresAt;
+            IsPersistent = isPersistent;
+            SetCreatedAudit(createdBy, createdAt);
+        }
 
-        //public void UpdateLastActivity(DateTime lastActivityAt, int updatedBy, DateTime? updatedAt = null)
-        //{
-        //    LastActivityAt = lastActivityAt;
-        //    SetUpdatedAudit(updatedBy, updatedAt);
-        //}
+        public void UpdateLastActivity(DateTime lastActivityAt, int updatedBy, DateTime? updatedAt = null)
+        {
+            LastActivityAt = lastActivityAt;
+            SetUpdatedAudit(updatedBy, updatedAt);
+        }
 
         //public void Revoke(DateTime revokedAt, string revokedReason, int closedByUserId, int updatedBy, DateTime? updatedAt = null)
         //{

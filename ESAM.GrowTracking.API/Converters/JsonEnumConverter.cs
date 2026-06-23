@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
-using ESAM.GrowTracking.API.Serialization;
+using ESAM.GrowTracking.Infrastructure.Utilities;
 
 namespace ESAM.GrowTracking.API.Converters
 {

@@ -26,15 +26,15 @@ namespace ESAM.GrowTracking.Domain.Entities
 
         public User User { get; private set; } = null!;
 
-        //public BlacklistedAccessTokenTemporary(int userId, string jti, DateTime expiresAt, DateTime blacklistedAt, string reason, int createdBy, DateTime? createdAt = null)
-        //{
-        //    UserId = userId;
-        //    Jti = jti;
-        //    ExpiresAt = expiresAt;
-        //    BlacklistedAt = blacklistedAt;
-        //    Reason = reason;
-        //    CreatedAt = createdAt ?? DateTime.UtcNow;
-        //    CreatedBy = createdBy;
-        //}
+        public BlacklistedAccessTokenTemporary(int userId, string jti, DateTime expiresAt, DateTime blacklistedAt, string reason, int createdBy, DateTime? createdAt = null)
+        {
+            UserId = userId;
+            Jti = jti;
+            ExpiresAt = expiresAt;
+            BlacklistedAt = blacklistedAt;
+            Reason = reason;
+            CreatedAt = createdAt ?? DateTime.UtcNow;
+            CreatedBy = createdBy;
+        }
     }
 }

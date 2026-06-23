@@ -4,6 +4,7 @@ using ESAM.GrowTracking.Application.Enums;
 using ESAM.GrowTracking.Domain.Enums;
 using ESAM.GrowTracking.Infrastructure.Security;
 using ESAM.GrowTracking.Infrastructure.Settings;
+using ESAM.GrowTracking.Infrastructure.Utilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -58,7 +59,7 @@ namespace ESAM.GrowTracking.Infrastructure.Services
             var claims = BuildBaseAccessTokenClaims(jti, userId, securityStamp, tokenVersion, userDeviceId, AccessTokenType.Session, utcNow, expiresAt);
             claims.Add(new Claim(CustomClaimTypes.UserSessionId, userSessionId.ToString(), ClaimValueTypes.Integer64));
             claims.Add(new Claim(CustomClaimTypes.WorkProfileId, workProfileId.ToString(), ClaimValueTypes.Integer64));
-            claims.Add(new Claim(CustomClaimTypes.WorkProfileType, ((byte)workProfileType).ToString(), ClaimValueTypes.Integer64));
+            claims.Add(new Claim(CustomClaimTypes.WorkProfileType, workProfileType.GetStringValue()));
             if (workProfileType == WorkProfileType.WithRoles)
                 if (roleId is not null && campusId is not null)
                 {
@@ -88,8 +89,8 @@ namespace ESAM.GrowTracking.Infrastructure.Services
                 new(JwtRegisteredClaimNames.Sub, userId.ToString(), ClaimValueTypes.Integer64), 
                 new(CustomClaimTypes.SecurityStamp, securityStamp), 
                 new(CustomClaimTypes.TokenVersion, tokenVersion.ToString(), ClaimValueTypes.Integer64), 
-                new(CustomClaimTypes.UserDeviceId, userDeviceId.ToString(), ClaimValueTypes.Integer64), 
-                new(CustomClaimTypes.AccessTokenType, ((byte)accessTokenType).ToString(), ClaimValueTypes.Integer64), 
+                new(CustomClaimTypes.UserDeviceId, userDeviceId.ToString(), ClaimValueTypes.Integer64),
+                new(CustomClaimTypes.AccessTokenType, accessTokenType.GetStringValue()),
                 new(CustomClaimTypes.AccessTokenExpiration, new DateTimeOffset(expiresAt).ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
             ];
         }

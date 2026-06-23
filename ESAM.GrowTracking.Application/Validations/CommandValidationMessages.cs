@@ -23,10 +23,10 @@
         public const string ApiClientTypeInvalid = "El tipo de cliente no es válido.";
         public const string WorkProfileIdRequired = "El perfil de trabajo es obligatorio.";
         public const string WorkProfileIdInvalid = "El perfil de trabajo no es válido.";
-        //public const string RoleIdRequired = "El rol es obligatorio.";
-        //public const string RoleIdInvalid = "El rol no es válido.";
-        //public const string CampusIdRequired = "La sede es obligatoria.";
-        //public const string CampusIdInvalid = "la sede no es válida.";
+        public const string RoleIdRequired = "El rol es obligatorio.";
+        public const string RoleIdInvalid = "El rol no es válido.";
+        public const string CampusIdRequired = "La sede es obligatoria.";
+        public const string CampusIdInvalid = "la sede no es válida.";
         //public const string RefreshTokenMinLength = "El refresh token debe de tener al menos 3 caracteres.";
         //public const string RefreshTokenMaxLength = "El refresh token no puede exceder los 256 caracteres.";
     }

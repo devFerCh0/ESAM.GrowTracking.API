@@ -1,6 +1,6 @@
-﻿using ESAM.GrowTracking.API.Serialization;
-using ESAM.GrowTracking.API.Validations;
+﻿using ESAM.GrowTracking.API.Validations;
 using ESAM.GrowTracking.Domain.Enums;
+using ESAM.GrowTracking.Infrastructure.Utilities;
 using FluentValidation;
 
 namespace ESAM.GrowTracking.API.Controllers.Auth.Login

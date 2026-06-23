@@ -16,16 +16,16 @@
 
         public UserRoleCampus UserRoleCampus { get; private set; } = null!;
 
-        //public UserSessionRoleCampusSelected(int userId, int roleId, int campusId)
-        //{
-        //    UserId = userId;
-        //    RoleId = roleId;
-        //    CampusId = campusId;
-        //}
+        public UserSessionRoleCampusSelected(int userId, int roleId, int campusId)
+        {
+            UserId = userId;
+            RoleId = roleId;
+            CampusId = campusId;
+        }
 
-        //public void AddUserSessionId(int userSessionId)
-        //{
-        //    UserSessionId = userSessionId;
-        //}
+        public void AddUserSessionId(int userSessionId)
+        {
+            UserSessionId = userSessionId;
+        }
     }
 }

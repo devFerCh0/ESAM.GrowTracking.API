@@ -8,13 +8,13 @@ using ESAM.GrowTracking.API.Filters;
 using ESAM.GrowTracking.API.HealthChecks;
 using ESAM.GrowTracking.API.Mappers;
 using ESAM.GrowTracking.API.Security;
-using ESAM.GrowTracking.API.Serialization;
 using ESAM.GrowTracking.API.Settings;
 using ESAM.GrowTracking.Application.Enums;
 using ESAM.GrowTracking.Infrastructure.Abstractions.Http;
 using ESAM.GrowTracking.Infrastructure.Abstractions.Security;
 using ESAM.GrowTracking.Infrastructure.Security;
 using ESAM.GrowTracking.Infrastructure.Settings;
+using ESAM.GrowTracking.Infrastructure.Utilities;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
@@ -180,9 +180,9 @@ namespace ESAM.GrowTracking.API
         {
             ArgumentNullException.ThrowIfNull(services);
             services.AddAuthorizationBuilder()
-                .AddPolicy(AuthorizationPolicies.RequireSessionTypeAccessToken, policy => policy.RequireClaim(CustomClaimTypes.AccessTokenType, 
+                .AddPolicy(AuthorizationPolicies.RequireSessionTypeAccessToken, policy => policy.RequireClaim(CustomClaimTypes.AccessTokenType,
                     AccessTokenType.Session.GetStringValue()))
-                .AddPolicy(AuthorizationPolicies.RequireTemporaryTypeAccessToken, policy => policy.RequireClaim(CustomClaimTypes.AccessTokenType, 
+                .AddPolicy(AuthorizationPolicies.RequireTemporaryTypeAccessToken, policy => policy.RequireClaim(CustomClaimTypes.AccessTokenType,
                     AccessTokenType.Temporary.GetStringValue()));
             return services;
         }

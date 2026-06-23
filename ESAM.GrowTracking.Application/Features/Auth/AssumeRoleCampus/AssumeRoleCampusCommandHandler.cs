@@ -1,11 +1,11 @@
 ﻿using ESAM.GrowTracking.Application.Abstractions.DataAccess.Queries;
 using ESAM.GrowTracking.Application.Abstractions.Services;
-using ESAM.GrowTracking.Application.Enums;
 using ESAM.GrowTracking.Application.Extensions;
 using ESAM.GrowTracking.Application.Features.Auth.AssumeRoleCampus.Responses;
 using ESAM.GrowTracking.Application.Results;
 using ESAM.GrowTracking.Application.Settings;
 using ESAM.GrowTracking.Application.ValueObjects;
+using ESAM.GrowTracking.Domain.Abstractions.DataAccess.Repositories;
 using ESAM.GrowTracking.Domain.Enums;
 using FluentValidation;
 using MediatR;
@@ -18,40 +18,47 @@ namespace ESAM.GrowTracking.Application.Features.Auth.AssumeRoleCampus
     {
         private readonly ILogger<AssumeRoleCampusCommandHandler> _logger;
         private readonly IValidator<AssumeRoleCampusCommand> _validator;
-        private readonly ICurrentUserService _currentUserService;
-        private readonly IDateTimeService _dateTimeService;
-        private readonly ICurrentUserValidatorService _currentUserValidatorService;
+        private readonly IAccessTokenClaimsValidatorService _accessTokenClaimsValidatorService;
+        private readonly IUserWorkProfileRepository _userWorkProfileRepository;
+        private readonly IUserRoleCampusRepository _userRoleCampusRepository;
+        private readonly IRolePermissionRepository _rolePermissionRepository;
+        private readonly IClientInfoService _clientInfoService;
         private readonly IUserSessionService _userSessionService;
+        private readonly IDateTimeService _dateTimeService;
+        private readonly IUserQuery _userQuery;
         private readonly ITokenService _tokenService;
         private readonly TokenLifetimeSettings _tokenLifetimeSettings;
-        private readonly IUserQuery _userQuery;
-        private readonly IClientInfoService _clientInfoService;
 
         public AssumeRoleCampusCommandHandler(ILogger<AssumeRoleCampusCommandHandler> logger, IValidator<AssumeRoleCampusCommand> validator, 
-            ICurrentUserService currentUserService, IDateTimeService dateTimeService, ICurrentUserValidatorService currentUserValidatorService, 
-            IUserSessionService userSessionService, ITokenService tokenService, IOptions<TokenLifetimeSettings> tokenLifetimeSettingsOptions, IUserQuery userQuery,
-            IClientInfoService clientInfoService)
+            IAccessTokenClaimsValidatorService accessTokenClaimsValidatorService, IUserWorkProfileRepository userWorkProfileRepository, 
+            IUserRoleCampusRepository userRoleCampusRepository, IRolePermissionRepository rolePermissionRepository, IClientInfoService clientInfoService,
+            IUserSessionService userSessionService, IDateTimeService dateTimeService, IUserQuery userQuery, ITokenService tokenService, 
+            IOptions<TokenLifetimeSettings> tokenLifetimeSettingsOptions)
         {
             ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(validator);
-            ArgumentNullException.ThrowIfNull(currentUserService);
-            ArgumentNullException.ThrowIfNull(dateTimeService);
-            ArgumentNullException.ThrowIfNull(currentUserValidatorService);
+            ArgumentNullException.ThrowIfNull(accessTokenClaimsValidatorService);
+            ArgumentNullException.ThrowIfNull(userWorkProfileRepository);
+            ArgumentNullException.ThrowIfNull(userRoleCampusRepository);
+            ArgumentNullException.ThrowIfNull(rolePermissionRepository);
+            ArgumentNullException.ThrowIfNull(clientInfoService);
             ArgumentNullException.ThrowIfNull(userSessionService);
+            ArgumentNullException.ThrowIfNull(dateTimeService);
+            ArgumentNullException.ThrowIfNull(userQuery);
             ArgumentNullException.ThrowIfNull(tokenService);
             ArgumentNullException.ThrowIfNull(tokenLifetimeSettingsOptions);
-            ArgumentNullException.ThrowIfNull(userQuery);
-            ArgumentNullException.ThrowIfNull(clientInfoService);
             _logger = logger;
             _validator = validator;
-            _currentUserService = currentUserService;
-            _dateTimeService = dateTimeService;
-            _currentUserValidatorService = currentUserValidatorService;
+            _accessTokenClaimsValidatorService = accessTokenClaimsValidatorService;
+            _userWorkProfileRepository = userWorkProfileRepository;
+            _userRoleCampusRepository = userRoleCampusRepository;
+            _rolePermissionRepository = rolePermissionRepository;
+            _clientInfoService = clientInfoService;
             _userSessionService = userSessionService;
+            _dateTimeService = dateTimeService;
+            _userQuery = userQuery;
             _tokenService = tokenService;
             _tokenLifetimeSettings = tokenLifetimeSettingsOptions.Value ?? throw new ArgumentNullException(nameof(tokenLifetimeSettingsOptions));
-            _userQuery = userQuery;
-            _clientInfoService = clientInfoService;
         }
 
         public async Task<Result<AssumeRoleCampusResponse>> Handle(AssumeRoleCampusCommand request, CancellationToken cancellationToken)
@@ -61,69 +68,68 @@ namespace ESAM.GrowTracking.Application.Features.Auth.AssumeRoleCampus
             if (!validation.IsValid)
             {
                 _logger.LogWarning("AssumeRoleCampusCommand: validación fallida. Errores: {Errors}", string.Join(" | ", validation.Errors.Select(e => e.ErrorMessage)));
-                return Result<AssumeRoleCampusResponse>.Fail(validation.ToDomainErrors());
+                return Result<AssumeRoleCampusResponse>.Fail(validation.ToCommandErrors());
             }
-            if (!_currentUserService.IsAuthenticated)
+            var currentUserId = _accessTokenClaimsValidatorService.CurrentUserId;
+            var isUserWorkProfileActiveAndOfType = await _userWorkProfileRepository.IsActiveAndOfTypeAsync(currentUserId, request.WorkProfileId, WorkProfileType.WithRoles,
+                asTracking, cancellationToken);
+            if (!isUserWorkProfileActiveAndOfType)
             {
-                _logger.LogWarning("AssumeRoleCampusCommand: intento de acceso no autenticado.");
-                return Result<AssumeRoleCampusResponse>.Fail(Error.Unauthorized("Sesión inválida o expirada. Inicie sesión nuevamente."));
+                _logger.LogWarning("AssumeRoleCampusCommand: perfil de trabajo del usuario no encontrado o eliminado. UserId={UserId}, WorkProfileId={WorkProfileId}",
+                    currentUserId, request.WorkProfileId);
+                return Result<AssumeRoleCampusResponse>.Fail(Error.Unauthorized("No se encontró un perfil de trabajo activo del tipo especificado asignado al usuario."));
             }
-            if (_currentUserService.AccessTokenType != AccessTokenType.Temporary)
+            var isUserRoleCampusActive = await _userRoleCampusRepository.IsActiveAsync(currentUserId, request.RoleId, request.CampusId, asTracking, cancellationToken);
+            if (!isUserRoleCampusActive)
             {
-                _logger.LogWarning("AssumeRoleCampusCommand: tipo de token de acceso inválido. Esperado=Temporal, Actual={AccessTokenType}", 
-                    _currentUserService.AccessTokenType);
-                return Result<AssumeRoleCampusResponse>.Fail(Error.Unauthorized("Esta operación requiere un token de acceso temporal."));
+                _logger.LogWarning("AssumeRoleCampusCommand: rol de sede de usuario no encontrado o eliminado. UserId={UserId}, RoleId={RoleId}, CampusId={CampusId}", 
+                    currentUserId, request.RoleId, request.CampusId);
+                return Result<AssumeRoleCampusResponse>.Fail(Error.Unauthorized("No se encontró un rol de sede de usuario activo."));
             }
-            var currentUserId = _currentUserService.UserId!.Value;
-            var currentUserDeviceId = _currentUserService.UserDeviceId!.Value;
-            var utcNow = _dateTimeService.UtcNow;
-            var currentUserResult = await _currentUserValidatorService.GetAndValidateCurrentUserAsync(currentUserId, utcNow, asTracking, cancellationToken);
-            if (currentUserResult.IsFailure)
-                return Result<AssumeRoleCampusResponse>.Fail(currentUserResult.Errors);
-            var user = currentUserResult.Value;
-            var currentUserDeviceValidationResult = await _currentUserValidatorService.ValidateCurrentUserDeviceAsync(currentUserId, currentUserDeviceId, utcNow, asTracking,
-                cancellationToken);
-            if (currentUserDeviceValidationResult.IsFailure)
-                return Result<AssumeRoleCampusResponse>.Fail(currentUserDeviceValidationResult.Errors);
-            var workProfileTypeValidationResult = await _currentUserValidatorService.ValidateUserWorkProfileAndTypeAsync(currentUserId, request.WorkProfileId!.Value,
-                WorkProfileType.WithRoles, asTracking, cancellationToken);
-            if (workProfileTypeValidationResult.IsFailure)
-                return Result<AssumeRoleCampusResponse>.Fail(workProfileTypeValidationResult.Errors);
-            var roleCampusPermissionsValidationResult = await _currentUserValidatorService.ValidateUserRoleCampusAndHasPermissionsAsync(currentUserId, request.RoleId!.Value, 
-                request.CampusId!.Value, asTracking, cancellationToken);
-            if (roleCampusPermissionsValidationResult.IsFailure)
-                return Result<AssumeRoleCampusResponse>.Fail(roleCampusPermissionsValidationResult.Errors);
+            var roleHasActivePermissionsWithAccess = await _rolePermissionRepository.HasActivePermissionsWithAccessAsync(request.RoleId, asTracking, cancellationToken);
+            if (!roleHasActivePermissionsWithAccess)
+            {
+                _logger.LogWarning("AssumeRoleCampusCommand: rol sin permisos activos. RoleId={RoleId}", request.RoleId);
+                return Result<AssumeRoleCampusResponse>.Fail(Error.Unauthorized("El rol no tiene permisos activos asignados."));
+            }
             var ipAddress = _clientInfoService.GetIpAddress();
             var userAgent = _clientInfoService.GetUserAgent();
-            var (refreshToken, userSession) = await _userSessionService.CreateUserSessionAsync(currentUserId, currentUserDeviceId, ipAddress, userAgent,
-                request.WorkProfileId!.Value, utcNow, WorkProfileType.WithRoles, _currentUserService.Jti!, _currentUserService.AccessTokenExpiration!.Value, 
-                _currentUserService.IsPersistent!.Value, request.RoleId!.Value, request.CampusId!.Value, asTracking, cancellationToken);
-            var accessToken = _tokenService.GenerateSessionAccessToken(currentUserId, user.SecurityStamp, user.TokenVersion, currentUserDeviceId, userSession.Id, utcNow,
-                _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, request.WorkProfileId!.Value, request.RoleId!.Value, request.CampusId!.Value);
-            var assumeRoleCampusUser = await _userQuery.GetAssumeRoleCampusUserByUserIdAndUserSessionIdAsync(user.Id, userSession.Id, asTracking,cancellationToken);
+            var currentUserDeviceId = _accessTokenClaimsValidatorService.CurrentUserDeviceId;
+            var currentIsPersistent = _accessTokenClaimsValidatorService.CurrentIsPersistent;
+            var currentJti = _accessTokenClaimsValidatorService.CurrentJti;
+            var currentAccessTokenExpiration = _accessTokenClaimsValidatorService.CurrentAccessTokenExpiration;
+            var utcNow = _dateTimeService.UtcNow;
+            var (refreshToken, userSession) = await _userSessionService.CreateUserSessionAsync(currentUserId, currentUserDeviceId, ipAddress, userAgent, currentIsPersistent, 
+                request.WorkProfileId, request.RoleId, request.CampusId, currentJti, currentAccessTokenExpiration, utcNow, cancellationToken);
+            var assumeRoleCampusUser = await _userQuery.GetAssumeRoleCampusUserByUserIdAndUserSessionIdAsync(currentUserId, userSession.Id, asTracking, cancellationToken);
             if (assumeRoleCampusUser is null)
             {
-                _logger.LogError("AssumeRoleCampusCommand: información del usuario no encontrada tras creación de sesión. UserId={UserId}, " + 
-                    "UserSessionId={UserSessionId}", user.Id, userSession.Id);
+                _logger.LogError("AssumeRoleCampusCommand: información del usuario no encontrada tras creación de sesión. UserId={UserId}, " +
+                    "UserSessionId={UserSessionId}", currentUserId, userSession.Id);
                 return Result<AssumeRoleCampusResponse>.Fail(Error.ServerError("Usuario no encontrado."));
             }
             if (assumeRoleCampusUser.AssumeRoleCampusUserWorkProfiles is null || assumeRoleCampusUser.AssumeRoleCampusUserWorkProfiles.Count == 0)
             {
-                _logger.LogError("AssumeRoleCampusCommand: el usuario no tiene perfiles de trabajo asignados. UserId={UserId}, UserSessionId={UserSessionId}", user.Id, 
+                _logger.LogError("AssumeRoleCampusCommand: el usuario no tiene perfiles de trabajo asignados. UserId={UserId}, UserSessionId={UserSessionId}", currentUserId,
                     userSession.Id);
                 return Result<AssumeRoleCampusResponse>.Fail(Error.ServerError("El usuario no tiene perfiles de trabajo asignados."));
             }
             if (assumeRoleCampusUser.AssumeRoleCampusUserRoleCampuses is null || assumeRoleCampusUser.AssumeRoleCampusUserRoleCampuses.Count == 0)
             {
-                _logger.LogError("AssumeRoleCampusCommand: el usuario no tiene roles de sede asignados. UserId={UserId}, UserSessionId={UserSessionId}", user.Id, userSession.Id);
+                _logger.LogError("AssumeRoleCampusCommand: el usuario no tiene roles de sede asignados. UserId={UserId}, UserSessionId={UserSessionId}", currentUserId, 
+                    userSession.Id);
                 return Result<AssumeRoleCampusResponse>.Fail(Error.ServerError("El usuario no tiene roles de sede asignados."));
             }
             if (assumeRoleCampusUser.AssumeRoleCampusUserSession is null)
             {
-                _logger.LogError("AssumeRoleCampusCommand: sesión ausente en los datos retornados. UserId={UserId}, UserSessionId={UserSessionId}", user.Id,  userSession.Id);
+                _logger.LogError("AssumeRoleCampusCommand: sesión ausente en los datos retornados. UserId={UserId}, UserSessionId={UserSessionId}", currentUserId, userSession.Id);
                 return Result<AssumeRoleCampusResponse>.Fail(Error.ServerError("No se encontró la sesión del usuario."));
             }
-            return Result<AssumeRoleCampusResponse>.Ok(new AssumeRoleCampusResponse(accessToken.Token, accessToken.ExpiresIn, accessToken.ExpiresAt, refreshToken.Identifier, 
+            var currentSecurityStamp = _accessTokenClaimsValidatorService.CurrentSecurityStamp;
+            var currentTokenVersion = _accessTokenClaimsValidatorService.CurrentTokenVersion;
+            var accessToken = _tokenService.GenerateSessionAccessToken(currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId, userSession.Id, utcNow,
+                _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, request.WorkProfileId, WorkProfileType.WithRoles, request.RoleId, request.CampusId);
+            return Result<AssumeRoleCampusResponse>.Ok(new AssumeRoleCampusResponse(accessToken.Token, accessToken.ExpiresIn, accessToken.ExpiresAt, refreshToken.Identifier,
                 refreshToken.Token, refreshToken.ExpiresIn, refreshToken.ExpiresAt, assumeRoleCampusUser));
         }
     }

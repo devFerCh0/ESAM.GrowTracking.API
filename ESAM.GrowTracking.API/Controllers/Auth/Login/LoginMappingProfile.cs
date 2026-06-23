@@ -1,9 +1,9 @@
 ﻿using AutoMapper;
 using ESAM.GrowTracking.API.Controllers.Auth.Login.HttpResponses;
-using ESAM.GrowTracking.API.Serialization;
 using ESAM.GrowTracking.Application.Features.Auth.Login;
 using ESAM.GrowTracking.Application.Features.Auth.Login.Responses;
 using ESAM.GrowTracking.Domain.Enums;
+using ESAM.GrowTracking.Infrastructure.Utilities;
 
 namespace ESAM.GrowTracking.API.Controllers.Auth.Login
 {
