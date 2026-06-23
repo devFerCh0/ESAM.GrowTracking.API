@@ -1,4 +1,5 @@
 ﻿using ESAM.GrowTracking.Application.Features.Auth.AssumeRoleCampus.Responses;
+using ESAM.GrowTracking.Application.Features.Auth.AssumeWorkProfile.Responses;
 using ESAM.GrowTracking.Application.Features.Auth.Login.Responses;
 using ESAM.GrowTracking.Domain.Entities;
 
@@ -11,8 +12,8 @@ namespace ESAM.GrowTracking.Application.Abstractions.DataAccess.Queries
         Task<AssumeRoleCampusUserResponse?> GetAssumeRoleCampusUserByUserIdAndUserSessionIdAsync(int userId, int userSessionId, bool asTracking = false,
             CancellationToken cancellationToken = default);
 
-        //Task<AssumeWorkProfileUserResponse?> GetAssumeWorkProfileUserByUserIdAndUserSessionIdAsync(int userId, int userSessionId, bool asTracking = false, 
-        //    CancellationToken cancellationToken = default);
+        Task<AssumeWorkProfileUserResponse?> GetAssumeWorkProfileUserByUserIdAndUserSessionIdAsync(int userId, int userSessionId, bool asTracking = false,
+            CancellationToken cancellationToken = default);
 
         //Task<GetCurrentUserWorkProfileResponse?> GetCurrentUserWorkProfileByUserIdAndUserSessionIdAsync(int userId, int userSessionId, bool asTracking = false,
         //    CancellationToken cancellationToken = default);

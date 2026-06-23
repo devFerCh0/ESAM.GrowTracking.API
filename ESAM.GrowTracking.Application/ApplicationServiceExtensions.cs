@@ -1,4 +1,6 @@
 ﻿using ESAM.GrowTracking.Application.Abstractions.Services;
+using ESAM.GrowTracking.Application.Features.Auth.AssumeRoleCampus;
+using ESAM.GrowTracking.Application.Features.Auth.AssumeWorkProfile;
 using ESAM.GrowTracking.Application.Features.Auth.GetUserRoleCampuses;
 using ESAM.GrowTracking.Application.Features.Auth.Login;
 using ESAM.GrowTracking.Application.Services;
@@ -40,11 +42,11 @@ namespace ESAM.GrowTracking.Application
         {
             services.AddScoped<IAccessTokenClaimsValidatorService, AccessTokenClaimsValidatorService>();
             services.AddScoped<ISecurityValidatorService, SecurityValidatorService>();
+            services.AddScoped<IUserSessionService, UserSessionService>();
             //services.AddScoped<IBlacklistedTokenService, BlacklistedTokenService>();
             //services.AddScoped<ICurrentUserValidatorService, CurrentUserValidatorService>();
             //services.AddScoped<IPurgeExpiredTokensService, PurgeExpiredTokensService>();
             //services.AddScoped<ITokenSessionValidationService, TokenSessionValidationService>();
-            //services.AddScoped<IUserSessionService, UserSessionService>();
             //services.AddHostedService<PurgeExpiredTokensHostedService>();
         }
 
@@ -52,10 +54,10 @@ namespace ESAM.GrowTracking.Application
         {
             services.AddMediatR(mrsc =>
             {
-                mrsc.RegisterServicesFromAssembly(typeof(LoginCommand).Assembly)
-                    .RegisterServicesFromAssembly(typeof(GetUserRoleCampusesQuery).Assembly);
-                //    mrsc.RegisterServicesFromAssembly(typeof(AssumeWorkProfileCommand).Assembly);
-                //    mrsc.RegisterServicesFromAssembly(typeof(AssumeRoleCampusCommand).Assembly);
+                mrsc.RegisterServicesFromAssembly(typeof(LoginCommand).Assembly);
+                mrsc.RegisterServicesFromAssembly(typeof(GetUserRoleCampusesQuery).Assembly);
+                mrsc.RegisterServicesFromAssembly(typeof(AssumeRoleCampusCommand).Assembly);
+                mrsc.RegisterServicesFromAssembly(typeof(AssumeWorkProfileCommand).Assembly);
                 //    mrsc.RegisterServicesFromAssembly(typeof(RefreshCommand).Assembly);
                 //    mrsc.RegisterServicesFromAssembly(typeof(LogoutCommand).Assembly);
             });
@@ -63,10 +65,10 @@ namespace ESAM.GrowTracking.Application
 
         private static void RegisterValidators(IServiceCollection services)
         {
-            services.AddValidatorsFromAssemblyContaining<LoginCommandValidator>()
-                .AddValidatorsFromAssemblyContaining<GetUserRoleCampusesQueryValidator>();
-            //.AddValidatorsFromAssemblyContaining<AssumeWorkProfileCommandValidator>()
-            //.AddValidatorsFromAssemblyContaining<AssumeRoleCampusCommandValidator>()
+            services.AddValidatorsFromAssemblyContaining<LoginCommandValidator>();
+            services.AddValidatorsFromAssemblyContaining<GetUserRoleCampusesQueryValidator>();
+            services.AddValidatorsFromAssemblyContaining<AssumeRoleCampusCommandValidator>();
+            services.AddValidatorsFromAssemblyContaining<AssumeWorkProfileCommandValidator>();
             //.AddValidatorsFromAssemblyContaining<RefreshCommandValidator>()
             //.AddValidatorsFromAssemblyContaining<LogoutCommandValidator>();
         }

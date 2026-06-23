@@ -7,26 +7,18 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Controllers\Auth\AssumeRoleCampus\**" />
-    <Compile Remove="Controllers\Auth\AssumeWorkProfile\**" />
     <Compile Remove="Controllers\Auth\GetCurrentUserRoleCampus\**" />
     <Compile Remove="Controllers\Auth\GetCurrentUserWorkProfile\**" />
     <Compile Remove="Controllers\Auth\Logout\**" />
     <Compile Remove="Controllers\Auth\Refresh\**" />
-    <Content Remove="Controllers\Auth\AssumeRoleCampus\**" />
-    <Content Remove="Controllers\Auth\AssumeWorkProfile\**" />
     <Content Remove="Controllers\Auth\GetCurrentUserRoleCampus\**" />
     <Content Remove="Controllers\Auth\GetCurrentUserWorkProfile\**" />
     <Content Remove="Controllers\Auth\Logout\**" />
     <Content Remove="Controllers\Auth\Refresh\**" />
-    <EmbeddedResource Remove="Controllers\Auth\AssumeRoleCampus\**" />
-    <EmbeddedResource Remove="Controllers\Auth\AssumeWorkProfile\**" />
     <EmbeddedResource Remove="Controllers\Auth\GetCurrentUserRoleCampus\**" />
     <EmbeddedResource Remove="Controllers\Auth\GetCurrentUserWorkProfile\**" />
     <EmbeddedResource Remove="Controllers\Auth\Logout\**" />
     <EmbeddedResource Remove="Controllers\Auth\Refresh\**" />
-    <None Remove="Controllers\Auth\AssumeRoleCampus\**" />
-    <None Remove="Controllers\Auth\AssumeWorkProfile\**" />
     <None Remove="Controllers\Auth\GetCurrentUserRoleCampus\**" />
     <None Remove="Controllers\Auth\GetCurrentUserWorkProfile\**" />
     <None Remove="Controllers\Auth\Logout\**" />

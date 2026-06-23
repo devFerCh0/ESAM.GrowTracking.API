@@ -1,6 +1,5 @@
 ﻿using ESAM.GrowTracking.Application.Abstractions.DataAccess.Queries;
 using ESAM.GrowTracking.Application.Abstractions.Services;
-using ESAM.GrowTracking.Application.Enums;
 using ESAM.GrowTracking.Application.Extensions;
 using ESAM.GrowTracking.Application.Features.Auth.AssumeWorkProfile.Responses;
 using ESAM.GrowTracking.Application.Results;
@@ -19,52 +18,43 @@ namespace ESAM.GrowTracking.Application.Features.Auth.AssumeWorkProfile
     {
         private readonly ILogger<AssumeWorkProfileCommandHandler> _logger;
         private readonly IValidator<AssumeWorkProfileCommand> _validator;
-        private readonly ITokenClaimsValidationService _tokenClaimsValidationService;
-        private readonly IDateTimeService _dateTimeService;
-        private readonly ICurrentSessionIntegrityValidationService _currentSessionIntegrityValidationService;
+        private readonly IAccessTokenClaimsValidatorService _accessTokenClaimsValidatorService;
         private readonly IUserWorkProfileRepository _userWorkProfileRepository;
         private readonly IWorkProfilePermissionRepository _workProfilePermissionRepository;
-
-
-
+        private readonly IClientInfoService _clientInfoService;
+        private readonly IDateTimeService _dateTimeService;
         private readonly IUserSessionService _userSessionService;
+        private readonly IUserQuery _userQuery;
         private readonly ITokenService _tokenService;
         private readonly TokenLifetimeSettings _tokenLifetimeSettings;
-        private readonly IUserQuery _userQuery;
-        private readonly IClientInfoService _clientInfoService;
 
-        public AssumeWorkProfileCommandHandler(ILogger<AssumeWorkProfileCommandHandler> logger, IValidator<AssumeWorkProfileCommand> validator, 
-            ITokenClaimsValidationService tokenClaimsValidationService, IDateTimeService dateTimeService, 
-            ICurrentSessionIntegrityValidationService currentSessionIntegrityValidationService, IUserWorkProfileRepository userWorkProfileRepository,
-            IWorkProfilePermissionRepository workProfilePermissionRepository, IUserSessionService userSessionService, 
-            ITokenService tokenService, IOptions<TokenLifetimeSettings> tokenLifetimeSettingsOptions, IUserQuery userQuery, IClientInfoService clientInfoService)
+        public AssumeWorkProfileCommandHandler(ILogger<AssumeWorkProfileCommandHandler> logger, IValidator<AssumeWorkProfileCommand> validator,
+            IAccessTokenClaimsValidatorService accessTokenClaimsValidatorService, IUserWorkProfileRepository userWorkProfileRepository, 
+            IWorkProfilePermissionRepository workProfilePermissionRepository, IClientInfoService clientInfoService, IDateTimeService dateTimeService, 
+            IUserSessionService userSessionService, IUserQuery userQuery, ITokenService tokenService, IOptions<TokenLifetimeSettings> tokenLifetimeSettingsOptions)
         {
             ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(validator);
-            ArgumentNullException.ThrowIfNull(tokenClaimsValidationService);
-            ArgumentNullException.ThrowIfNull(dateTimeService);
-            ArgumentNullException.ThrowIfNull(currentSessionIntegrityValidationService);
+            ArgumentNullException.ThrowIfNull(accessTokenClaimsValidatorService);
             ArgumentNullException.ThrowIfNull(userWorkProfileRepository);
             ArgumentNullException.ThrowIfNull(workProfilePermissionRepository);
-
+            ArgumentNullException.ThrowIfNull(clientInfoService);
+            ArgumentNullException.ThrowIfNull(dateTimeService);
             ArgumentNullException.ThrowIfNull(userSessionService);
+            ArgumentNullException.ThrowIfNull(userQuery);
             ArgumentNullException.ThrowIfNull(tokenService);
             ArgumentNullException.ThrowIfNull(tokenLifetimeSettingsOptions);
-            ArgumentNullException.ThrowIfNull(userQuery);
-            ArgumentNullException.ThrowIfNull(clientInfoService);
             _logger = logger;
             _validator = validator;
-            _tokenClaimsValidationService = tokenClaimsValidationService;
-            _dateTimeService = dateTimeService;
-            _currentSessionIntegrityValidationService = currentSessionIntegrityValidationService;
+            _accessTokenClaimsValidatorService = accessTokenClaimsValidatorService;
             _userWorkProfileRepository = userWorkProfileRepository;
             _workProfilePermissionRepository = workProfilePermissionRepository;
-
+            _clientInfoService = clientInfoService;
+            _dateTimeService = dateTimeService;
             _userSessionService = userSessionService;
+            _userQuery = userQuery;
             _tokenService = tokenService;
             _tokenLifetimeSettings = tokenLifetimeSettingsOptions.Value ?? throw new ArgumentNullException(nameof(tokenLifetimeSettingsOptions));
-            _userQuery = userQuery;
-            _clientInfoService = clientInfoService;
         }
 
         public async Task<Result<AssumeWorkProfileResponse>> Handle(AssumeWorkProfileCommand request, CancellationToken cancellationToken)
@@ -74,79 +64,56 @@ namespace ESAM.GrowTracking.Application.Features.Auth.AssumeWorkProfile
             if (!validation.IsValid)
             {
                 _logger.LogWarning("AssumeWorkProfileCommand: validación fallida. Errores: {Errors}", string.Join(" | ", validation.Errors.Select(e => e.ErrorMessage)));
-                return Result<AssumeWorkProfileResponse>.Fail(validation.ToDomainErrors());
+                return Result<AssumeWorkProfileResponse>.Fail(validation.ToCommandErrors());
             }
-            if (!_tokenClaimsValidationService.IsAuthenticated)
-            {
-                _logger.LogWarning("AssumeWorkProfileCommand: intento de acceso no autenticado.");
-                return Result<AssumeWorkProfileResponse>.Fail(Error.Unauthorized("Sesión inválida o expirada. Inicie sesión nuevamente."));
-            }
-            var currentAccessTokenType = _tokenClaimsValidationService.CurrentAccessTokenType;
-            if (currentAccessTokenType != AccessTokenType.Temporary)
-            {
-                _logger.LogWarning("AssumeWorkProfileCommand: tipo de token de acceso inválido. Esperado=Temporal, Actual={AccessTokenType}", currentAccessTokenType);
-                return Result<AssumeWorkProfileResponse>.Fail(Error.Unauthorized("Esta operación requiere un token de acceso temporal."));
-            }
-            var currentUserId = _tokenClaimsValidationService.CurrentUserId;
-            var currentSecurityStamp = _tokenClaimsValidationService.CurrentSecurityStamp;
-            var currentTokenVersion = _tokenClaimsValidationService.CurrentTokenVersion;
-            var utcNow = _dateTimeService.UtcNow;
-            var validateUserResult = await _currentSessionIntegrityValidationService.ValidateUserAsync(currentUserId, currentSecurityStamp, currentTokenVersion, utcNow, asTracking,
-                cancellationToken);
-            if (validateUserResult.IsFailure)
-                return Result<AssumeWorkProfileResponse>.Fail(validateUserResult.Errors);
-            var currentUserDeviceId = _tokenClaimsValidationService.CurrentUserDeviceId;
-            var validateUserDeviceResult = await _currentSessionIntegrityValidationService.ValidateUserDeviceAsync(currentUserDeviceId, currentUserId, utcNow, asTracking, 
-                cancellationToken);
-            if (validateUserDeviceResult.IsFailure)
-                return Result<AssumeWorkProfileResponse>.Fail(validateUserDeviceResult.Errors);
-            var currentJti = _tokenClaimsValidationService.CurrentJti;
-            var validateAccessTokenTemporaryResult = await _currentSessionIntegrityValidationService.ValidateAccessTokenTemporaryAsync(currentJti, asTracking, cancellationToken);
-            if (validateAccessTokenTemporaryResult.IsFailure)
-                return Result<AssumeWorkProfileResponse>.Fail(validateAccessTokenTemporaryResult.Errors);
-            var isUserWorkProfileActiveAndOfType = await _userWorkProfileRepository.IsActiveAndOfTypeAsync(currentUserId, request.WorkProfileId, WorkProfileType.OnlyWorkProfile, 
+            var currentUserId = _accessTokenClaimsValidatorService.CurrentUserId;
+            var isUserWorkProfileActiveAndOfType = await _userWorkProfileRepository.IsActiveAndOfTypeAsync(currentUserId, request.WorkProfileId, WorkProfileType.OnlyWorkProfile,
                 asTracking, cancellationToken);
             if (!isUserWorkProfileActiveAndOfType)
             {
-                _logger.LogWarning("AssumeWorkProfileCommand: perfil de trabajo de usuario no encontrado o eliminado. UserId={UserId}, WorkProfileId={WorkProfileId}",
+                _logger.LogWarning("AssumeWorkProfileCommand: perfil de trabajo del usuario no encontrado o eliminado. UserId={UserId}, WorkProfileId={WorkProfileId}",
                     currentUserId, request.WorkProfileId);
-                return Result<AssumeWorkProfileResponse>.Fail(Error.NotFound("No se encontró un perfil de trabajo activo del tipo especificado asignado al usuario."));
+                return Result<AssumeWorkProfileResponse>.Fail(Error.Unauthorized("No se encontró un perfil de trabajo activo del tipo especificado asignado al usuario."));
             }
             var workProfileHasActivePermissionsWithAccess = await _workProfilePermissionRepository.HasActivePermissionsWithAccessAsync(request.WorkProfileId, asTracking, 
                 cancellationToken);
             if (!workProfileHasActivePermissionsWithAccess)
             {
-                _logger.LogWarning("AssumeWorkProfileCommand: el perfil de trabajo no tiene permisos activos con acceso. WorkProfileId={WorkProfileId}", request.WorkProfileId);
-                return Result<AssumeWorkProfileResponse>.Fail(Error.Forbidden("El perfil de trabajo no tiene permisos activos con acceso."));
+                _logger.LogWarning("AssumeWorkProfileCommand: perfil de trabajo sin permisos activos. WorkProfileId={WorkProfileId}", request.WorkProfileId);
+                return Result<AssumeWorkProfileResponse>.Fail(Error.Unauthorized("El perfil de trabajo no tiene permisos activos asignados."));
             }
+            var currentUserDeviceId = _accessTokenClaimsValidatorService.CurrentUserDeviceId;
             var ipAddress = _clientInfoService.GetIpAddress();
             var userAgent = _clientInfoService.GetUserAgent();
-            var (refreshToken, userSession) = await _userSessionService.CreateUserSessionAsync(currentUserId, currentUserDeviceId, ipAddress, userAgent, request.WorkProfileId, 
-                utcNow, WorkProfileType.OnlyWorkProfile, currentJti, _tokenClaimsValidationService.CurrentAccessTokenExpiration, _tokenClaimsValidationService.CurrentIsPersistent, 
-                asTracking: asTracking, cancellationToken: cancellationToken);
-
-
-            var accessToken = _tokenService.GenerateSessionAccessToken(currentUserId, user.SecurityStamp, user.TokenVersion, currentUserDeviceId, userSession.Id, utcNow,
-                _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, request.WorkProfileId!.Value);
-            var assumeWorkProfileUser = await _userQuery.GetAssumeWorkProfileUserByUserIdAndUserSessionIdAsync(user.Id, userSession.Id, asTracking, cancellationToken);
+            var currentIsPersistent = _accessTokenClaimsValidatorService.CurrentIsPersistent;
+            var currentJti = _accessTokenClaimsValidatorService.CurrentJti;
+            var currentAccessTokenExpiration = _accessTokenClaimsValidatorService.CurrentAccessTokenExpiration;
+            var utcNow = _dateTimeService.UtcNow;
+            var (refreshToken, userSession) = await _userSessionService.CreateUserSessionAsync(currentUserId, currentUserDeviceId, ipAddress, userAgent, currentIsPersistent,
+                request.WorkProfileId, currentJti, currentAccessTokenExpiration, utcNow, cancellationToken);
+            var assumeWorkProfileUser = await _userQuery.GetAssumeWorkProfileUserByUserIdAndUserSessionIdAsync(currentUserId, userSession.Id, asTracking, cancellationToken);
             if (assumeWorkProfileUser is null)
             {
-                _logger.LogError("AssumeWorkProfileCommand: información del usuario no encontrada tras creación de sesión. UserId={UserId}, UserSessionId={UserSessionId}", 
-                    user.Id, userSession.Id);
+                _logger.LogError("AssumeWorkProfileCommand: información del usuario no encontrada tras creación de sesión. UserId={UserId}, UserSessionId={UserSessionId}",
+                    currentUserId, userSession.Id);
                 return Result<AssumeWorkProfileResponse>.Fail(Error.ServerError("Usuario no encontrado."));
             }
             if (assumeWorkProfileUser.AssumeWorkProfileUserWorkProfiles is null || assumeWorkProfileUser.AssumeWorkProfileUserWorkProfiles.Count == 0)
             {
-                _logger.LogError("AssumeWorkProfileCommand: el usuario no tiene perfiles de trabajo asignados. UserId={UserId}, UserSessionId={UserSessionId}", user.Id, 
+                _logger.LogError("AssumeWorkProfileCommand: el usuario no tiene perfiles de trabajo asignados. UserId={UserId}, UserSessionId={UserSessionId}", currentUserId,
                     userSession.Id);
                 return Result<AssumeWorkProfileResponse>.Fail(Error.ServerError("El usuario no tiene perfiles de trabajo asignados."));
             }
             if (assumeWorkProfileUser.AssumeWorkProfileUserSession is null)
             {
-                _logger.LogError("AssumeWorkProfileCommand: sesión ausente en los datos retornados. UserId={UserId}, UserSessionId={UserSessionId}", user.Id, userSession.Id);
+                _logger.LogError("AssumeWorkProfileCommand: sesión ausente en los datos retornados. UserId={UserId}, UserSessionId={UserSessionId}", currentUserId, userSession.Id);
                 return Result<AssumeWorkProfileResponse>.Fail(Error.ServerError("No se encontró la sesión del usuario."));
             }
-            return Result<AssumeWorkProfileResponse>.Ok(new AssumeWorkProfileResponse(accessToken.Token, accessToken.ExpiresIn, accessToken.ExpiresAt, refreshToken.Identifier, 
+            var currentSecurityStamp = _accessTokenClaimsValidatorService.CurrentSecurityStamp;
+            var currentTokenVersion = _accessTokenClaimsValidatorService.CurrentTokenVersion;
+            var accessToken = _tokenService.GenerateSessionAccessToken(currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId, userSession.Id, utcNow,
+                _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, request.WorkProfileId, WorkProfileType.OnlyWorkProfile);
+            return Result<AssumeWorkProfileResponse>.Ok(new AssumeWorkProfileResponse(accessToken.Token, accessToken.ExpiresIn, accessToken.ExpiresAt, refreshToken.Identifier,
                 refreshToken.Token, refreshToken.ExpiresIn, refreshToken.ExpiresAt, assumeWorkProfileUser));
         }
     }

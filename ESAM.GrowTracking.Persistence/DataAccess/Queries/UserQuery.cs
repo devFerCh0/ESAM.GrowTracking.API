@@ -1,5 +1,6 @@
 ﻿using ESAM.GrowTracking.Application.Abstractions.DataAccess.Queries;
 using ESAM.GrowTracking.Application.Features.Auth.AssumeRoleCampus.Responses;
+using ESAM.GrowTracking.Application.Features.Auth.AssumeWorkProfile.Responses;
 using ESAM.GrowTracking.Application.Features.Auth.Login.Responses;
 using ESAM.GrowTracking.Domain.Entities;
 using ESAM.GrowTracking.Persistence.Contexts;
@@ -41,21 +42,21 @@ namespace ESAM.GrowTracking.Persistence.DataAccess.Queries
                 .FirstOrDefaultAsync(cancellationToken);
         }
 
-        //public async Task<AssumeWorkProfileUserResponse?> GetAssumeWorkProfileUserByUserIdAndUserSessionIdAsync(int userId, int userSessionId, bool asTracking = false, 
-        //    CancellationToken cancellationToken = default)
-        //{
-        //    var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
-        //    return await query.Where(u => u.Id == userId && !u.IsDeleted)
-        //        .Select(u => new AssumeWorkProfileUserResponse(u.Id, u.Username, u.Email, 
-        //            u.Person.FirstName + " " + u.Person.LastName + (string.IsNullOrWhiteSpace(u.Person.SecondLastName) ? "" : " " + u.Person.SecondLastName), 
-        //            u.UserPhotos.Where(up => !up.IsDeleted && up.IsDefault).Select(up => up.Photo).FirstOrDefault(),
-        //            u.UserWorkProfiles.Where(uwp => !uwp.IsDeleted).Select(uwp => new AssumeWorkProfileUserWorkProfileResponse(uwp.WorkProfileId, uwp.WorkProfile.Name, 
-        //                uwp.WorkProfile.WorkProfileType)).ToList(), 
-        //            u.UserSessions.Where(us => us.Id == userSessionId).Select(us => new AssumeWorkProfileUserSessionResponse(us.Id, us.IpAddress, us.UserAgent, 
-        //                us.UserSessionWorkProfileSelected != null ? new AssumeWorkProfileSessionWorkProfileSelectedResponse(
-        //                    us.UserSessionWorkProfileSelected.WorkProfileId) : null)).FirstOrDefault()))
-        //            .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
-        //}
+        public async Task<AssumeWorkProfileUserResponse?> GetAssumeWorkProfileUserByUserIdAndUserSessionIdAsync(int userId, int userSessionId, bool asTracking = false,
+            CancellationToken cancellationToken = default)
+        {
+            var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
+            return await query.Where(u => u.Id == userId && !u.IsDeleted)
+                .Select(u => new AssumeWorkProfileUserResponse(u.Id, u.Username, u.Email,
+                    u.Person.FirstName + " " + u.Person.LastName + (string.IsNullOrWhiteSpace(u.Person.SecondLastName) ? "" : " " + u.Person.SecondLastName),
+                    u.UserPhotos.Where(up => !up.IsDeleted && up.IsDefault).Select(up => up.Photo).FirstOrDefault(),
+                    u.UserWorkProfiles.Where(uwp => !uwp.IsDeleted).Select(uwp => new AssumeWorkProfileUserWorkProfileResponse(uwp.WorkProfileId, uwp.WorkProfile.Name,
+                        uwp.WorkProfile.WorkProfileType)).ToList(),
+                    u.UserSessions.Where(us => us.Id == userSessionId).Select(us => new AssumeWorkProfileUserSessionResponse(us.Id, us.IpAddress, us.UserAgent,
+                        us.UserSessionWorkProfileSelected != null ? new AssumeWorkProfileSessionWorkProfileSelectedResponse(
+                            us.UserSessionWorkProfileSelected.WorkProfileId) : null)).FirstOrDefault()))
+                    .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+        }
 
         //public async Task<GetCurrentUserWorkProfileResponse?> GetCurrentUserWorkProfileByUserIdAndUserSessionIdAsync(int userId, int userSessionId, bool asTracking = false,
         //    CancellationToken cancellationToken = default)

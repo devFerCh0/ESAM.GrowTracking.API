@@ -92,9 +92,9 @@ namespace ESAM.GrowTracking.Application.Features.Auth.AssumeRoleCampus
                 _logger.LogWarning("AssumeRoleCampusCommand: rol sin permisos activos. RoleId={RoleId}", request.RoleId);
                 return Result<AssumeRoleCampusResponse>.Fail(Error.Unauthorized("El rol no tiene permisos activos asignados."));
             }
+            var currentUserDeviceId = _accessTokenClaimsValidatorService.CurrentUserDeviceId;
             var ipAddress = _clientInfoService.GetIpAddress();
             var userAgent = _clientInfoService.GetUserAgent();
-            var currentUserDeviceId = _accessTokenClaimsValidatorService.CurrentUserDeviceId;
             var currentIsPersistent = _accessTokenClaimsValidatorService.CurrentIsPersistent;
             var currentJti = _accessTokenClaimsValidatorService.CurrentJti;
             var currentAccessTokenExpiration = _accessTokenClaimsValidatorService.CurrentAccessTokenExpiration;
