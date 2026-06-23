@@ -16,12 +16,12 @@
 
         public List<GetCurrentUserRoleCampusUserRoleCampusHttpResponse> CurrentUserRoleCampusUserRoleCampuses { get; init; }
 
-        public GetCurrentUserRoleCampusUserSessionHttpResponse? CurrentUserRoleCampusUserSession { get; init; }
+        public GetCurrentUserRoleCampusUserSessionHttpResponse CurrentUserRoleCampusUserSession { get; init; }
 
         public GetCurrentUserRoleCampusHttpResponse(int userId, string username, string email, string fullname, string? photoURL,
             List<GetCurrentUserRoleCampusUserWorkProfileHttpResponse> currentUserRoleCampusUserWorkProfiles, 
             List<GetCurrentUserRoleCampusUserRoleCampusHttpResponse> currentUserRoleCampusUserRoleCampuses,
-            GetCurrentUserRoleCampusUserSessionHttpResponse? currentUserRoleCampusUserSession)
+            GetCurrentUserRoleCampusUserSessionHttpResponse currentUserRoleCampusUserSession)
         {
             UserId = userId;
             Username = username;

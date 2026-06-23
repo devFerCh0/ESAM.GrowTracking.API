@@ -4,10 +4,10 @@
     {
         public int WorkProfileIdSelected { get; init; }
 
-        public GetCurrentUserRoleCampusSessionRoleCampusSelectedHttpResponse? CurrentUserRoleCampusSessionRoleCampusSelected { get; init; }
+        public GetCurrentUserRoleCampusSessionRoleCampusSelectedHttpResponse CurrentUserRoleCampusSessionRoleCampusSelected { get; init; }
 
         public GetCurrentUserRoleCampusSessionWorkProfileSelectedHttpResponse(int workProfileIdSelected,
-            GetCurrentUserRoleCampusSessionRoleCampusSelectedHttpResponse? currentUserRoleCampusSessionRoleCampusSelected)
+            GetCurrentUserRoleCampusSessionRoleCampusSelectedHttpResponse currentUserRoleCampusSessionRoleCampusSelected)
         {
             WorkProfileIdSelected = workProfileIdSelected;
             CurrentUserRoleCampusSessionRoleCampusSelected = currentUserRoleCampusSessionRoleCampusSelected;

@@ -1,10 +1,8 @@
 ﻿using ESAM.GrowTracking.Application.Abstractions.DataAccess.Queries;
 using ESAM.GrowTracking.Application.Abstractions.Services;
-using ESAM.GrowTracking.Application.Enums;
 using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserRoleCampus.Responses;
 using ESAM.GrowTracking.Application.Results;
 using ESAM.GrowTracking.Application.ValueObjects;
-using ESAM.GrowTracking.Domain.Enums;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -13,68 +11,25 @@ namespace ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserRoleCampus
     public class GetCurrentUserRoleCampusQueryHandler : IRequestHandler<GetCurrentUserRoleCampusQuery, Result<GetCurrentUserRoleCampusResponse>>
     {
         private readonly ILogger<GetCurrentUserRoleCampusQueryHandler> _logger;
-        private readonly ICurrentUserService _currentUserService;
-        private readonly IDateTimeService _dateTimeService;
-        private readonly ICurrentUserValidatorService _currentUserValidatorService;
+        private readonly IAccessTokenClaimsValidatorService _accessTokenClaimsValidatorService;
         private readonly IUserQuery _userQuery;
 
-        public GetCurrentUserRoleCampusQueryHandler(ILogger<GetCurrentUserRoleCampusQueryHandler> logger, ICurrentUserService currentUserService, IDateTimeService dateTimeService, 
-            ICurrentUserValidatorService currentUserValidatorService, IUserQuery userQuery)
+        public GetCurrentUserRoleCampusQueryHandler(ILogger<GetCurrentUserRoleCampusQueryHandler> logger, IAccessTokenClaimsValidatorService accessTokenClaimsValidatorService, 
+            IUserQuery userQuery)
         {
             ArgumentNullException.ThrowIfNull(logger);
-            ArgumentNullException.ThrowIfNull(currentUserService);
-            ArgumentNullException.ThrowIfNull(dateTimeService);
-            ArgumentNullException.ThrowIfNull(currentUserValidatorService);
+            ArgumentNullException.ThrowIfNull(accessTokenClaimsValidatorService);
             ArgumentNullException.ThrowIfNull(userQuery);
             _logger = logger;
-            _currentUserService = currentUserService;
-            _dateTimeService = dateTimeService;
-            _currentUserValidatorService = currentUserValidatorService;
+            _accessTokenClaimsValidatorService = accessTokenClaimsValidatorService;
             _userQuery = userQuery;
         }
 
         public async Task<Result<GetCurrentUserRoleCampusResponse>> Handle(GetCurrentUserRoleCampusQuery request, CancellationToken cancellationToken)
         {
             var asTracking = false;
-            if (!_currentUserService.IsAuthenticated)
-            {
-                _logger.LogWarning("GetCurrentUserRoleCampusResponse: intento de acceso no autenticado.");
-                return Result<GetCurrentUserRoleCampusResponse>.Fail(Error.Unauthorized("Sesión inválida o expirada. Inicie sesión nuevamente."));
-            }
-            if (_currentUserService.AccessTokenType != AccessTokenType.Session)
-            {
-                _logger.LogWarning("GetCurrentUserRoleCampusResponse: tipo de token inválido. Esperado=Session, Actual={AccessTokenType}", _currentUserService.AccessTokenType);
-                return Result<GetCurrentUserRoleCampusResponse>.Fail(Error.Unauthorized("Esta operación requiere un token de acceso de sesión."));
-            }
-            var currentUserId = _currentUserService.UserId!.Value;
-            var currentUserDeviceId = _currentUserService.UserDeviceId!.Value;
-            var currentUserSessionId = _currentUserService.UserSessionId!.Value;
-            var currentWorkProfileId = _currentUserService.WorkProfileId!.Value;
-            var currentRoleId = _currentUserService.RoleId!.Value;
-            var currentCampusId = _currentUserService.CampusId!.Value;
-            var utcNow = _dateTimeService.UtcNow;
-
-            var validateCurrentUser = await _currentUserValidatorService.ValidateCurrentUserAsync(currentUserId, utcNow, asTracking, cancellationToken);
-            if (validateCurrentUser.IsFailure)
-                return Result<GetCurrentUserRoleCampusResponse>.Fail(validateCurrentUser.Errors);
-
-            var validateCurrentUserDevice = await _currentUserValidatorService.ValidateCurrentUserDeviceAsync(currentUserId, currentUserDeviceId, utcNow, asTracking,
-                cancellationToken);
-            if (validateCurrentUserDevice.IsFailure)
-                return Result<GetCurrentUserRoleCampusResponse>.Fail(validateCurrentUserDevice.Errors);
-
-            // Validar Sesión
-
-            var validateUserWorkProfileAndType = await _currentUserValidatorService.ValidateUserWorkProfileAndTypeAsync(currentUserId, currentWorkProfileId, 
-                WorkProfileType.WithRoles, asTracking, cancellationToken);
-            if (validateUserWorkProfileAndType.IsFailure)
-                return Result<GetCurrentUserRoleCampusResponse>.Fail(validateUserWorkProfileAndType.Errors);
-
-            var validateUserRoleCampusAndHasPermissions = await _currentUserValidatorService.ValidateUserRoleCampusAndHasPermissionsAsync(currentUserId, currentRoleId, 
-                currentCampusId, asTracking, cancellationToken);
-            if (validateUserRoleCampusAndHasPermissions.IsFailure)
-                return Result<GetCurrentUserRoleCampusResponse>.Fail(validateUserRoleCampusAndHasPermissions.Errors);
-
+            var currentUserId = _accessTokenClaimsValidatorService.CurrentUserId;
+            var currentUserSessionId = _accessTokenClaimsValidatorService.CurrentUserSessionId;
             var currentUserRoleCampus = await _userQuery.GetCurrentUserRoleCampusByUserIdAndUserSessionIdAsync(currentUserId, currentUserSessionId, asTracking, cancellationToken);
             if (currentUserRoleCampus is null)
             {
@@ -96,11 +51,22 @@ namespace ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserRoleCampus
             }
             if (currentUserRoleCampus.CurrentUserRoleCampusUserSession is null)
             {
-                _logger.LogError("GetCurrentUserRoleCampusResponse: sesión ausente en los datos retornados. UserId={UserId}, UserSessionId={UserSessionId}", currentUserId, 
-                    currentUserSessionId);
+                _logger.LogError("GetCurrentUserRoleCampusResponse: sesión de usuario ausente en los datos retornados. UserId={UserId}, UserSessionId={UserSessionId}", 
+                    currentUserId, currentUserSessionId);
                 return Result<GetCurrentUserRoleCampusResponse>.Fail(Error.ServerError("No se encontró la sesión del usuario."));
             }
-
+            if (currentUserRoleCampus.CurrentUserRoleCampusUserSession.CurrentUserRoleCampusSessionWorkProfileSelected is null)
+            {
+                _logger.LogError("GetCurrentUserRoleCampusResponse: perfil de trabajo ausente en los datos retornados. UserId={UserId}, UserSessionId={UserSessionId}", 
+                    currentUserId, currentUserSessionId);
+                return Result<GetCurrentUserRoleCampusResponse>.Fail(Error.ServerError("No se encontró perfil de trabajo de usuario seleccionado."));
+            }
+            if (currentUserRoleCampus.CurrentUserRoleCampusUserSession.CurrentUserRoleCampusSessionWorkProfileSelected.CurrentUserRoleCampusSessionRoleCampusSelected is null)
+            {
+                _logger.LogError("GetCurrentUserRoleCampusResponse: rol y sede ausente en los datos retornados. UserId={UserId}, UserSessionId={UserSessionId}",
+                    currentUserId, currentUserSessionId);
+                return Result<GetCurrentUserRoleCampusResponse>.Fail(Error.ServerError("No se encontró rol y sede de usuario seleccionado."));
+            }
             return Result<GetCurrentUserRoleCampusResponse>.Ok(currentUserRoleCampus);
         }
     }

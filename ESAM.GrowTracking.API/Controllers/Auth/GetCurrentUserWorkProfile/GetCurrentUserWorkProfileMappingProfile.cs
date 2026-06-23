@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using ESAM.GrowTracking.API.Controllers.Auth.GetCurrentUserWorkProfile.HttpResponses;
 using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserWorkProfile.Responses;
+using ESAM.GrowTracking.Infrastructure.Utilities;
 
 namespace ESAM.GrowTracking.API.Controllers.Auth.GetCurrentUserWorkProfile
 {
@@ -11,7 +12,7 @@ namespace ESAM.GrowTracking.API.Controllers.Auth.GetCurrentUserWorkProfile
             CreateMap<GetCurrentUserWorkProfileSessionWorkProfileSelectedResponse, GetCurrentUserWorkProfileSessionWorkProfileSelectedHttpResponse>();
             CreateMap<GetCurrentUserWorkProfileUserSessionResponse, GetCurrentUserWorkProfileUserSessionHttpResponse>();
             CreateMap<GetCurrentUserWorkProfileUserWorkProfileResponse, GetCurrentUserWorkProfileUserWorkProfileHttpResponse>()
-                .ForCtorParam("workProfileType", opt => opt.MapFrom(src => src.WorkProfileType.ToString()));
+                .ForCtorParam("workProfileType", opt => opt.MapFrom(src => src.WorkProfileType.GetStringValue()));
             CreateMap<GetCurrentUserWorkProfileResponse, GetCurrentUserWorkProfileHttpResponse>();
         }
     }

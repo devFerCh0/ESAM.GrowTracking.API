@@ -42,7 +42,7 @@ namespace ESAM.GrowTracking.Domain.Entities
 
         public UserDevice UserDevice { get; private set; } = null!;
 
-        public UserSessionWorkProfileSelected? UserSessionWorkProfileSelected { get; private set; }
+        public UserSessionWorkProfileSelected UserSessionWorkProfileSelected { get; private set; } = null!;
 
         public User? ClosedByUser { get; private set; }
 

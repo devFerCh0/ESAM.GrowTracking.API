@@ -14,7 +14,7 @@
 
         public UserWorkProfile UserWorkProfile { get; private set; } = null!;
 
-        public UserSessionRoleCampusSelected? UserSessionRoleCampusSelected { get; private set; }
+        public UserSessionRoleCampusSelected UserSessionRoleCampusSelected { get; private set; } = null!;
 
         public UserSessionWorkProfileSelected(int userId, int workProfileId)
         {

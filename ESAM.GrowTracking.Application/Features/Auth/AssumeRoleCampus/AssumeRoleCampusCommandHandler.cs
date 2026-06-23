@@ -2,6 +2,7 @@
 using ESAM.GrowTracking.Application.Abstractions.Services;
 using ESAM.GrowTracking.Application.Extensions;
 using ESAM.GrowTracking.Application.Features.Auth.AssumeRoleCampus.Responses;
+using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserRoleCampus.Responses;
 using ESAM.GrowTracking.Application.Results;
 using ESAM.GrowTracking.Application.Settings;
 using ESAM.GrowTracking.Application.ValueObjects;
@@ -124,6 +125,18 @@ namespace ESAM.GrowTracking.Application.Features.Auth.AssumeRoleCampus
             {
                 _logger.LogError("AssumeRoleCampusCommand: sesión ausente en los datos retornados. UserId={UserId}, UserSessionId={UserSessionId}", currentUserId, userSession.Id);
                 return Result<AssumeRoleCampusResponse>.Fail(Error.ServerError("No se encontró la sesión del usuario."));
+            }
+            if (assumeRoleCampusUser.AssumeRoleCampusUserSession.AssumeRoleCampusSessionWorkProfileSelected is null)
+            {
+                _logger.LogError("AssumeRoleCampusCommand: perfil de trabajo ausente en los datos retornados. UserId={UserId}, UserSessionId={UserSessionId}",
+                    currentUserId, userSession.Id);
+                return Result<AssumeRoleCampusResponse>.Fail(Error.ServerError("No se encontró perfil de trabajo de usuario seleccionado."));
+            }
+            if (assumeRoleCampusUser.AssumeRoleCampusUserSession.AssumeRoleCampusSessionWorkProfileSelected.AssumeRoleCampusSessionRoleCampusSelected is null)
+            {
+                _logger.LogError("AssumeRoleCampusCommand: rol y sede ausente en los datos retornados. UserId={UserId}, UserSessionId={UserSessionId}",
+                    currentUserId, userSession.Id);
+                return Result<AssumeRoleCampusResponse>.Fail(Error.ServerError("No se encontró rol y sede de usuario seleccionado."));
             }
             var currentSecurityStamp = _accessTokenClaimsValidatorService.CurrentSecurityStamp;
             var currentTokenVersion = _accessTokenClaimsValidatorService.CurrentTokenVersion;

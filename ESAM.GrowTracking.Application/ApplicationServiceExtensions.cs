@@ -1,6 +1,8 @@
 ﻿using ESAM.GrowTracking.Application.Abstractions.Services;
 using ESAM.GrowTracking.Application.Features.Auth.AssumeRoleCampus;
 using ESAM.GrowTracking.Application.Features.Auth.AssumeWorkProfile;
+using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserRoleCampus;
+using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserWorkProfile;
 using ESAM.GrowTracking.Application.Features.Auth.GetUserRoleCampuses;
 using ESAM.GrowTracking.Application.Features.Auth.Login;
 using ESAM.GrowTracking.Application.Services;
@@ -58,6 +60,8 @@ namespace ESAM.GrowTracking.Application
                 mrsc.RegisterServicesFromAssembly(typeof(GetUserRoleCampusesQuery).Assembly);
                 mrsc.RegisterServicesFromAssembly(typeof(AssumeRoleCampusCommand).Assembly);
                 mrsc.RegisterServicesFromAssembly(typeof(AssumeWorkProfileCommand).Assembly);
+                mrsc.RegisterServicesFromAssembly(typeof(GetCurrentUserRoleCampusQuery).Assembly);
+                mrsc.RegisterServicesFromAssembly(typeof(GetCurrentUserWorkProfileQuery).Assembly);
                 //    mrsc.RegisterServicesFromAssembly(typeof(RefreshCommand).Assembly);
                 //    mrsc.RegisterServicesFromAssembly(typeof(LogoutCommand).Assembly);
             });

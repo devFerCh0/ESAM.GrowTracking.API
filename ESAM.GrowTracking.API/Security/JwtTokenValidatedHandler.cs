@@ -2,8 +2,8 @@
 using ESAM.GrowTracking.Application.Abstractions.Services;
 using ESAM.GrowTracking.Application.Enums;
 using ESAM.GrowTracking.Application.Results;
-using ESAM.GrowTracking.Application.Services;
 using ESAM.GrowTracking.Application.ValueObjects;
+using ESAM.GrowTracking.Domain.Enums;
 using ESAM.GrowTracking.Infrastructure.Extensions;
 using System.Security.Claims;
 
@@ -68,38 +68,47 @@ namespace ESAM.GrowTracking.API.Security
             if (accessTokenType == AccessTokenType.Temporary)
                 return await _securityValidatorService.ValidateAccessTokenTemporaryAsync(jti, userId.Value, securityStamp, tokenVersion.Value, userDeviceId.Value, 
                     cancellationToken);
-            var userSessionId = principal.GetUserSessionId();
-            if (userSessionId is null)
+            else
             {
-                _logger.LogWarning("JwtTokenValidatedHandler: identificador de la sesión de usuario ausente o inválido en los claims.");
-                return Result.Fail(Error.Unauthorized("El identificador de la sesión de usuario no es válido o no está presente."));
+                var userSessionId = principal.GetUserSessionId();
+                if (userSessionId is null)
+                {
+                    _logger.LogWarning("JwtTokenValidatedHandler: identificador de la sesión de usuario ausente o inválido en los claims.");
+                    return Result.Fail(Error.Unauthorized("El identificador de la sesión de usuario no es válido o no está presente."));
+                }
+                var workProfileId = principal.GetWorkProfileId();
+                if (workProfileId is null)
+                {
+                    _logger.LogWarning("JwtTokenValidatedHandler: identificador de perfil de trabajo ausente o inválido en los claims.");
+                    return Result.Fail(Error.Unauthorized("El identificador de perfil de trabajo no es válido o no está presente."));
+                }
+                var workProfileType = principal.GetWorkProfileType();
+                if (workProfileType is null)
+                {
+                    _logger.LogWarning("JwtTokenValidatedHandler: tipo de perfil de trabajo ausente o inválido en los claims.");
+                    return Result.Fail(Error.Unauthorized("El tipo de perfil de trabajo no es válido o no está presente."));
+                }
+                if (workProfileType == WorkProfileType.OnlyWorkProfile)
+                    return await _securityValidatorService.ValidateAccessTokenSessionAsync(jti, userId.Value, securityStamp, tokenVersion.Value, userDeviceId.Value,
+                        userSessionId.Value, workProfileId.Value, workProfileType.Value, cancellationToken);
+                else
+                {
+                    var roleId = principal.GetRoleId();
+                    if (roleId is null)
+                    {
+                        _logger.LogWarning("JwtTokenValidatedHandler: identificador del rol ausente o inválido en los claims.");
+                        return Result.Fail(Error.Unauthorized("El identificador del rol no es válido o no está presente."));
+                    }
+                    var campusId = principal.GetCampusId();
+                    if (campusId is null)
+                    {
+                        _logger.LogWarning("JwtTokenValidatedHandler: identificador de la sede ausente o inválido en los claims.");
+                        return Result.Fail(Error.Unauthorized("El identificador de la sede no es válido o no está presente."));
+                    }
+                    return await _securityValidatorService.ValidateAccessTokenSessionAsync(jti, userId.Value, securityStamp, tokenVersion.Value, userDeviceId.Value, 
+                        userSessionId.Value, workProfileId.Value, workProfileType.Value, roleId.Value, campusId.Value, cancellationToken);
+                }
             }
-            var workProfileId = principal.GetWorkProfileId();
-            if (workProfileId is null)
-            {
-                _logger.LogWarning("JwtTokenValidatedHandler: identificador de perfil de trabajo ausente o inválido en los claims.");
-                return Result.Fail(Error.Unauthorized("El identificador de perfil de trabajo no es válido o no está presente."));
-            }
-            var workProfileType = principal.GetWorkProfileType();
-            if (workProfileType is null)
-            {
-                _logger.LogWarning("JwtTokenValidatedHandler: tipo de perfil de trabajo ausente o inválido en los claims.");
-                return Result.Fail(Error.Unauthorized("El tipo de perfil de trabajo no es válido o no está presente."));
-            }
-            var roleId = principal.GetRoleId();
-            if (roleId is null)
-            {
-                _logger.LogWarning("JwtTokenValidatedHandler: identificador del rol ausente o inválido en los claims.");
-                return Result.Fail(Error.Unauthorized("El identificador del rol no es válido o no está presente."));
-            }
-            var campusId = principal.GetCampusId();
-            if (campusId is null)
-            {
-                _logger.LogWarning("JwtTokenValidatedHandler: identificador de la sede ausente o inválido en los claims.");
-                return Result.Fail(Error.Unauthorized("El identificador de la sede no es válido o no está presente."));
-            }
-            return await _securityValidatorService.ValidateAccessTokenSessionAsync(jti, userId.Value, securityStamp, tokenVersion.Value, userDeviceId.Value, userSessionId.Value, 
-                workProfileId.Value, workProfileType.Value, roleId.Value, campusId.Value, cancellationToken);
         }
     }
 }

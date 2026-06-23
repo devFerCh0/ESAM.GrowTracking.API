@@ -8,10 +8,10 @@
 
         public string? UserAgent { get; init; }
 
-        public GetCurrentUserRoleCampusSessionWorkProfileSelectedHttpResponse? CurrentUserRoleCampusSessionWorkProfileSelected { get; init; }
+        public GetCurrentUserRoleCampusSessionWorkProfileSelectedHttpResponse CurrentUserRoleCampusSessionWorkProfileSelected { get; init; }
 
         public GetCurrentUserRoleCampusUserSessionHttpResponse(int userSessionId, string? ipAddress, string? userAgent,
-            GetCurrentUserRoleCampusSessionWorkProfileSelectedHttpResponse? currentUserRoleCampusSessionWorkProfileSelected)
+            GetCurrentUserRoleCampusSessionWorkProfileSelectedHttpResponse currentUserRoleCampusSessionWorkProfileSelected)
         {
             UserSessionId = userSessionId;
             IpAddress = ipAddress;

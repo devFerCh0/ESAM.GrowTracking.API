@@ -14,11 +14,11 @@
 
         public List<GetCurrentUserWorkProfileUserWorkProfileHttpResponse> CurrentUserWorkProfileUserWorkProfiles { get; init; }
 
-        public GetCurrentUserWorkProfileUserSessionHttpResponse? CurrentUserWorkProfileUserSession { get; init; }
+        public GetCurrentUserWorkProfileUserSessionHttpResponse CurrentUserWorkProfileUserSession { get; init; }
 
         public GetCurrentUserWorkProfileHttpResponse(int userId, string username, string email, string fullname, string? photoURL,
             List<GetCurrentUserWorkProfileUserWorkProfileHttpResponse> currentUserWorkProfileUserWorkProfiles,
-            GetCurrentUserWorkProfileUserSessionHttpResponse? currentUserWorkProfileUserSession)
+            GetCurrentUserWorkProfileUserSessionHttpResponse currentUserWorkProfileUserSession)
         {
             UserId = userId;
             Username = username;

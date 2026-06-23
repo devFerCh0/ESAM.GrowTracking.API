@@ -4,6 +4,8 @@ using ESAM.GrowTracking.API.Controllers.Auth.AssumeRoleCampus;
 using ESAM.GrowTracking.API.Controllers.Auth.AssumeRoleCampus.HttpResponses;
 using ESAM.GrowTracking.API.Controllers.Auth.AssumeWorkProfile;
 using ESAM.GrowTracking.API.Controllers.Auth.AssumeWorkProfile.HttpResponses;
+using ESAM.GrowTracking.API.Controllers.Auth.GetCurrentUserRoleCampus.HttpResponses;
+using ESAM.GrowTracking.API.Controllers.Auth.GetCurrentUserWorkProfile.HttpResponses;
 using ESAM.GrowTracking.API.Controllers.Auth.GetUserRoleCampuses;
 using ESAM.GrowTracking.API.Controllers.Auth.Login;
 using ESAM.GrowTracking.API.Controllers.Auth.Login.HttpResponses;
@@ -13,6 +15,8 @@ using ESAM.GrowTracking.API.Security;
 using ESAM.GrowTracking.Application.Abstractions.Services;
 using ESAM.GrowTracking.Application.Features.Auth.AssumeRoleCampus;
 using ESAM.GrowTracking.Application.Features.Auth.AssumeWorkProfile;
+using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserRoleCampus;
+using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserWorkProfile;
 using ESAM.GrowTracking.Application.Features.Auth.GetUserRoleCampuses;
 using ESAM.GrowTracking.Application.Features.Auth.Login;
 using FluentValidation;
@@ -147,6 +151,46 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
             return Ok(ApiSuccessResponse<AssumeWorkProfileHttpResponse>.From(assumeWorkProfile, HttpContext.TraceIdentifier));
         }
 
+        [Authorize(Policy = AuthorizationPolicies.RequireSessionTypeAccessToken)]
+        [HttpGet("current-user-role-Campus")]
+        [Consumes("application/json")]
+        [ProducesResponseType(typeof(ApiSuccessResponse<GetCurrentUserRoleCampusHttpResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<ApiSuccessResponse<GetCurrentUserRoleCampusHttpResponse>>> GetCurrentUserRoleCampusAsync(CancellationToken cancellationToken)
+        {
+            var query = new GetCurrentUserRoleCampusQuery();
+            var currentUserRoleCampusResult = await _sender.Send(query, cancellationToken);
+            if (currentUserRoleCampusResult.IsFailure)
+                return currentUserRoleCampusResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
+            var currentUserRoleCampus = _mapper.Map<GetCurrentUserRoleCampusHttpResponse>(currentUserRoleCampusResult.Value);
+            return Ok(ApiSuccessResponse<GetCurrentUserRoleCampusHttpResponse>.From(currentUserRoleCampus, HttpContext.TraceIdentifier));
+        }
+
+        [Authorize(Policy = AuthorizationPolicies.RequireSessionTypeAccessToken)]
+        [HttpGet("current-user-work-profile")]
+        [Consumes("application/json")]
+        [ProducesResponseType(typeof(ApiSuccessResponse<GetCurrentUserWorkProfileHttpResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<ApiSuccessResponse<GetCurrentUserWorkProfileHttpResponse>>> GetCurrentUserWorkProfileAsync(CancellationToken cancellationToken)
+        {
+            var query = new GetCurrentUserWorkProfileQuery();
+            var currentUserWorkProfileResult = await _sender.Send(query, cancellationToken);
+            if (currentUserWorkProfileResult.IsFailure)
+                return currentUserWorkProfileResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
+            var currentUserWorkProfile = _mapper.Map<GetCurrentUserWorkProfileHttpResponse>(currentUserWorkProfileResult.Value);
+            return Ok(ApiSuccessResponse<GetCurrentUserWorkProfileHttpResponse>.From(currentUserWorkProfile, HttpContext.TraceIdentifier));
+        }
+
 
 
 
@@ -199,46 +243,6 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
         //    {
         //        _authSessionCookieService.ClearSessionCookies();
         //    }
-        //}
-
-        //[AllowAnonymous]
-        //[HttpGet("current-user-work-profile")]
-        //[Consumes("application/json")]
-        //[ProducesResponseType(typeof(ApiSuccessResponse<GetCurrentUserWorkProfileHttpResponse>), StatusCodes.Status200OK)]
-        //[ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
-        //[ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
-        //[ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
-        //[ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
-        //[ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
-        //[ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
-        //public async Task<ActionResult<ApiSuccessResponse<GetCurrentUserWorkProfileHttpResponse>>> GetCurrentUserWorkProfileAsync(CancellationToken cancellationToken)
-        //{
-        //    var query = new GetCurrentUserWorkProfileQuery();
-        //    var currentUserWorkProfileResult = await _sender.Send(query, cancellationToken);
-        //    if (currentUserWorkProfileResult.IsFailure)
-        //        return currentUserWorkProfileResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
-        //    var currentUserWorkProfile = _mapper.Map<GetCurrentUserWorkProfileHttpResponse>(currentUserWorkProfileResult.Value);
-        //    return Ok(ApiSuccessResponse<GetCurrentUserWorkProfileHttpResponse>.From(currentUserWorkProfile, HttpContext.TraceIdentifier));
-        //}
-
-        //[AllowAnonymous]
-        //[HttpGet("current-user-role-campus")]
-        //[Consumes("application/json")]
-        //[ProducesResponseType(typeof(ApiSuccessResponse<GetCurrentUserRoleCampusHttpResponse>), StatusCodes.Status200OK)]
-        //[ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
-        //[ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
-        //[ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
-        //[ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
-        //[ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
-        //[ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
-        //public async Task<ActionResult<ApiSuccessResponse<GetCurrentUserRoleCampusHttpResponse>>> GetCurrentUserRoleCampusAsync(CancellationToken cancellationToken)
-        //{
-        //    var query = new GetCurrentUserRoleCampusQuery();
-        //    var currentUserRoleCampusResult = await _sender.Send(query, cancellationToken);
-        //    if (currentUserRoleCampusResult.IsFailure)
-        //        return currentUserRoleCampusResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
-        //    var currentUserRoleCampus = _mapper.Map<GetCurrentUserRoleCampusHttpResponse>(currentUserRoleCampusResult.Value);
-        //    return Ok(ApiSuccessResponse<GetCurrentUserRoleCampusHttpResponse>.From(currentUserRoleCampus, HttpContext.TraceIdentifier));
         //}
 
         private void ApplySessionAndXsrfToken(string refreshTokenRaw, DateTime refreshTokenExpiresAt)
