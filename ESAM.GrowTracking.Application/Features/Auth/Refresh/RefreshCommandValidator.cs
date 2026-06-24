@@ -8,8 +8,8 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Refresh
         public RefreshCommandValidator()
         {
             RuleFor(rc => rc.RefreshTokenRaw).Cascade(CascadeMode.Stop)
-                .MinimumLength(3).WithMessage(ValidationMessages.RefreshTokenMinLength)
-                .MaximumLength(256).WithMessage(ValidationMessages.RefreshTokenMaxLength)
+                .MinimumLength(3).WithMessage(CommandValidationMessages.RefreshTokenMinLength)
+                .MaximumLength(256).WithMessage(CommandValidationMessages.RefreshTokenMaxLength)
                 .When(rc => !string.IsNullOrWhiteSpace(rc.RefreshTokenRaw));
             RuleFor(rc => rc.DeviceIdentifier).Cascade(CascadeMode.Stop)
                 .NotEmpty().WithMessage(ValidationMessages.DeviceIdentifierRequired)
