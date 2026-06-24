@@ -8,13 +8,10 @@
 
   <ItemGroup>
     <Compile Remove="Features\Auth\Logout\**" />
-    <Compile Remove="Features\Auth\Refresh\**" />
     <Compile Remove="ValueObjects\**" />
     <EmbeddedResource Remove="Features\Auth\Logout\**" />
-    <EmbeddedResource Remove="Features\Auth\Refresh\**" />
     <EmbeddedResource Remove="ValueObjects\**" />
     <None Remove="Features\Auth\Logout\**" />
-    <None Remove="Features\Auth\Refresh\**" />
     <None Remove="ValueObjects\**" />
   </ItemGroup>
 
