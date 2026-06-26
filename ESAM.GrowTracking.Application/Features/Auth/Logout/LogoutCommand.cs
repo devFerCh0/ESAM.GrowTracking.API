@@ -3,16 +3,18 @@ using MediatR;
 
 namespace ESAM.GrowTracking.Application.Features.Auth.Logout
 {
-    public record LogoutCommand : IRequest<Result>
-    {
-        public string? RefreshTokenRaw { get; init; }
+    public sealed record LogoutCommand : IRequest<Result> { } // 1, 2, 3
 
-        public string? DeviceIdentifier { get; init; }
+    //public record LogoutCommand : IRequest<Result>
+    //{
+    //    public string? RefreshTokenRaw { get; init; }
 
-        public LogoutCommand(string? refreshTokenRaw, string? deviceIdentifier)
-        {
-            RefreshTokenRaw = refreshTokenRaw;
-            DeviceIdentifier = deviceIdentifier;
-        }
-    }
+    //    public string? DeviceIdentifier { get; init; }
+
+    //    public LogoutCommand(string? refreshTokenRaw, string? deviceIdentifier)
+    //    {
+    //        RefreshTokenRaw = refreshTokenRaw;
+    //        DeviceIdentifier = deviceIdentifier;
+    //    }
+    //}
 }
