@@ -4,6 +4,7 @@ using ESAM.GrowTracking.Application.Results;
 using ESAM.GrowTracking.Domain.Abstractions.DataAccess;
 using ESAM.GrowTracking.Domain.Abstractions.DataAccess.Repositories;
 using ESAM.GrowTracking.Domain.Entities;
+using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -12,45 +13,58 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
     public sealed class LogoutCommandHandler : IRequestHandler<LogoutCommand, Result>
     {
         private readonly ILogger<LogoutCommandHandler> _logger;
+        private readonly IValidator<LogoutCommand> _validator;
         private readonly IDateTimeService _dateTimeService;
         private readonly ICurrentUserService _currentUserService;
         private readonly IBlacklistedTokenService _blacklistedTokenService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IUserSessionRepository _userSessionRepository;
+        private readonly IUserSessionRefreshTokenRepository _userSessionRefreshTokenRepository;
         private readonly IUserSessionService _userSessionService;
 
-        public LogoutCommandHandler(ILogger<LogoutCommandHandler> logger, IDateTimeService dateTimeService, ICurrentUserService currentUserService, 
-            IBlacklistedTokenService blacklistedTokenService, IUnitOfWork unitOfWork, IUserSessionRepository userSessionRepository, IUserSessionService userSessionService)
+        public LogoutCommandHandler(ILogger<LogoutCommandHandler> logger, IValidator<LogoutCommand> validator, IDateTimeService dateTimeService,
+            ICurrentUserService currentUserService, IBlacklistedTokenService blacklistedTokenService, IUnitOfWork unitOfWork, IUserSessionRepository userSessionRepository,
+            IUserSessionRefreshTokenRepository userSessionRefreshTokenRepository, IUserSessionService userSessionService)
         {
             ArgumentNullException.ThrowIfNull(logger);
+            ArgumentNullException.ThrowIfNull(validator);
             ArgumentNullException.ThrowIfNull(dateTimeService);
             ArgumentNullException.ThrowIfNull(currentUserService);
             ArgumentNullException.ThrowIfNull(blacklistedTokenService);
             ArgumentNullException.ThrowIfNull(unitOfWork);
             ArgumentNullException.ThrowIfNull(userSessionRepository);
+            ArgumentNullException.ThrowIfNull(userSessionRefreshTokenRepository);
             ArgumentNullException.ThrowIfNull(userSessionService);
             _logger = logger;
+            _validator = validator;
             _dateTimeService = dateTimeService;
             _currentUserService = currentUserService;
             _blacklistedTokenService = blacklistedTokenService;
             _unitOfWork = unitOfWork;
             _userSessionRepository = userSessionRepository;
+            _userSessionRefreshTokenRepository = userSessionRefreshTokenRepository;
             _userSessionService = userSessionService;
         }
 
         public async Task<Result> Handle(LogoutCommand request, CancellationToken cancellationToken)
         {
+            var validation = await _validator.ValidateAsync(request, cancellationToken);
+            if (!validation.IsValid)
+            {
+                _logger.LogWarning("LogoutCommand: Validación fallida. Errores: {Errors}", string.Join(" | ", validation.Errors.Select(e => e.ErrorMessage)));
+                return Result.Fail(validation.ToDomainErrors());
+            }
             const bool asTracking = false;
             const string revokedReasonPrefix = "Cerrar Sesión:";
             var utcNow = _dateTimeService.UtcNow;
             var currentUserId = _currentUserService.UserId!.Value;
             var currentJti = _currentUserService.Jti;
-            var currentAccessTokenExpiration = _currentUserService.AccessTokenExpiration;
-            var currentAccessTokenType = _currentUserService.AccessTokenType!.Value;
-            if (currentAccessTokenType == AccessTokenType.Temporary)
+            var currentAtExpiration = _currentUserService.AccessTokenExpiration;
+            var currentAtType = _currentUserService.AccessTokenType!.Value;
+            if (currentAtType == AccessTokenType.Temporary)
             {
-                var blacklisted = await _blacklistedTokenService.TryGenerateBlacklistedAccessTokenTemporaryAsync(currentUserId, currentJti!, currentAccessTokenExpiration!.Value, 
-                    utcNow, revokedReasonPrefix + " Access token temporal revocado.", currentUserId, utcNow, asTracking, cancellationToken);
+                var blacklisted = await _blacklistedTokenService.TryGenerateBlacklistedAccessTokenTemporaryAsync(currentUserId, currentJti!, currentAtExpiration!.Value, utcNow,
+                    $"{revokedReasonPrefix} Access token temporal revocado.", currentUserId, utcNow, asTracking, cancellationToken);
                 if (blacklisted is not null)
                 {
                     await _unitOfWork.BlacklistedAccessTokensTemporary.InsertAsync(blacklisted, cancellationToken);
@@ -58,19 +72,54 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                 }
                 return Result.Ok();
             }
-            var currentUserSessionId = _currentUserService.UserSessionId;
-            var currentUserDeviceId = _currentUserService.UserDeviceId;
-            if (!currentUserSessionId.HasValue || !currentUserDeviceId.HasValue)
+            var currentSessionId = _currentUserService.UserSessionId;
+            var currentDeviceId = _currentUserService.UserDeviceId;
+            if (!currentSessionId.HasValue || !currentDeviceId.HasValue)
             {
-                _logger.LogWarning("LogoutCommand: AT de tipo Session sin claims de sesión o dispositivo. UserId={UserId}", currentUserId);
+                _logger.LogWarning("LogoutCommand: Access Token tipo Session carece de UserSessionId o UserDeviceId. UserId={UserId}", currentUserId);
                 return Result.Ok();
             }
-            var userSession = await _userSessionRepository.GetByIdAndUserIdAndUserDeviceIdAsync(currentUserSessionId.Value, currentUserId, currentUserDeviceId.Value, asTracking, 
-                cancellationToken);
-            if (userSession is null)
-                return Result.Ok();
-            await _userSessionService.RevokeUserSessionAsync(userSession, currentJti, currentAccessTokenExpiration, revokedReasonPrefix + " Logout exitoso.", currentUserId, utcNow, 
-                asTracking, cancellationToken);
+            RefreshTokenParser.TryParse(request.RefreshTokenRaw, out var identifier, out _);
+            UserSession? sessionToRevoke = null;
+            string finalRevokedReason = string.Empty;
+            if (identifier is not null)
+            {
+                var userSessionRefreshToken = await _userSessionRefreshTokenRepository.GetByIdentifierAsync(identifier, asTracking, cancellationToken);
+                if (userSessionRefreshToken is null)
+                {
+                    _logger.LogWarning("LogoutCommand: RT provisto no encontrado en BD. UserId={UserId}, Identifier={Identifier}", currentUserId, identifier);
+                    finalRevokedReason = $"{revokedReasonPrefix} Logout ejecutado por claims del AT (RT no encontrado).";
+                }
+                else if (userSessionRefreshToken.UserSessionId != currentSessionId.Value)
+                {
+                    _logger.LogWarning("LogoutCommand: Discrepancia crítica binding AT-RT. UserId={UserId}, AT_Session={ATSession}, RT_Session={RTSession}", currentUserId,
+                        currentSessionId.Value, userSessionRefreshToken.UserSessionId);
+                    finalRevokedReason = $"{revokedReasonPrefix} Binding AT-RT no coincidente; sesión revocada por prevención de seguridad.";
+                }
+                else
+                {
+                    sessionToRevoke = await _userSessionRepository.GetByIdAsync(currentSessionId.Value, asTracking, cancellationToken);
+                    if (sessionToRevoke is null || sessionToRevoke.UserId != currentUserId || sessionToRevoke.UserDeviceId != currentDeviceId.Value)
+                    {
+                        _logger.LogWarning("LogoutCommand: Discrepancia en propiedad de sesión. UserId={UserId}, SessionId={SessionId}", currentUserId, currentSessionId.Value);
+                        sessionToRevoke = null;
+                    }
+                    else
+                        finalRevokedReason = $"{revokedReasonPrefix} Logout exitoso con binding AT-RT verificado.";
+                }
+            }
+            else
+                finalRevokedReason = $"{revokedReasonPrefix} Logout ejecutado por claims del AT (RT no provisto).";
+            if (sessionToRevoke is null)
+            {
+                sessionToRevoke = await _userSessionRepository.GetByIdAndUserIdAndUserDeviceIdAsync(currentSessionId.Value, currentUserId, currentDeviceId.Value, asTracking,
+                    cancellationToken);
+                if (string.IsNullOrEmpty(finalRevokedReason))
+                    finalRevokedReason = $"{revokedReasonPrefix} Logout ejecutado por claims del AT.";
+            }
+            if (sessionToRevoke is not null)
+                await _userSessionService.RevokeUserSessionAsync(sessionToRevoke, currentJti, currentAtExpiration, finalRevokedReason, currentUserId, utcNow, asTracking,
+                    cancellationToken);
             return Result.Ok();
         }
     }
@@ -83,12 +132,10 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
     //    private readonly IBlacklistedTokenService _blacklistedTokenService;
     //    private readonly IUnitOfWork _unitOfWork;
     //    private readonly IUserSessionRepository _userSessionRepository;
-    //    private readonly IUserSessionRefreshTokenRepository _userSessionRefreshTokenRepository;
     //    private readonly IUserSessionService _userSessionService;
 
     //    public LogoutCommandHandler(ILogger<LogoutCommandHandler> logger, IDateTimeService dateTimeService, ICurrentUserService currentUserService, 
-    //        IBlacklistedTokenService blacklistedTokenService, IUnitOfWork unitOfWork, IUserSessionRepository userSessionRepository, 
-    //        IUserSessionRefreshTokenRepository userSessionRefreshTokenRepository, IUserSessionService userSessionService)
+    //        IBlacklistedTokenService blacklistedTokenService, IUnitOfWork unitOfWork, IUserSessionRepository userSessionRepository, IUserSessionService userSessionService)
     //    {
     //        ArgumentNullException.ThrowIfNull(logger);
     //        ArgumentNullException.ThrowIfNull(dateTimeService);
@@ -96,7 +143,6 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
     //        ArgumentNullException.ThrowIfNull(blacklistedTokenService);
     //        ArgumentNullException.ThrowIfNull(unitOfWork);
     //        ArgumentNullException.ThrowIfNull(userSessionRepository);
-    //        ArgumentNullException.ThrowIfNull(userSessionRefreshTokenRepository);
     //        ArgumentNullException.ThrowIfNull(userSessionService);
     //        _logger = logger;
     //        _dateTimeService = dateTimeService;
@@ -104,7 +150,6 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
     //        _blacklistedTokenService = blacklistedTokenService;
     //        _unitOfWork = unitOfWork;
     //        _userSessionRepository = userSessionRepository;
-    //        _userSessionRefreshTokenRepository = userSessionRefreshTokenRepository;
     //        _userSessionService = userSessionService;
     //    }
 
@@ -115,12 +160,12 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
     //        var utcNow = _dateTimeService.UtcNow;
     //        var currentUserId = _currentUserService.UserId!.Value;
     //        var currentJti = _currentUserService.Jti;
-    //        var currentAtExpiration = _currentUserService.AccessTokenExpiration;
-    //        var currentAtType = _currentUserService.AccessTokenType!.Value;
-    //        if (currentAtType == AccessTokenType.Temporary)
+    //        var currentAccessTokenExpiration = _currentUserService.AccessTokenExpiration;
+    //        var currentAccessTokenType = _currentUserService.AccessTokenType!.Value;
+    //        if (currentAccessTokenType == AccessTokenType.Temporary)
     //        {
-    //            var blacklisted = await _blacklistedTokenService.TryGenerateBlacklistedAccessTokenTemporaryAsync(currentUserId, currentJti!, currentAtExpiration!.Value, utcNow, 
-    //                revokedReasonPrefix + " Access token temporal revocado.", currentUserId, utcNow, asTracking, cancellationToken);
+    //            var blacklisted = await _blacklistedTokenService.TryGenerateBlacklistedAccessTokenTemporaryAsync(currentUserId, currentJti!, currentAccessTokenExpiration!.Value, 
+    //                utcNow, revokedReasonPrefix + " Access token temporal revocado.", currentUserId, utcNow, asTracking, cancellationToken);
     //            if (blacklisted is not null)
     //            {
     //                await _unitOfWork.BlacklistedAccessTokensTemporary.InsertAsync(blacklisted, cancellationToken);
@@ -128,43 +173,18 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
     //            }
     //            return Result.Ok();
     //        }
-    //        var currentSessionId = _currentUserService.UserSessionId;
-    //        var currentDeviceId = _currentUserService.UserDeviceId;
-    //        if (!currentSessionId.HasValue || !currentDeviceId.HasValue)
+    //        var currentUserSessionId = _currentUserService.UserSessionId;
+    //        var currentUserDeviceId = _currentUserService.UserDeviceId;
+    //        if (!currentUserSessionId.HasValue || !currentUserDeviceId.HasValue)
     //        {
-    //            _logger.LogWarning("LogoutCommand: AT Session sin userSessionId o userDeviceId. UserId={UserId}", currentUserId);
+    //            _logger.LogWarning("LogoutCommand: AT de tipo Session sin claims de sesión o dispositivo. UserId={UserId}", currentUserId);
     //            return Result.Ok();
     //        }
-    //        RefreshTokenParser.TryParse(request.RefreshTokenRaw, out var identifier, out _);
-    //        if (identifier is not null)
-    //        {
-    //            var userSessionRefreshToken = await _userSessionRefreshTokenRepository.GetByIdentifierAsync(identifier, asTracking, cancellationToken);
-    //            if (userSessionRefreshToken is not null)
-    //            {
-    //                var rtSession = await _userSessionRepository.GetByIdAsync(userSessionRefreshToken.UserSessionId, asTracking, cancellationToken);
-    //                if (rtSession is null || rtSession.Id != currentSessionId.Value || rtSession.UserId != currentUserId || rtSession.UserDeviceId != currentDeviceId.Value)
-    //                {
-    //                    _logger.LogWarning("LogoutCommand: discrepancia de binding AT-RT. UserId={UserId}, UserSessionIdAT={SessionAT}, UserSessionIdRT={SessionRT}",
-    //                        currentUserId, currentSessionId.Value, userSessionRefreshToken.UserSessionId);
-    //                    var atSession = await _userSessionRepository.GetByIdAndUserIdAndUserDeviceIdAsync(currentSessionId.Value, currentUserId, currentDeviceId.Value, asTracking, 
-    //                        cancellationToken);
-    //                    if (atSession is not null)
-    //                        await _userSessionService.RevokeUserSessionAsync(atSession, currentJti, currentAtExpiration, revokedReasonPrefix +
-    //                            " Binding AT-RT no coincidente; sesión AT revocada por seguridad.", currentUserId, utcNow, asTracking, cancellationToken);
-    //                    return Result.Ok();
-    //                }
-    //                await _userSessionService.RevokeUserSessionAsync(rtSession, currentJti, currentAtExpiration, revokedReasonPrefix + 
-    //                    " Logout exitoso con binding AT-RT verificado.", currentUserId, utcNow, asTracking, cancellationToken);
-    //                return Result.Ok();
-    //            }
-    //            _logger.LogWarning("LogoutCommand: RT no encontrado en DB. UserId={UserId}, Identifier={Identifier}", currentUserId, identifier);
-    //        }
-    //        var sessionByAt = await _userSessionRepository.GetByIdAndUserIdAndUserDeviceIdAsync(currentSessionId.Value, currentUserId, currentDeviceId.Value, asTracking, 
+    //        var userSession = await _userSessionRepository.GetByIdAndUserIdAndUserDeviceIdAsync(currentUserSessionId.Value, currentUserId, currentUserDeviceId.Value, asTracking, 
     //            cancellationToken);
-    //        if (sessionByAt is null)
-    //            return Result.Ok();
-    //        await _userSessionService.RevokeUserSessionAsync(sessionByAt, currentJti, currentAtExpiration, revokedReasonPrefix + " Logout exitoso.",currentUserId, utcNow, 
-    //            asTracking, cancellationToken);
+    //        if (userSession is not null)
+    //            await _userSessionService.RevokeUserSessionAsync(userSession, currentJti, currentAccessTokenExpiration, revokedReasonPrefix + " Logout exitoso.", currentUserId, 
+    //                utcNow, asTracking, cancellationToken);
     //        return Result.Ok();
     //    }
     //}
