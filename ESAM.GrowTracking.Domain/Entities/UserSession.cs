@@ -69,14 +69,14 @@ namespace ESAM.GrowTracking.Domain.Entities
             SetUpdatedAudit(updatedBy, updatedAt);
         }
 
-        //public void Revoke(DateTime revokedAt, string revokedReason, int closedByUserId, int updatedBy, DateTime? updatedAt = null)
-        //{
-        //    IsRevoked = true;
-        //    RevokedAt = revokedAt;
-        //    RevokedReason = revokedReason;
-        //    ClosedByUserId = closedByUserId;
-        //    SetUpdatedAudit(updatedBy, updatedAt);
-        //}
+        public void Revoke(DateTime revokedAt, string revokedReason, int closedByUserId, int updatedBy, DateTime? updatedAt = null)
+        {
+            IsRevoked = true;
+            RevokedAt = revokedAt;
+            RevokedReason = revokedReason;
+            ClosedByUserId = closedByUserId;
+            SetUpdatedAudit(updatedBy, updatedAt);
+        }
 
         //public void UpdateExpiresAt(DateTime expiresAt, int updatedBy, DateTime? updatedAt = null)
         //{

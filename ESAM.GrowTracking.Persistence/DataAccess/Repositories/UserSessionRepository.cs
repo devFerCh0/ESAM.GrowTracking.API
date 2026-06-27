@@ -3,7 +3,6 @@ using ESAM.GrowTracking.Domain.Entities;
 using ESAM.GrowTracking.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System.Threading;
 
 namespace ESAM.GrowTracking.Persistence.DataAccess.Repositories
 {
@@ -26,11 +25,11 @@ namespace ESAM.GrowTracking.Persistence.DataAccess.Repositories
                 us.UserSessionWorkProfileSelected.UserSessionRoleCampusSelected.CampusId == campusId, cancellationToken);
         }
 
-        //public async Task<UserSession?> GetByIdAndUserIdAndUserDeviceIdAsync(int id, int userId, int userDeviceId, bool asTracking = false, 
-        //    CancellationToken cancellationToken = default)
-        //{
-        //    var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
-        //    return await query.FirstOrDefaultAsync(us => us.Id == id && us.UserId == userId && us.UserDeviceId == userDeviceId, cancellationToken).ConfigureAwait(false);
-        //}
+        public async Task<UserSession?> GetByIdAndUserIdAndUserDeviceIdAsync(int id, int userId, int userDeviceId, bool asTracking = false,
+            CancellationToken cancellationToken = default)
+        {
+            var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
+            return await query.FirstOrDefaultAsync(us => us.Id == id && us.UserId == userId && us.UserDeviceId == userDeviceId, cancellationToken);
+        }
     }
 }

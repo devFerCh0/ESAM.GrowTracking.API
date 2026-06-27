@@ -15,28 +15,29 @@ namespace ESAM.GrowTracking.Application.Services
         private readonly TokenLifetimeSettings _tokenLifetimeSettings;
         private readonly IHashService _hashService;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IUserSessionRefreshTokenRepository _userSessionRefreshTokenRepository;
 
         //private readonly IBlacklistedTokenService _blacklistedTokenService;
-        //private readonly IUserSessionRefreshTokenRepository _userSessionRefreshTokenRepository;
 
-        public UserSessionService(ITokenService tokenService, IOptions<TokenLifetimeSettings> tokenLifetimeSettingsOptions, IHashService hashService, IUnitOfWork unitOfWork
+        public UserSessionService(ITokenService tokenService, IOptions<TokenLifetimeSettings> tokenLifetimeSettingsOptions, IHashService hashService, IUnitOfWork unitOfWork, 
+            IUserSessionRefreshTokenRepository userSessionRefreshTokenRepository
 
-            //, IBlacklistedTokenService blacklistedTokenService, IUserSessionRefreshTokenRepository userSessionRefreshTokenRepository
+            //, IBlacklistedTokenService blacklistedTokenService
             )
         {
             ArgumentNullException.ThrowIfNull(tokenService);
             ArgumentNullException.ThrowIfNull(tokenLifetimeSettingsOptions);
             ArgumentNullException.ThrowIfNull(hashService);
             ArgumentNullException.ThrowIfNull(unitOfWork);
+            ArgumentNullException.ThrowIfNull(userSessionRefreshTokenRepository);
             _tokenService = tokenService;
             _tokenLifetimeSettings = tokenLifetimeSettingsOptions.Value ?? throw new ArgumentNullException(nameof(tokenLifetimeSettingsOptions));
             _hashService = hashService;
             _unitOfWork = unitOfWork;
+            _userSessionRefreshTokenRepository = userSessionRefreshTokenRepository;
 
             //ArgumentNullException.ThrowIfNull(blacklistedTokenService);
-            //ArgumentNullException.ThrowIfNull(userSessionRefreshTokenRepository);
             //_blacklistedTokenService = blacklistedTokenService;
-            //_userSessionRefreshTokenRepository = userSessionRefreshTokenRepository;
         }
 
         public async Task<(RefreshTokenDTO, UserSession)> CreateUserSessionAsync(int currentUserId, int currentUserDeviceId, string? ipAddress, string? userAgent, 
@@ -93,41 +94,38 @@ namespace ESAM.GrowTracking.Application.Services
             return (refreshToken, userSession);
         }
 
-        //public async Task RevokeUserSessionAsync(UserSession userSession, string? jti, DateTime? accessTokenExpiration, string revokedReason, int currentUserId, DateTime utcNow, 
-        //    bool asTracking = false, CancellationToken cancellationToken = default)
-        //{
-        //    UserSession? revokedUserSession = null;
-        //    if (!userSession.IsRevoked)
-        //    {
-        //        userSession.Revoke(utcNow, revokedReason, currentUserId, currentUserId, utcNow);
-        //        userSession.UpdateLastActivity(utcNow, currentUserId, utcNow);
-        //        revokedUserSession = userSession;
-        //    }
-        //    var userSessionRefreshTokens = await _userSessionRefreshTokenRepository.GetAllByUserSessionIdAsync(userSession.Id, asTracking, cancellationToken);
-        //    var userSessionRefreshTokensToRevoke = userSessionRefreshTokens.Where(usrt => !usrt.IsRevoked).ToList();
-        //    foreach (var userSessionRefreshTokenToRevoke in userSessionRefreshTokensToRevoke)
-        //    {
-        //        userSessionRefreshTokenToRevoke.Revoke(utcNow, revokedReason, currentUserId, utcNow);
-        //        userSessionRefreshTokenToRevoke.UpdateLastUsedAt(utcNow, currentUserId, utcNow);
-        //    }
-        //    var blacklistedRefreshTokens = await _blacklistedTokenService.GetPendingBlacklistedRefreshTokensAsync(
-        //        [.. userSessionRefreshTokens.Select(usrt => (usrt.Id, usrt.Identifier, usrt.ExpiresAt))], utcNow, revokedReason, currentUserId, utcNow, asTracking, 
-        //        cancellationToken);
-        //    var blacklistedAccessTokenPermanent = (jti is not null && accessTokenExpiration is not null) ? 
-        //        await _blacklistedTokenService.TryGenerateBlacklistedAccessTokenPermanentAsync(userSession.Id, jti, accessTokenExpiration.Value, utcNow, revokedReason, 
-        //        currentUserId, utcNow, asTracking, cancellationToken) : null;
-        //    await _unitOfWork.ExecuteInTransactionAsync(async ct =>
-        //    {
-        //        if (revokedUserSession is not null)
-        //            await _unitOfWork.UserSessions.UpdateAsync(revokedUserSession, ct);
-        //        if (userSessionRefreshTokensToRevoke.Count > 0)
-        //            await _unitOfWork.UserSessionRefreshTokens.UpdateRangeAsync(userSessionRefreshTokensToRevoke, ct);
-        //        if (blacklistedRefreshTokens.Count > 0)
-        //            await _unitOfWork.BlacklistedRefreshTokens.InsertRangeAsync(blacklistedRefreshTokens, ct);
-        //        if (blacklistedAccessTokenPermanent is not null)
-        //            await _unitOfWork.BlacklistedAccessTokensPermanent.InsertAsync(blacklistedAccessTokenPermanent, ct);
-        //    }, cancellationToken: cancellationToken);
-        //}
+        public async Task RevokeUserSessionAsync(UserSession userSessionToRevoke, string jti, DateTime accessTokenExpiration, string revokedReason, int currentUserId, 
+            DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
+        {
+            userSessionToRevoke.Revoke(utcNow, revokedReason, currentUserId, currentUserId, utcNow);
+            userSessionToRevoke.UpdateLastActivity(utcNow, currentUserId, utcNow);
+            var userSessionRefreshTokens = await _userSessionRefreshTokenRepository.GetAllByUserSessionIdAsync(userSessionToRevoke.Id, asTracking, cancellationToken);
+
+            var userSessionRefreshTokensToRevoke = userSessionRefreshTokens.Where(usrt => !usrt.IsRevoked).ToList();
+            
+            //foreach (var userSessionRefreshTokenToRevoke in userSessionRefreshTokensToRevoke)
+            //{
+            //    userSessionRefreshTokenToRevoke.Revoke(utcNow, revokedReason, currentUserId, utcNow);
+            //    userSessionRefreshTokenToRevoke.UpdateLastUsedAt(utcNow, currentUserId, utcNow);
+            //}
+            //var blacklistedRefreshTokens = await _blacklistedTokenService.GetPendingBlacklistedRefreshTokensAsync(
+            //    [.. userSessionRefreshTokens.Select(usrt => (usrt.Id, usrt.Identifier, usrt.ExpiresAt))], utcNow, revokedReason, currentUserId, utcNow, asTracking,
+            //    cancellationToken);
+            //var blacklistedAccessTokenPermanent = (jti is not null && accessTokenExpiration is not null) ?
+            //    await _blacklistedTokenService.TryGenerateBlacklistedAccessTokenPermanentAsync(userSession.Id, jti, accessTokenExpiration.Value, utcNow, revokedReason,
+            //    currentUserId, utcNow, asTracking, cancellationToken) : null;
+            //await _unitOfWork.ExecuteInTransactionAsync(async ct =>
+            //{
+            //    if (revokedUserSession is not null)
+            //        await _unitOfWork.UserSessions.UpdateAsync(revokedUserSession, ct);
+            //    if (userSessionRefreshTokensToRevoke.Count > 0)
+            //        await _unitOfWork.UserSessionRefreshTokens.UpdateRangeAsync(userSessionRefreshTokensToRevoke, ct);
+            //    if (blacklistedRefreshTokens.Count > 0)
+            //        await _unitOfWork.BlacklistedRefreshTokens.InsertRangeAsync(blacklistedRefreshTokens, ct);
+            //    if (blacklistedAccessTokenPermanent is not null)
+            //        await _unitOfWork.BlacklistedAccessTokensPermanent.InsertAsync(blacklistedAccessTokenPermanent, ct);
+            //}, cancellationToken: cancellationToken);
+        }
 
         //public async Task<RefreshTokenDTO> RotateUserSessionAsync(UserSession userSession, UserSessionRefreshToken userSessionRefreshToken, string? jti, 
         //    DateTime? accessTokenExpiration, string revokedReason, int currentUserId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)

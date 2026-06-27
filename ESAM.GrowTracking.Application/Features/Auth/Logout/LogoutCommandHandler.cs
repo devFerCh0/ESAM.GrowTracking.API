@@ -1,5 +1,7 @@
 ﻿using ESAM.GrowTracking.Application.Abstractions.Services;
 using ESAM.GrowTracking.Application.Enums;
+using ESAM.GrowTracking.Application.Extensions;
+using ESAM.GrowTracking.Application.Helpers;
 using ESAM.GrowTracking.Application.Results;
 using ESAM.GrowTracking.Domain.Abstractions.DataAccess;
 using ESAM.GrowTracking.Domain.Abstractions.DataAccess.Repositories;
@@ -14,35 +16,32 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
     {
         private readonly ILogger<LogoutCommandHandler> _logger;
         private readonly IValidator<LogoutCommand> _validator;
+        private readonly IAccessTokenClaimsValidatorService _accessTokenClaimsValidatorService;
         private readonly IDateTimeService _dateTimeService;
-        private readonly ICurrentUserService _currentUserService;
-        private readonly IBlacklistedTokenService _blacklistedTokenService;
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IUserSessionRepository _userSessionRepository;
         private readonly IUserSessionRefreshTokenRepository _userSessionRefreshTokenRepository;
+        private readonly IUserSessionRepository _userSessionRepository;
         private readonly IUserSessionService _userSessionService;
 
-        public LogoutCommandHandler(ILogger<LogoutCommandHandler> logger, IValidator<LogoutCommand> validator, IDateTimeService dateTimeService,
-            ICurrentUserService currentUserService, IBlacklistedTokenService blacklistedTokenService, IUnitOfWork unitOfWork, IUserSessionRepository userSessionRepository,
-            IUserSessionRefreshTokenRepository userSessionRefreshTokenRepository, IUserSessionService userSessionService)
+        public LogoutCommandHandler(ILogger<LogoutCommandHandler> logger, IValidator<LogoutCommand> validator, IAccessTokenClaimsValidatorService accessTokenClaimsValidatorService, 
+            IDateTimeService dateTimeService, IUnitOfWork unitOfWork, IUserSessionRefreshTokenRepository userSessionRefreshTokenRepository, 
+            IUserSessionRepository userSessionRepository, IUserSessionService userSessionService)
         {
             ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(validator);
+            ArgumentNullException.ThrowIfNull(accessTokenClaimsValidatorService);
             ArgumentNullException.ThrowIfNull(dateTimeService);
-            ArgumentNullException.ThrowIfNull(currentUserService);
-            ArgumentNullException.ThrowIfNull(blacklistedTokenService);
             ArgumentNullException.ThrowIfNull(unitOfWork);
-            ArgumentNullException.ThrowIfNull(userSessionRepository);
             ArgumentNullException.ThrowIfNull(userSessionRefreshTokenRepository);
+            ArgumentNullException.ThrowIfNull(userSessionRepository);
             ArgumentNullException.ThrowIfNull(userSessionService);
             _logger = logger;
             _validator = validator;
+            _accessTokenClaimsValidatorService = accessTokenClaimsValidatorService;
             _dateTimeService = dateTimeService;
-            _currentUserService = currentUserService;
-            _blacklistedTokenService = blacklistedTokenService;
             _unitOfWork = unitOfWork;
-            _userSessionRepository = userSessionRepository;
             _userSessionRefreshTokenRepository = userSessionRefreshTokenRepository;
+            _userSessionRepository = userSessionRepository;
             _userSessionService = userSessionService;
         }
 
@@ -52,36 +51,28 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
             if (!validation.IsValid)
             {
                 _logger.LogWarning("LogoutCommand: Validación fallida. Errores: {Errors}", string.Join(" | ", validation.Errors.Select(e => e.ErrorMessage)));
-                return Result.Fail(validation.ToDomainErrors());
+                return Result.Fail(validation.ToCommandErrors());
             }
-            const bool asTracking = false;
-            const string revokedReasonPrefix = "Cerrar Sesión:";
+            var currentAccessTokenType = _accessTokenClaimsValidatorService.CurrentAccessTokenType;
+            var currentUserId = _accessTokenClaimsValidatorService.CurrentUserId;
+            var currentJti = _accessTokenClaimsValidatorService.CurrentJti;
+            var currentAccessTokenExpiration = _accessTokenClaimsValidatorService.CurrentAccessTokenExpiration;
             var utcNow = _dateTimeService.UtcNow;
-            var currentUserId = _currentUserService.UserId!.Value;
-            var currentJti = _currentUserService.Jti;
-            var currentAtExpiration = _currentUserService.AccessTokenExpiration;
-            var currentAtType = _currentUserService.AccessTokenType!.Value;
-            if (currentAtType == AccessTokenType.Temporary)
+            var revokedReasonPrefix = "Cerrar Sesión:";
+            if (currentAccessTokenType == AccessTokenType.Temporary)
             {
-                var blacklisted = await _blacklistedTokenService.TryGenerateBlacklistedAccessTokenTemporaryAsync(currentUserId, currentJti!, currentAtExpiration!.Value, utcNow,
-                    $"{revokedReasonPrefix} Access token temporal revocado.", currentUserId, utcNow, asTracking, cancellationToken);
-                if (blacklisted is not null)
-                {
-                    await _unitOfWork.BlacklistedAccessTokensTemporary.InsertAsync(blacklisted, cancellationToken);
-                    await _unitOfWork.SaveChangesAsync(cancellationToken);
-                }
-                return Result.Ok();
-            }
-            var currentSessionId = _currentUserService.UserSessionId;
-            var currentDeviceId = _currentUserService.UserDeviceId;
-            if (!currentSessionId.HasValue || !currentDeviceId.HasValue)
-            {
-                _logger.LogWarning("LogoutCommand: Access Token tipo Session carece de UserSessionId o UserDeviceId. UserId={UserId}", currentUserId);
+                var blacklistedAccessTokenTemporary = new BlacklistedAccessTokenTemporary(currentUserId, currentJti, currentAccessTokenExpiration, utcNow,
+                    $"{revokedReasonPrefix} Access token temporal revocado.", currentUserId, utcNow);
+                await _unitOfWork.BlacklistedAccessTokensTemporary.InsertAsync(blacklistedAccessTokenTemporary, cancellationToken);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
                 return Result.Ok();
             }
             RefreshTokenParser.TryParse(request.RefreshTokenRaw, out var identifier, out _);
-            UserSession? sessionToRevoke = null;
+            var asTracking = false;
             string finalRevokedReason = string.Empty;
+            var currentUserSessionId = _accessTokenClaimsValidatorService.CurrentUserSessionId;
+            UserSession? userSessionToRevoke = null;
+            var currentUserDeviceId = _accessTokenClaimsValidatorService.CurrentUserDeviceId;
             if (identifier is not null)
             {
                 var userSessionRefreshToken = await _userSessionRefreshTokenRepository.GetByIdentifierAsync(identifier, asTracking, cancellationToken);
@@ -90,19 +81,20 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                     _logger.LogWarning("LogoutCommand: RT provisto no encontrado en BD. UserId={UserId}, Identifier={Identifier}", currentUserId, identifier);
                     finalRevokedReason = $"{revokedReasonPrefix} Logout ejecutado por claims del AT (RT no encontrado).";
                 }
-                else if (userSessionRefreshToken.UserSessionId != currentSessionId.Value)
+                else if (userSessionRefreshToken.UserSessionId != currentUserSessionId)
                 {
                     _logger.LogWarning("LogoutCommand: Discrepancia crítica binding AT-RT. UserId={UserId}, AT_Session={ATSession}, RT_Session={RTSession}", currentUserId,
-                        currentSessionId.Value, userSessionRefreshToken.UserSessionId);
+                        currentUserSessionId, userSessionRefreshToken.UserSessionId);
                     finalRevokedReason = $"{revokedReasonPrefix} Binding AT-RT no coincidente; sesión revocada por prevención de seguridad.";
                 }
                 else
                 {
-                    sessionToRevoke = await _userSessionRepository.GetByIdAsync(currentSessionId.Value, asTracking, cancellationToken);
-                    if (sessionToRevoke is null || sessionToRevoke.UserId != currentUserId || sessionToRevoke.UserDeviceId != currentDeviceId.Value)
+                    userSessionToRevoke = await _userSessionRepository.GetByIdAsync(currentUserSessionId, asTracking, cancellationToken);
+                    if (userSessionToRevoke is null || userSessionToRevoke.UserId != currentUserId || userSessionToRevoke.UserDeviceId != currentUserDeviceId)
                     {
-                        _logger.LogWarning("LogoutCommand: Discrepancia en propiedad de sesión. UserId={UserId}, SessionId={SessionId}", currentUserId, currentSessionId.Value);
-                        sessionToRevoke = null;
+                        _logger.LogWarning("LogoutCommand: Discrepancia en propiedad de sesión. UserId={UserId}, UserSessionId={UserSessionId}", currentUserId, 
+                            currentUserSessionId);
+                        userSessionToRevoke = null;
                     }
                     else
                         finalRevokedReason = $"{revokedReasonPrefix} Logout exitoso con binding AT-RT verificado.";
@@ -110,16 +102,16 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
             }
             else
                 finalRevokedReason = $"{revokedReasonPrefix} Logout ejecutado por claims del AT (RT no provisto).";
-            if (sessionToRevoke is null)
+            if (userSessionToRevoke is null)
             {
-                sessionToRevoke = await _userSessionRepository.GetByIdAndUserIdAndUserDeviceIdAsync(currentSessionId.Value, currentUserId, currentDeviceId.Value, asTracking,
+                userSessionToRevoke = await _userSessionRepository.GetByIdAndUserIdAndUserDeviceIdAsync(currentUserSessionId, currentUserId, currentUserDeviceId, asTracking,
                     cancellationToken);
                 if (string.IsNullOrEmpty(finalRevokedReason))
                     finalRevokedReason = $"{revokedReasonPrefix} Logout ejecutado por claims del AT.";
             }
-            if (sessionToRevoke is not null)
-                await _userSessionService.RevokeUserSessionAsync(sessionToRevoke, currentJti, currentAtExpiration, finalRevokedReason, currentUserId, utcNow, asTracking,
-                    cancellationToken);
+            if (userSessionToRevoke is not null)
+                await _userSessionService.RevokeUserSessionAsync(userSessionToRevoke, currentJti, currentAccessTokenExpiration, finalRevokedReason, currentUserId, utcNow, 
+                    asTracking,cancellationToken);
             return Result.Ok();
         }
     }

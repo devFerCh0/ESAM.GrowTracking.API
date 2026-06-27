@@ -10,6 +10,6 @@ namespace ESAM.GrowTracking.Domain.Abstractions.DataAccess.Repositories
         Task<bool> IsUnRevokedAndUnExpiredForRoleCampusAsync(int id, int userId, int workProfileId, int roleId, int campusId, DateTime utcNow, bool asTracking = false, 
             CancellationToken cancellationToken = default);
 
-        //Task<UserSession?> GetByIdAndUserIdAndUserDeviceIdAsync(int id, int userId, int userDeviceId, bool asTracking = false, CancellationToken cancellationToken = default);
+        Task<UserSession?> GetByIdAndUserIdAndUserDeviceIdAsync(int id, int userId, int userDeviceId, bool asTracking = false, CancellationToken cancellationToken = default);
     }
 }

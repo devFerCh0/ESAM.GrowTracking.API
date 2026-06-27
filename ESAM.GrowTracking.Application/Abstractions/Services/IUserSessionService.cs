@@ -16,8 +16,8 @@ namespace ESAM.GrowTracking.Application.Abstractions.Services
         //    DateTime utcNow, WorkProfileType workProfileType, string jti, DateTime accessTokenExpiration, bool isPersistent, int currentRoleId = 0, int currentCampusId = 0,
         //    bool asTracking = false, CancellationToken cancellationToken = default);
 
-        //Task RevokeUserSessionAsync(UserSession userSession, string? jti, DateTime? accessTokenExpiration, string revokedReason, int currentUserId, DateTime utcNow, 
-        //    bool asTracking = false, CancellationToken cancellationToken = default);
+        Task RevokeUserSessionAsync(UserSession userSessionToRevoke, string jti, DateTime accessTokenExpiration, string revokedReason, int currentUserId, DateTime utcNow,
+            bool asTracking = false, CancellationToken cancellationToken = default);
 
         //Task<RefreshTokenDTO> RotateUserSessionAsync(UserSession userSession, UserSessionRefreshToken userSessionRefreshToken, string? jti, DateTime? accessTokenExpiration,
         //    string revokedReason, int currentUserId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default);

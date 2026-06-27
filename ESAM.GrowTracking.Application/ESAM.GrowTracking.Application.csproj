@@ -22,7 +22,6 @@
     <Compile Remove="Abstractions\Services\ITokenSessionValidationService.cs" />
     <Compile Remove="Abstractions\Services\Results\PurgeExpiredTokensResult.cs" />
     <Compile Remove="Abstractions\Services\Results\TokenSessionValidationResult.cs" />
-    <Compile Remove="Helpers\RefreshTokenHelper.cs" />
     <Compile Remove="Services\BlacklistedTokenService.cs" />
     <Compile Remove="Services\CurrentSessionIntegrityValidationService.cs" />
     <Compile Remove="Services\PurgeExpiredTokensHostedService.cs" />
@@ -53,7 +52,6 @@
 
   <ItemGroup>
     <Folder Include="Abstractions\Services\Results\" />
-    <Folder Include="Helpers\" />
   </ItemGroup>
 
 </Project>
