@@ -1,8 +1,6 @@
 ﻿using ESAM.GrowTracking.Application.Abstractions.Services;
 using ESAM.GrowTracking.Application.DTOs;
-using ESAM.GrowTracking.Application.Results;
 using ESAM.GrowTracking.Application.Settings;
-using ESAM.GrowTracking.Application.ValueObjects;
 using ESAM.GrowTracking.Domain.Abstractions.DataAccess;
 using ESAM.GrowTracking.Domain.Abstractions.DataAccess.Repositories;
 using ESAM.GrowTracking.Domain.Entities;
@@ -90,8 +88,8 @@ namespace ESAM.GrowTracking.Application.Services
             return (refreshToken, userSession);
         }
 
-        public async Task RevokeUserSessionAsync(UserSession userSession, string jti, DateTime accessTokenExpiration, string revokedReason, int currentUserId,
-            DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
+        public async Task RevokeUserSessionAsync(UserSession userSession, string? jti, DateTime? accessTokenExpiration, string revokedReason, int currentUserId, DateTime utcNow,
+            bool asTracking = false, CancellationToken cancellationToken = default)
         {
             UserSession? userSessionToRevoke = null;
             if (!userSession.IsRevoked)
@@ -112,7 +110,8 @@ namespace ESAM.GrowTracking.Application.Services
             var existingIdentifierSet = new HashSet<string>(existingIdentifiers, StringComparer.Ordinal);
             List<BlacklistedRefreshToken> blacklistedRefreshTokens = [.. userSessionRefreshTokens.Where(ust => !existingIdentifierSet.Contains(ust.Identifier))
                 .Select(usrt => new BlacklistedRefreshToken(usrt.Id, usrt.Identifier, usrt.ExpiresAt, utcNow, revokedReason, currentUserId, utcNow))];
-            var blacklistedAccessTokenSession = new BlacklistedAccessTokenSession(userSession.Id, jti, accessTokenExpiration, utcNow, revokedReason, currentUserId, utcNow);
+            var blacklistedAccessTokenSession = (!string.IsNullOrWhiteSpace(jti) && accessTokenExpiration is not null)
+                ? new BlacklistedAccessTokenSession(userSession.Id, jti, accessTokenExpiration.Value, utcNow, revokedReason, currentUserId, utcNow) : null;
             await _unitOfWork.ExecuteInTransactionAsync(async ct =>
             {
                 if (userSessionToRevoke is not null)
