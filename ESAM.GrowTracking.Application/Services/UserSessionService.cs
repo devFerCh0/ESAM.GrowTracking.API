@@ -1,10 +1,11 @@
 ﻿using ESAM.GrowTracking.Application.Abstractions.Services;
 using ESAM.GrowTracking.Application.DTOs;
+using ESAM.GrowTracking.Application.Results;
 using ESAM.GrowTracking.Application.Settings;
+using ESAM.GrowTracking.Application.ValueObjects;
 using ESAM.GrowTracking.Domain.Abstractions.DataAccess;
 using ESAM.GrowTracking.Domain.Abstractions.DataAccess.Repositories;
 using ESAM.GrowTracking.Domain.Entities;
-using ESAM.GrowTracking.Domain.Enums;
 using Microsoft.Extensions.Options;
 
 namespace ESAM.GrowTracking.Application.Services
@@ -16,28 +17,23 @@ namespace ESAM.GrowTracking.Application.Services
         private readonly IHashService _hashService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IUserSessionRefreshTokenRepository _userSessionRefreshTokenRepository;
-
-        //private readonly IBlacklistedTokenService _blacklistedTokenService;
+        private readonly IBlacklistedRefreshTokenRepository _blacklistedRefreshTokenRepository;
 
         public UserSessionService(ITokenService tokenService, IOptions<TokenLifetimeSettings> tokenLifetimeSettingsOptions, IHashService hashService, IUnitOfWork unitOfWork, 
-            IUserSessionRefreshTokenRepository userSessionRefreshTokenRepository
-
-            //, IBlacklistedTokenService blacklistedTokenService
-            )
+            IUserSessionRefreshTokenRepository userSessionRefreshTokenRepository, IBlacklistedRefreshTokenRepository blacklistedRefreshTokenRepository)
         {
             ArgumentNullException.ThrowIfNull(tokenService);
             ArgumentNullException.ThrowIfNull(tokenLifetimeSettingsOptions);
             ArgumentNullException.ThrowIfNull(hashService);
             ArgumentNullException.ThrowIfNull(unitOfWork);
             ArgumentNullException.ThrowIfNull(userSessionRefreshTokenRepository);
+            ArgumentNullException.ThrowIfNull(blacklistedRefreshTokenRepository);
             _tokenService = tokenService;
             _tokenLifetimeSettings = tokenLifetimeSettingsOptions.Value ?? throw new ArgumentNullException(nameof(tokenLifetimeSettingsOptions));
             _hashService = hashService;
             _unitOfWork = unitOfWork;
             _userSessionRefreshTokenRepository = userSessionRefreshTokenRepository;
-
-            //ArgumentNullException.ThrowIfNull(blacklistedTokenService);
-            //_blacklistedTokenService = blacklistedTokenService;
+            _blacklistedRefreshTokenRepository = blacklistedRefreshTokenRepository;
         }
 
         public async Task<(RefreshTokenDTO, UserSession)> CreateUserSessionAsync(int currentUserId, int currentUserDeviceId, string? ipAddress, string? userAgent, 
@@ -94,37 +90,40 @@ namespace ESAM.GrowTracking.Application.Services
             return (refreshToken, userSession);
         }
 
-        public async Task RevokeUserSessionAsync(UserSession userSessionToRevoke, string jti, DateTime accessTokenExpiration, string revokedReason, int currentUserId, 
+        public async Task RevokeUserSessionAsync(UserSession userSession, string jti, DateTime accessTokenExpiration, string revokedReason, int currentUserId,
             DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
         {
-            userSessionToRevoke.Revoke(utcNow, revokedReason, currentUserId, currentUserId, utcNow);
-            userSessionToRevoke.UpdateLastActivity(utcNow, currentUserId, utcNow);
-            var userSessionRefreshTokens = await _userSessionRefreshTokenRepository.GetAllByUserSessionIdAsync(userSessionToRevoke.Id, asTracking, cancellationToken);
-
+            UserSession? userSessionToRevoke = null;
+            if (!userSession.IsRevoked)
+            {
+                userSession.Revoke(utcNow, revokedReason, currentUserId, currentUserId, utcNow);
+                userSession.UpdateLastActivity(utcNow, currentUserId, utcNow);
+                userSessionToRevoke = userSession;
+            }
+            var userSessionRefreshTokens = await _userSessionRefreshTokenRepository.GetAllByUserSessionIdAsync(userSession.Id, asTracking, cancellationToken);
             var userSessionRefreshTokensToRevoke = userSessionRefreshTokens.Where(usrt => !usrt.IsRevoked).ToList();
-            
-            //foreach (var userSessionRefreshTokenToRevoke in userSessionRefreshTokensToRevoke)
-            //{
-            //    userSessionRefreshTokenToRevoke.Revoke(utcNow, revokedReason, currentUserId, utcNow);
-            //    userSessionRefreshTokenToRevoke.UpdateLastUsedAt(utcNow, currentUserId, utcNow);
-            //}
-            //var blacklistedRefreshTokens = await _blacklistedTokenService.GetPendingBlacklistedRefreshTokensAsync(
-            //    [.. userSessionRefreshTokens.Select(usrt => (usrt.Id, usrt.Identifier, usrt.ExpiresAt))], utcNow, revokedReason, currentUserId, utcNow, asTracking,
-            //    cancellationToken);
-            //var blacklistedAccessTokenPermanent = (jti is not null && accessTokenExpiration is not null) ?
-            //    await _blacklistedTokenService.TryGenerateBlacklistedAccessTokenPermanentAsync(userSession.Id, jti, accessTokenExpiration.Value, utcNow, revokedReason,
-            //    currentUserId, utcNow, asTracking, cancellationToken) : null;
-            //await _unitOfWork.ExecuteInTransactionAsync(async ct =>
-            //{
-            //    if (revokedUserSession is not null)
-            //        await _unitOfWork.UserSessions.UpdateAsync(revokedUserSession, ct);
-            //    if (userSessionRefreshTokensToRevoke.Count > 0)
-            //        await _unitOfWork.UserSessionRefreshTokens.UpdateRangeAsync(userSessionRefreshTokensToRevoke, ct);
-            //    if (blacklistedRefreshTokens.Count > 0)
-            //        await _unitOfWork.BlacklistedRefreshTokens.InsertRangeAsync(blacklistedRefreshTokens, ct);
-            //    if (blacklistedAccessTokenPermanent is not null)
-            //        await _unitOfWork.BlacklistedAccessTokensPermanent.InsertAsync(blacklistedAccessTokenPermanent, ct);
-            //}, cancellationToken: cancellationToken);
+            foreach (var userSessionRefreshTokenToRevoke in userSessionRefreshTokensToRevoke)
+            {
+                userSessionRefreshTokenToRevoke.Revoke(utcNow, revokedReason, currentUserId, utcNow);
+                userSessionRefreshTokenToRevoke.UpdateLastUsedAt(utcNow, currentUserId, utcNow);
+            }
+            var identifiers = userSessionRefreshTokens.Select(ust => ust.Identifier).ToList();
+            var existingIdentifiers = await _blacklistedRefreshTokenRepository.GetExistingIdentifiersAsync(identifiers, asTracking, cancellationToken);
+            var existingIdentifierSet = new HashSet<string>(existingIdentifiers, StringComparer.Ordinal);
+            List<BlacklistedRefreshToken> blacklistedRefreshTokens = [.. userSessionRefreshTokens.Where(ust => !existingIdentifierSet.Contains(ust.Identifier))
+                .Select(usrt => new BlacklistedRefreshToken(usrt.Id, usrt.Identifier, usrt.ExpiresAt, utcNow, revokedReason, currentUserId, utcNow))];
+            var blacklistedAccessTokenSession = new BlacklistedAccessTokenSession(userSession.Id, jti, accessTokenExpiration, utcNow, revokedReason, currentUserId, utcNow);
+            await _unitOfWork.ExecuteInTransactionAsync(async ct =>
+            {
+                if (userSessionToRevoke is not null)
+                    await _unitOfWork.UserSessions.UpdateAsync(userSessionToRevoke, ct);
+                if (userSessionRefreshTokensToRevoke.Count > 0)
+                    await _unitOfWork.UserSessionRefreshTokens.UpdateRangeAsync(userSessionRefreshTokensToRevoke, ct);
+                if (blacklistedRefreshTokens.Count > 0)
+                    await _unitOfWork.BlacklistedRefreshTokens.InsertRangeAsync(blacklistedRefreshTokens, ct);
+                if (blacklistedAccessTokenSession is not null)
+                    await _unitOfWork.BlacklistedAccessTokensSession.InsertAsync(blacklistedAccessTokenSession, ct);
+            }, cancellationToken: cancellationToken);
         }
 
         //public async Task<RefreshTokenDTO> RotateUserSessionAsync(UserSession userSession, UserSessionRefreshToken userSessionRefreshToken, string? jti, 

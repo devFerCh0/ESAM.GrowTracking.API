@@ -9,11 +9,11 @@ namespace ESAM.GrowTracking.Persistence.DataAccess.Repositories
     public class BlacklistedRefreshTokenRepository(ILogger<BlacklistedRefreshTokenRepository> logger, AppDbContext context) 
         : Repository<BlacklistedRefreshToken, int>(logger, context), IBlacklistedRefreshTokenRepository
     {
-        //public async Task<List<string>> GetExistingIdentifiersAsync(List<string> identifiers, bool asTracking = false, CancellationToken cancellationToken = default)
-        //{
-        //    var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
-        //    return await query.Where(brt => identifiers.Contains(brt.Identifier)).Select(brt => brt.Identifier).ToListAsync(cancellationToken).ConfigureAwait(false);
-        //}
+        public async Task<List<string>> GetExistingIdentifiersAsync(List<string> identifiers, bool asTracking = false, CancellationToken cancellationToken = default)
+        {
+            var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
+            return await query.Where(brt => identifiers.Contains(brt.Identifier)).Select(brt => brt.Identifier).ToListAsync(cancellationToken);
+        }
 
         //public async Task<bool> ExistsAsync(string identifier, bool asTracking = false, CancellationToken cancellationToken = default)
         //{

@@ -1,19 +1,15 @@
 ﻿using ESAM.GrowTracking.Application.Abstractions.Services;
 using ESAM.GrowTracking.Application.Enums;
-using Microsoft.Extensions.Logging;
 
 namespace ESAM.GrowTracking.Application.Services
 {
     public class AccessTokenClaimsValidatorService : IAccessTokenClaimsValidatorService
     {
-        private readonly ILogger<AccessTokenClaimsValidatorService> _logger;
         private readonly ICurrentUserService _currentUserService;
 
-        public AccessTokenClaimsValidatorService(ILogger<AccessTokenClaimsValidatorService> logger, ICurrentUserService currentUserService)
+        public AccessTokenClaimsValidatorService(ICurrentUserService currentUserService)
         {
-            ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(currentUserService);
-            _logger = logger;
             _currentUserService = currentUserService;
         }
 

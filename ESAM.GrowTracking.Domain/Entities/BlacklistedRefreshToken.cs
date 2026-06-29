@@ -26,16 +26,16 @@ namespace ESAM.GrowTracking.Domain.Entities
 
         public UserSessionRefreshToken UserSessionRefreshToken { get; private set; } = null!;
 
-        //public BlacklistedRefreshToken(int userSessionRefreshTokenId, string identifier, DateTime expiresAt, DateTime blacklistedAt, string reason, int createdBy, 
-        //    DateTime? createdAt = null)
-        //{
-        //    UserSessionRefreshTokenId = userSessionRefreshTokenId;
-        //    Identifier = identifier;
-        //    ExpiresAt = expiresAt;
-        //    BlacklistedAt = blacklistedAt;
-        //    Reason = reason;
-        //    CreatedAt = createdAt ?? DateTime.UtcNow;
-        //    CreatedBy = createdBy;
-        //}
+        public BlacklistedRefreshToken(int userSessionRefreshTokenId, string identifier, DateTime expiresAt, DateTime blacklistedAt, string reason, int createdBy,
+            DateTime? createdAt = null)
+        {
+            UserSessionRefreshTokenId = userSessionRefreshTokenId;
+            Identifier = identifier;
+            ExpiresAt = expiresAt;
+            BlacklistedAt = blacklistedAt;
+            Reason = reason;
+            CreatedAt = createdAt ?? DateTime.UtcNow;
+            CreatedBy = createdBy;
+        }
     }
 }

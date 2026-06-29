@@ -1,8 +1,11 @@
-﻿using ESAM.GrowTracking.Application.Abstractions.Services;
+﻿using System.Security.Cryptography;
+using System.Text;
+using ESAM.GrowTracking.Application.Abstractions.Services;
 using ESAM.GrowTracking.Application.Enums;
 using ESAM.GrowTracking.Application.Extensions;
 using ESAM.GrowTracking.Application.Helpers;
 using ESAM.GrowTracking.Application.Results;
+using ESAM.GrowTracking.Application.ValueObjects;
 using ESAM.GrowTracking.Domain.Abstractions.DataAccess;
 using ESAM.GrowTracking.Domain.Abstractions.DataAccess.Repositories;
 using ESAM.GrowTracking.Domain.Entities;
@@ -92,7 +95,7 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                     userSessionToRevoke = await _userSessionRepository.GetByIdAsync(currentUserSessionId, asTracking, cancellationToken);
                     if (userSessionToRevoke is null || userSessionToRevoke.UserId != currentUserId || userSessionToRevoke.UserDeviceId != currentUserDeviceId)
                     {
-                        _logger.LogWarning("LogoutCommand: Discrepancia en propiedad de sesión. UserId={UserId}, UserSessionId={UserSessionId}", currentUserId, 
+                        _logger.LogWarning("LogoutCommand: Discrepancia en propiedad de sesión. UserId={UserId}, UserSessionId={UserSessionId}", currentUserId,
                             currentUserSessionId);
                         userSessionToRevoke = null;
                     }
@@ -110,8 +113,8 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                     finalRevokedReason = $"{revokedReasonPrefix} Logout ejecutado por claims del AT.";
             }
             if (userSessionToRevoke is not null)
-                await _userSessionService.RevokeUserSessionAsync(userSessionToRevoke, currentJti, currentAccessTokenExpiration, finalRevokedReason, currentUserId, utcNow, 
-                    asTracking,cancellationToken);
+                await _userSessionService.RevokeUserSessionAsync(userSessionToRevoke, currentJti, currentAccessTokenExpiration, finalRevokedReason, currentUserId, utcNow,
+                    asTracking, cancellationToken);
             return Result.Ok();
         }
     }

@@ -75,13 +75,13 @@ namespace ESAM.GrowTracking.Domain.Entities
             UserSessionId = userSessionId;
         }
 
-        //public void Revoke(DateTime revokedAt, string revokedReason, int updatedBy, DateTime? updatedAt = null)
-        //{
-        //    IsRevoked = true;
-        //    RevokedAt = revokedAt;
-        //    RevokedReason = revokedReason;
-        //    SetUpdatedAudit(updatedBy, updatedAt);
-        //}
+        public void Revoke(DateTime revokedAt, string revokedReason, int updatedBy, DateTime? updatedAt = null)
+        {
+            IsRevoked = true;
+            RevokedAt = revokedAt;
+            RevokedReason = revokedReason;
+            SetUpdatedAudit(updatedBy, updatedAt);
+        }
 
         //public void UpdateReplacedByUserSessionRefreshTokenId(int replacedByUserSessionRefreshTokenId)
         //{
