@@ -65,6 +65,7 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
             var currentAccessTokenExpiration = _accessTokenClaimsValidatorService.CurrentAccessTokenExpiration;
             var utcNow = _dateTimeService.UtcNow;
             var revokedReasonPrefix = "Cerrar Sesión:";
+            // CUANDO EL CLAIM CURRENTACCESSTOKENTYPE DEL ACCESS TOKEN ES DE TIPO TEMPORARY: NO SE TIENE SESION DE USUARIO, POR LO TANTO TAMPOCO SE TIENE REFRESH TOKEN
             if (currentAccessTokenType == AccessTokenType.Temporary)
             {
                 if (request.RefreshTokenRaw is not null)
@@ -73,45 +74,43 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                     if (identifier is not null)
                     {
                         var userSessionRefreshToken = await _userSessionRefreshTokenRepository.GetByIdentifierAsync(identifier, asTracking, cancellationToken);
-                        if (userSessionRefreshToken is null)
-                        {
-                            //Introducir Loger y determinar mensaje del loger
-                            //Determinar razón del por que se está revocando el token remporal
-                            //EN ESTE CASO EL PROCEDIMIENTO NO ES CORRECTO: Por que cuando el token de accesso es temporal, no debe de estar presente el RefreshToken, en este caso si está presente el refresh token, se obtuvo su identifier pero no se pudo obtener ningun registro en bd de ese identifier
-                        }
-                        else
+                        if (userSessionRefreshToken is not null)
                         {
                             var mismatchedUserSession = await _userSessionRepository.GetByIdAsync(userSessionRefreshToken.UserSessionId, asTracking, cancellationToken);
                             if (mismatchedUserSession is not null)
                             {
-                                //Introducir Loger y determinar mensaje del loger
-                                //Determinar razón del por que se está revocando el token remporal
-                                //Modificar la razón del por que se está revocando la sesion por el Refresh Token
-                                //EN ESTE CASO EL PROCEDIMIENTO NO ES CORRECTO: Por que cuando el token de accesso es temporal, no debe de estar presente el RefreshToken, en este caso si está presente el refresh token, se obtuvo su identifier se obtuvo su registro en bd de ese identifier, tambien se obtuvo la sesion y por seguridad se revoca la sesion en base de datos
-                                await _userSessionService.RevokeUserSessionAsync(mismatchedUserSession, null, null,
-                                    $"{revokedReasonPrefix} Binding AT-RT no coincidente; sesión vinculada al RT recibido revocada por prevención de seguridad.", currentUserId, 
+                                //Introducir logger y determinar mensaje del logger
+                                //Determinar razón del por que se está revocando el token de acceso temporal
+                                //Modificar la razón del por que se está revocando la sesion
+                                //REVOCACION ANOMALA
+                                await _userSessionService.RevokeUserSessionAndAccessTokenTemporaryAsync(mismatchedUserSession, currentJti, currentAccessTokenExpiration,
+                                    $"{revokedReasonPrefix} Binding AT-RT no coincidente; sesión vinculada al RT recibido revocada por prevención de seguridad.", currentUserId,
                                     utcNow, asTracking, cancellationToken);
+                                return Result.Ok();
                             }
-                            else
-                            {
-                                //Introducir Loger y determinar mensaje del loger
-                                //Determinar razón del por que se está revocando el token temporal
-                                //EN ESTE CASO EL PROCEDIMIENTO NO ES CORRECTO: Por que cuando el token de accesso es temporal, no debe de estar presente el RefreshToken, en este caso si está presente el refresh token, se obtuvo su identifier se obtuvo su registro en bd de ese identifier, pero no se obtuvo su sesión
-                            }
+                            //Introducir logger y determinar mensaje del logger
+                            //Determinar razón del por que se está revocando el token de acceso temporal
+                            //REVOCACION ANOMALA
+                        }
+                        else
+                        {
+                            //Introducir logger y determinar mensaje del logger
+                            //Determinar razón del por que se está revocando el token de acceso temporal
+                            //REVOCACION ANOMALA
                         }
                     }
                     else
                     {
-                        //Introducir Loger y determinar mensaje del loger
-                        //Determinar razón del por que se está revocando el token temporal
-                        //EN ESTE CASO EL PROCEDIMIENTO NO ES CORRECTO: Por que cuando el token de accesso es temporal, no debe de estar presente el RefreshToken, en este caso si está presente el refresh token, pero no se pudo obtener su identifier de manera correcta
+                        //Introducir logger y determinar mensaje del logger
+                        //Determinar razón del por que se está revocando el token de acceso temporal
+                        //REVOCACION ANOMALA
                     }
                 }
                 else
                 {
-                    //Introducir Loger y determinar mensaje del loger
-                    //Determinar razón del por que se está revocando el token temporal
-                    //EN ESTE CASO EL PROCEDIMIENTO SE HIZO CORRECTO: Por que cuando el token de accesso es temporal, no debe de estar presente el RefreshToken
+                    //Introducir logger y determinar mensaje del logger
+                    //Determinar razón del por que se está revocando el token de acceso temporal
+                    //REVOCACION CORRECTA
                 }
                 var blacklistedAccessTokenTemporary = new BlacklistedAccessTokenTemporary(currentUserId, currentJti, currentAccessTokenExpiration, utcNow, 
                     $"{revokedReasonPrefix} Access token temporal revocado.", currentUserId, utcNow);
@@ -119,15 +118,179 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
                 return Result.Ok();
             }
-
+            // CUANDO EL CLAIM CURRENTACCESSTOKENTYPE DEL ACCESS TOKEN ES DE TIPO SESSION: SI SE TIENE SESION DE USUARIO, POR LO TANTO TAMBIEN SE TIENE REFRESH TOKEN
             RefreshTokenParser.TryParse(request.RefreshTokenRaw, out var identifier1, out var tokenPlain1);
+            var currentUserSessionId = _accessTokenClaimsValidatorService.CurrentUserSessionId;
+            var currentUserDeviceId = _accessTokenClaimsValidatorService.CurrentUserDeviceId;
             if (identifier1 is not null)
             {
+                var userSessionRefreshToken = await _userSessionRefreshTokenRepository.GetByIdentifierAsync(identifier1, asTracking, cancellationToken);
+                if (userSessionRefreshToken is null)
+                {
+                    var mismatchedUserSession = await _userSessionRepository.GetByIdAsync(currentUserSessionId, asTracking, cancellationToken);
+                    if (mismatchedUserSession is not null)
+                    {
+                        //Introducir logger y determinar mensaje del logger
+                        //Determinar razón del por que se está revocando el token de acceso session
+                        //Modificar la razón del por que se está revocando la sesion
+                        //REVOCACION ANOMALA
+                        await _userSessionService.RevokeUserSessionAndAccessTokenSessionAsync(mismatchedUserSession, currentJti, currentAccessTokenExpiration,
+                            $"{revokedReasonPrefix} Binding AT-RT no coincidente; sesión vinculada al RT recibido revocada por prevención de seguridad.", currentUserId, utcNow, 
+                            asTracking, cancellationToken);
+                        return Result.Ok();
+                    }
+                    //Introducir logger y determinar mensaje del logger
+                    //Determinar razón del por que se está revocando el token de acceso session
+                    //REVOCACION ANOMALA
+                }
+                else if (userSessionRefreshToken.UserSessionId != currentUserSessionId)
+                {
+                    var mismatchedUserSession = await _userSessionRepository.GetByIdAsync(userSessionRefreshToken.UserSessionId, asTracking, cancellationToken);
+                    var mismatchedUserSession1 = await _userSessionRepository.GetByIdAsync(currentUserSessionId, asTracking, cancellationToken);
+                    if (mismatchedUserSession is not null && mismatchedUserSession1 is null)
+                    {
+                        //Introducir logger y determinar mensaje del logger
+                        //Determinar razón del por que se está revocando el token de acceso session
+                        //Modificar la razón del por que se está revocando la sesion
+                        //REVOCACION ANOMALA
+                        await _userSessionService.RevokeUserSessionAsync(mismatchedUserSession, 
+                            $"{revokedReasonPrefix} Binding AT-RT no coincidente; sesión vinculada al RT recibido revocada por prevención de seguridad.", currentUserId, utcNow,
+                            asTracking, cancellationToken);
+                        return Result.Ok();
+                    }
+                    if (mismatchedUserSession is null && mismatchedUserSession1 is not null)
+                    {
+                        //Introducir logger y determinar mensaje del logger
+                        //Determinar razón del por que se está revocando el token de acceso session
+                        //Modificar la razón del por que se está revocando la sesion
+                        //REVOCACION ANOMALA
+                        await _userSessionService.RevokeUserSessionAndAccessTokenSessionAsync(mismatchedUserSession1, currentJti, currentAccessTokenExpiration,
+                            $"{revokedReasonPrefix} Binding AT-RT no coincidente; sesión vinculada al RT recibido revocada por prevención de seguridad.", currentUserId, utcNow,
+                            asTracking, cancellationToken);
+                        return Result.Ok();
+                    }
+                    if (mismatchedUserSession is not null && mismatchedUserSession1 is not null)
+                    {
+                        //Introducir logger y determinar mensaje del logger
+                        //Determinar razón del por que se está revocando el token de acceso session
+                        //Modificar la razón del por que se está revocando la sesion
+                        //REVOCACION ANOMALA
+                        await _userSessionService.RevokeUserSessionAndAccessTokenSessionAsync(mismatchedUserSession, mismatchedUserSession1, currentJti, 
+                            currentAccessTokenExpiration, 
+                            $"{revokedReasonPrefix} Binding AT-RT no coincidente; sesión vinculada al RT recibido revocada por prevención de seguridad.", currentUserId, utcNow,
+                            asTracking, cancellationToken);
+                        return Result.Ok();
+                    }
+                    if (mismatchedUserSession is null && mismatchedUserSession1 is null)
+                    {
+                        //Introducir logger y determinar mensaje del logger
+                    }
+                    ////Introducir logger y determinar mensaje del logger
+                    ////Determinar razón del por que se está revocando el token de acceso session
+                    ////REVOCACION ANOMALA
+                }
+                else
+                {
+                    if (tokenPlain1 is null)
+                    {
+                        var mismatchedUserSession = await _userSessionRepository.GetByIdAsync(currentUserSessionId, asTracking, cancellationToken);
+                        if (mismatchedUserSession is not null)
+                        {
+                            //Introducir logger y determinar mensaje del logger
+                            //Determinar razón del por que se está revocando el token de acceso session
+                            //Modificar la razón del por que se está revocando la sesion
+                            //REVOCACION ANOMALA
+                            await _userSessionService.RevokeUserSessionAndAccessTokenSessionAsync(mismatchedUserSession, currentJti, currentAccessTokenExpiration,
+                                $"{revokedReasonPrefix} Binding AT-RT no coincidente; sesión vinculada al RT recibido revocada por prevención de seguridad.", currentUserId, utcNow,
+                                asTracking, cancellationToken);
+                            return Result.Ok();
+                        }
+                        else
+                        {
+                            //Introducir logger y determinar mensaje del logger
+                        }
+                        ////Introducir logger y determinar mensaje del logger
+                        ////Determinar razón del por que se está revocando el token de acceso session
+                        ////REVOCACION ANOMALA
+                    }
+                    else
+                    {
+                        var computedHash = _hashService.ComputeHash(tokenPlain1, userSessionRefreshToken.Salt);
+                        if (!CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(computedHash), Encoding.UTF8.GetBytes(userSessionRefreshToken.TokenHash)))
+                        {
+                            var mismatchedUserSession = await _userSessionRepository.GetByIdAsync(currentUserSessionId, asTracking, cancellationToken);
+                            if (mismatchedUserSession is not null)
+                            {
+                                //Introducir logger y determinar mensaje del logger
+                                //Determinar razón del por que se está revocando el token de acceso session
+                                //Modificar la razón del por que se está revocando la sesion
+                                //REVOCACION ANOMALA
+                                await _userSessionService.RevokeUserSessionAndAccessTokenSessionAsync(mismatchedUserSession, currentJti, currentAccessTokenExpiration,
+                                    $"{revokedReasonPrefix} Binding AT-RT no coincidente; sesión vinculada al RT recibido revocada por prevención de seguridad.", currentUserId, 
+                                    utcNow, asTracking, cancellationToken);
+                                return Result.Ok();
+                            }
+                            else
+                            {
+                                //Introducir logger y determinar mensaje del logger
+                            }
+                            ////Introducir logger y determinar mensaje del logger
+                            ////Determinar razón del por que se está revocando el token de acceso session
+                            ////REVOCACION ANOMALA
+                        }
+                        else
+                        {
+                            var userSessionToRevoke = await _userSessionRepository.GetByIdAndUserIdAndUserDeviceIdAsync(currentUserSessionId, currentUserId, currentUserDeviceId, 
+                                asTracking, cancellationToken);
+                            if (userSessionToRevoke is not null)
+                            {
+                                //Introducir logger y determinar mensaje del logger
+                                //Determinar razón del por que se está revocando el token de acceso session
+                                //Modificar la razón del por que se está revocando la sesion
+                                //REVOCACION CORRECTA
+                                await _userSessionService.RevokeUserSessionAndAccessTokenSessionAsync(userSessionToRevoke, currentJti, currentAccessTokenExpiration,
+                                    $"{revokedReasonPrefix} Binding AT-RT no coincidente; sesión vinculada al RT recibido revocada por prevención de seguridad.", currentUserId,
+                                    utcNow, asTracking, cancellationToken);
+                                return Result.Ok();
+                            }
+                            else
+                            {
+                                //Introducir logger y determinar mensaje del logger
+                            }
+                            ////Introducir logger y determinar mensaje del logger
+                            ////Determinar razón del por que se está revocando el token de acceso session
+                            ////REVOCACION ANOMALA
+                        }
+                    }
+                }
             }
             else
             {
-
+                var mismatchedUserSession = await _userSessionRepository.GetByIdAsync(currentUserSessionId, asTracking, cancellationToken);
+                if (mismatchedUserSession is not null)
+                {
+                    //Introducir logger y determinar mensaje del logger
+                    //Determinar razón del por que se está revocando el token de acceso session
+                    //Modificar la razón del por que se está revocando la sesion
+                    //REVOCACION ANOMALA
+                    await _userSessionService.RevokeUserSessionAndAccessTokenSessionAsync(mismatchedUserSession, currentJti, currentAccessTokenExpiration,
+                        $"{revokedReasonPrefix} Binding AT-RT no coincidente; sesión vinculada al RT recibido revocada por prevención de seguridad.", currentUserId,
+                        utcNow, asTracking, cancellationToken);
+                    return Result.Ok();
+                }
+                else
+                {
+                    //Introducir logger y determinar mensaje del logger
+                }
+                ////Introducir logger y determinar mensaje del logger
+                ////Determinar razón del por que se está revocando el token de acceso session
+                ////REVOCACION ANOMALA
             }
+            var blacklistedAccessTokenSession = new BlacklistedAccessTokenSession(currentUserSessionId, currentJti, currentAccessTokenExpiration, utcNow,
+                $"{revokedReasonPrefix} Access token temporal revocado.", currentUserId, utcNow);
+            await _unitOfWork.BlacklistedAccessTokensSession.InsertAsync(blacklistedAccessTokenSession, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            return Result.Ok();
         }
 
         //public async Task<Result> Handle(LogoutCommand request, CancellationToken cancellationToken)
@@ -153,6 +316,7 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
         //        return Result.Fail(validation.ToCommandErrors());
         //    }
         //    RefreshTokenParser.TryParse(request.RefreshTokenRaw, out var identifier, out var tokenPlain);
+
         //    var asTracking = false;
         //    string finalRevokedReason = string.Empty;
         //    UserSession? userSessionToRevoke = null;

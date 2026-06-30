@@ -88,8 +88,8 @@ namespace ESAM.GrowTracking.Application.Services
             return (refreshToken, userSession);
         }
 
-        public async Task RevokeUserSessionAsync(UserSession userSession, string? jti, DateTime? accessTokenExpiration, string revokedReason, int currentUserId, DateTime utcNow,
-            bool asTracking = false, CancellationToken cancellationToken = default)
+        public async Task RevokeUserSessionAsync(UserSession userSession, string revokedReason, int currentUserId, DateTime utcNow, bool asTracking = false, 
+            CancellationToken cancellationToken = default)
         {
             UserSession? userSessionToRevoke = null;
             if (!userSession.IsRevoked)
@@ -110,8 +110,6 @@ namespace ESAM.GrowTracking.Application.Services
             var existingIdentifierSet = new HashSet<string>(existingIdentifiers, StringComparer.Ordinal);
             List<BlacklistedRefreshToken> blacklistedRefreshTokens = [.. userSessionRefreshTokens.Where(ust => !existingIdentifierSet.Contains(ust.Identifier))
                 .Select(usrt => new BlacklistedRefreshToken(usrt.Id, usrt.Identifier, usrt.ExpiresAt, utcNow, revokedReason, currentUserId, utcNow))];
-            var blacklistedAccessTokenSession = (!string.IsNullOrWhiteSpace(jti) && accessTokenExpiration is not null)
-                ? new BlacklistedAccessTokenSession(userSession.Id, jti, accessTokenExpiration.Value, utcNow, revokedReason, currentUserId, utcNow) : null;
             await _unitOfWork.ExecuteInTransactionAsync(async ct =>
             {
                 if (userSessionToRevoke is not null)
@@ -120,8 +118,147 @@ namespace ESAM.GrowTracking.Application.Services
                     await _unitOfWork.UserSessionRefreshTokens.UpdateRangeAsync(userSessionRefreshTokensToRevoke, ct);
                 if (blacklistedRefreshTokens.Count > 0)
                     await _unitOfWork.BlacklistedRefreshTokens.InsertRangeAsync(blacklistedRefreshTokens, ct);
-                if (blacklistedAccessTokenSession is not null)
-                    await _unitOfWork.BlacklistedAccessTokensSession.InsertAsync(blacklistedAccessTokenSession, ct);
+            }, cancellationToken: cancellationToken);
+        }
+
+        public async Task RevokeUserSessionAndAccessTokenTemporaryAsync(UserSession userSession, string jti, DateTime accessTokenExpiration, string revokedReason, 
+            int currentUserId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
+        {
+            UserSession? userSessionToRevoke = null;
+            if (!userSession.IsRevoked)
+            {
+                userSession.Revoke(utcNow, revokedReason, currentUserId, currentUserId, utcNow);
+                userSession.UpdateLastActivity(utcNow, currentUserId, utcNow);
+                userSessionToRevoke = userSession;
+            }
+            var userSessionRefreshTokens = await _userSessionRefreshTokenRepository.GetAllByUserSessionIdAsync(userSession.Id, asTracking, cancellationToken);
+            var userSessionRefreshTokensToRevoke = userSessionRefreshTokens.Where(usrt => !usrt.IsRevoked).ToList();
+            foreach (var userSessionRefreshTokenToRevoke in userSessionRefreshTokensToRevoke)
+            {
+                userSessionRefreshTokenToRevoke.Revoke(utcNow, revokedReason, currentUserId, utcNow);
+                userSessionRefreshTokenToRevoke.UpdateLastUsedAt(utcNow, currentUserId, utcNow);
+            }
+            var identifiers = userSessionRefreshTokens.Select(ust => ust.Identifier).ToList();
+            var existingIdentifiers = await _blacklistedRefreshTokenRepository.GetExistingIdentifiersAsync(identifiers, asTracking, cancellationToken);
+            var existingIdentifierSet = new HashSet<string>(existingIdentifiers, StringComparer.Ordinal);
+            List<BlacklistedRefreshToken> blacklistedRefreshTokens = [.. userSessionRefreshTokens.Where(ust => !existingIdentifierSet.Contains(ust.Identifier))
+                .Select(usrt => new BlacklistedRefreshToken(usrt.Id, usrt.Identifier, usrt.ExpiresAt, utcNow, revokedReason, currentUserId, utcNow))];
+            var blacklistedAccessTokenTemporary = new BlacklistedAccessTokenTemporary(currentUserId, jti, accessTokenExpiration, utcNow, revokedReason, currentUserId, utcNow);
+            await _unitOfWork.ExecuteInTransactionAsync(async ct =>
+            {
+                if (userSessionToRevoke is not null)
+                    await _unitOfWork.UserSessions.UpdateAsync(userSessionToRevoke, ct);
+                if (userSessionRefreshTokensToRevoke.Count > 0)
+                    await _unitOfWork.UserSessionRefreshTokens.UpdateRangeAsync(userSessionRefreshTokensToRevoke, ct);
+                if (blacklistedRefreshTokens.Count > 0)
+                    await _unitOfWork.BlacklistedRefreshTokens.InsertRangeAsync(blacklistedRefreshTokens, ct);
+                await _unitOfWork.BlacklistedAccessTokensTemporary.InsertAsync(blacklistedAccessTokenTemporary, ct);
+            }, cancellationToken: cancellationToken);
+        }
+
+        public async Task RevokeUserSessionAndAccessTokenSessionAsync(UserSession userSession, string jti, DateTime accessTokenExpiration, string revokedReason,
+            int currentUserId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
+        {
+            UserSession? userSessionToRevoke = null;
+            if (!userSession.IsRevoked)
+            {
+                userSession.Revoke(utcNow, revokedReason, currentUserId, currentUserId, utcNow);
+                userSession.UpdateLastActivity(utcNow, currentUserId, utcNow);
+                userSessionToRevoke = userSession;
+            }
+            var userSessionRefreshTokens = await _userSessionRefreshTokenRepository.GetAllByUserSessionIdAsync(userSession.Id, asTracking, cancellationToken);
+            var userSessionRefreshTokensToRevoke = userSessionRefreshTokens.Where(usrt => !usrt.IsRevoked).ToList();
+            foreach (var userSessionRefreshTokenToRevoke in userSessionRefreshTokensToRevoke)
+            {
+                userSessionRefreshTokenToRevoke.Revoke(utcNow, revokedReason, currentUserId, utcNow);
+                userSessionRefreshTokenToRevoke.UpdateLastUsedAt(utcNow, currentUserId, utcNow);
+            }
+            var identifiers = userSessionRefreshTokens.Select(ust => ust.Identifier).ToList();
+            var existingIdentifiers = await _blacklistedRefreshTokenRepository.GetExistingIdentifiersAsync(identifiers, asTracking, cancellationToken);
+            var existingIdentifierSet = new HashSet<string>(existingIdentifiers, StringComparer.Ordinal);
+            List<BlacklistedRefreshToken> blacklistedRefreshTokens = [.. userSessionRefreshTokens.Where(ust => !existingIdentifierSet.Contains(ust.Identifier))
+                .Select(usrt => new BlacklistedRefreshToken(usrt.Id, usrt.Identifier, usrt.ExpiresAt, utcNow, revokedReason, currentUserId, utcNow))];
+            var blacklistedAccessTokenSession = new BlacklistedAccessTokenSession(userSession.Id, jti, accessTokenExpiration, utcNow, revokedReason, currentUserId, utcNow);
+            await _unitOfWork.ExecuteInTransactionAsync(async ct =>
+            {
+                if (userSessionToRevoke is not null)
+                    await _unitOfWork.UserSessions.UpdateAsync(userSessionToRevoke, ct);
+                if (userSessionRefreshTokensToRevoke.Count > 0)
+                    await _unitOfWork.UserSessionRefreshTokens.UpdateRangeAsync(userSessionRefreshTokensToRevoke, ct);
+                if (blacklistedRefreshTokens.Count > 0)
+                    await _unitOfWork.BlacklistedRefreshTokens.InsertRangeAsync(blacklistedRefreshTokens, ct);
+                await _unitOfWork.BlacklistedAccessTokensSession.InsertAsync(blacklistedAccessTokenSession, ct);
+            }, cancellationToken: cancellationToken);
+        }
+
+        public async Task RevokeUserSessionAndAccessTokenSessionAsync(UserSession? userSession, UserSession? userSession1, string jti, DateTime accessTokenExpiration, 
+            string revokedReason, int currentUserId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
+        {
+            UserSession? userSessionToRevoke = null;
+            UserSession? userSessionToRevoke1 = null;
+            List<UserSessionRefreshToken>? userSessionRefreshTokensToRevoke = [];
+            List<UserSessionRefreshToken>? userSessionRefreshTokensToRevoke1 = [];
+            List<BlacklistedRefreshToken> blacklistedRefreshTokens = [];
+            List<BlacklistedRefreshToken> blacklistedRefreshTokens1 = [];
+            BlacklistedAccessTokenSession blacklistedAccessTokenSession = null!;
+            if (userSession is not null)
+            {
+                if (!userSession.IsRevoked)
+                {
+                    userSession.Revoke(utcNow, revokedReason, currentUserId, currentUserId, utcNow);
+                    userSession.UpdateLastActivity(utcNow, currentUserId, utcNow);
+                    userSessionToRevoke = userSession;
+                }
+                var userSessionRefreshTokens = await _userSessionRefreshTokenRepository.GetAllByUserSessionIdAsync(userSession.Id, asTracking, cancellationToken);
+                userSessionRefreshTokensToRevoke = [.. userSessionRefreshTokens.Where(usrt => !usrt.IsRevoked)];
+                foreach (var userSessionRefreshTokenToRevoke in userSessionRefreshTokensToRevoke)
+                {
+                    userSessionRefreshTokenToRevoke.Revoke(utcNow, revokedReason, currentUserId, utcNow);
+                    userSessionRefreshTokenToRevoke.UpdateLastUsedAt(utcNow, currentUserId, utcNow);
+                }
+                var identifiers = userSessionRefreshTokens.Select(ust => ust.Identifier).ToList();
+                var existingIdentifiers = await _blacklistedRefreshTokenRepository.GetExistingIdentifiersAsync(identifiers, asTracking, cancellationToken);
+                var existingIdentifierSet = new HashSet<string>(existingIdentifiers, StringComparer.Ordinal);
+                blacklistedRefreshTokens = [.. userSessionRefreshTokens.Where(ust => !existingIdentifierSet.Contains(ust.Identifier))
+                    .Select(usrt => new BlacklistedRefreshToken(usrt.Id, usrt.Identifier, usrt.ExpiresAt, utcNow, revokedReason, currentUserId, utcNow))];
+            }
+            if (userSession1 is not null)
+            {
+                if (!userSession1.IsRevoked)
+                {
+                    userSession1.Revoke(utcNow, revokedReason, currentUserId, currentUserId, utcNow);
+                    userSession1.UpdateLastActivity(utcNow, currentUserId, utcNow);
+                    userSessionToRevoke1 = userSession1;
+                }
+                var userSessionRefreshTokens1 = await _userSessionRefreshTokenRepository.GetAllByUserSessionIdAsync(userSession1.Id, asTracking, cancellationToken);
+                userSessionRefreshTokensToRevoke1 = [.. userSessionRefreshTokens1.Where(usrt1 => !usrt1.IsRevoked)];
+                foreach (var userSessionRefreshTokenToRevoke1 in userSessionRefreshTokensToRevoke1)
+                {
+                    userSessionRefreshTokenToRevoke1.Revoke(utcNow, revokedReason, currentUserId, utcNow);
+                    userSessionRefreshTokenToRevoke1.UpdateLastUsedAt(utcNow, currentUserId, utcNow);
+                }
+                var identifiers1 = userSessionRefreshTokens1.Select(ust1 => ust1.Identifier).ToList();
+                var existingIdentifiers1 = await _blacklistedRefreshTokenRepository.GetExistingIdentifiersAsync(identifiers1, asTracking, cancellationToken);
+                var existingIdentifierSet1 = new HashSet<string>(existingIdentifiers1, StringComparer.Ordinal);
+                blacklistedRefreshTokens1 = [.. userSessionRefreshTokens1.Where(ust1 => !existingIdentifierSet1.Contains(ust1.Identifier))
+                    .Select(usrt1 => new BlacklistedRefreshToken(usrt1.Id, usrt1.Identifier, usrt1.ExpiresAt, utcNow, revokedReason, currentUserId, utcNow))];
+                blacklistedAccessTokenSession = new BlacklistedAccessTokenSession(userSession1.Id, jti, accessTokenExpiration, utcNow, revokedReason, currentUserId, utcNow);
+            }
+            await _unitOfWork.ExecuteInTransactionAsync(async ct =>
+            {
+                if (userSessionToRevoke is not null)
+                    await _unitOfWork.UserSessions.UpdateAsync(userSessionToRevoke, ct);
+                if (userSessionToRevoke1 is not null)
+                    await _unitOfWork.UserSessions.UpdateAsync(userSessionToRevoke1, ct);
+                if (userSessionRefreshTokensToRevoke.Count > 0)
+                    await _unitOfWork.UserSessionRefreshTokens.UpdateRangeAsync(userSessionRefreshTokensToRevoke, ct);
+                if (userSessionRefreshTokensToRevoke1.Count > 0)
+                    await _unitOfWork.UserSessionRefreshTokens.UpdateRangeAsync(userSessionRefreshTokensToRevoke1, ct);
+                if (blacklistedRefreshTokens.Count > 0)
+                    await _unitOfWork.BlacklistedRefreshTokens.InsertRangeAsync(blacklistedRefreshTokens, ct);
+                if (blacklistedRefreshTokens1.Count > 0)
+                    await _unitOfWork.BlacklistedRefreshTokens.InsertRangeAsync(blacklistedRefreshTokens1, ct);
+                await _unitOfWork.BlacklistedAccessTokensSession.InsertAsync(blacklistedAccessTokenSession, ct);
             }, cancellationToken: cancellationToken);
         }
 
