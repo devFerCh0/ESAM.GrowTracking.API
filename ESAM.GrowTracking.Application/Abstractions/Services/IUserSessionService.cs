@@ -19,10 +19,10 @@ namespace ESAM.GrowTracking.Application.Abstractions.Services
             DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default);
 
         Task RevokeUserSessionAndAccessTokenSessionAsync(UserSession userSession, string jti, DateTime accessTokenExpiration, string revokedReason, int currentUserId,
-            DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default);
+            int currentUserSessionId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default);
 
-        Task RevokeUserSessionAndAccessTokenSessionAsync(UserSession? userSession, UserSession? userSession1, string jti, DateTime accessTokenExpiration, string revokedReason, int currentUserId,
-            DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default);
+        Task RevokeUserSessionAndAccessTokenSessionAsync(UserSession? userSession, UserSession? userSession1, string jti, DateTime accessTokenExpiration, string revokedReason, 
+            int currentUserId, int currentUserSessionId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default);
 
         //Task<RefreshTokenDTO> RotateUserSessionAsync(UserSession userSession, UserSessionRefreshToken userSessionRefreshToken, string? jti, DateTime? accessTokenExpiration,
         //    string revokedReason, int currentUserId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default);

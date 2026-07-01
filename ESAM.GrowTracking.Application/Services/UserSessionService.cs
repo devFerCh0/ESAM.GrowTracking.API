@@ -157,7 +157,7 @@ namespace ESAM.GrowTracking.Application.Services
         }
 
         public async Task RevokeUserSessionAndAccessTokenSessionAsync(UserSession userSession, string jti, DateTime accessTokenExpiration, string revokedReason,
-            int currentUserId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
+            int currentUserId, int currentUserSessionId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
         {
             UserSession? userSessionToRevoke = null;
             if (!userSession.IsRevoked)
@@ -178,7 +178,7 @@ namespace ESAM.GrowTracking.Application.Services
             var existingIdentifierSet = new HashSet<string>(existingIdentifiers, StringComparer.Ordinal);
             List<BlacklistedRefreshToken> blacklistedRefreshTokens = [.. userSessionRefreshTokens.Where(ust => !existingIdentifierSet.Contains(ust.Identifier))
                 .Select(usrt => new BlacklistedRefreshToken(usrt.Id, usrt.Identifier, usrt.ExpiresAt, utcNow, revokedReason, currentUserId, utcNow))];
-            var blacklistedAccessTokenSession = new BlacklistedAccessTokenSession(userSession.Id, jti, accessTokenExpiration, utcNow, revokedReason, currentUserId, utcNow);
+            var blacklistedAccessTokenSession = new BlacklistedAccessTokenSession(currentUserSessionId, jti, accessTokenExpiration, utcNow, revokedReason, currentUserId, utcNow);
             await _unitOfWork.ExecuteInTransactionAsync(async ct =>
             {
                 if (userSessionToRevoke is not null)
@@ -192,7 +192,7 @@ namespace ESAM.GrowTracking.Application.Services
         }
 
         public async Task RevokeUserSessionAndAccessTokenSessionAsync(UserSession? userSession, UserSession? userSession1, string jti, DateTime accessTokenExpiration, 
-            string revokedReason, int currentUserId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
+            string revokedReason, int currentUserId, int currentUserSessionId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
         {
             UserSession? userSessionToRevoke = null;
             UserSession? userSessionToRevoke1 = null;
@@ -242,7 +242,7 @@ namespace ESAM.GrowTracking.Application.Services
                 var existingIdentifierSet1 = new HashSet<string>(existingIdentifiers1, StringComparer.Ordinal);
                 blacklistedRefreshTokens1 = [.. userSessionRefreshTokens1.Where(ust1 => !existingIdentifierSet1.Contains(ust1.Identifier))
                     .Select(usrt1 => new BlacklistedRefreshToken(usrt1.Id, usrt1.Identifier, usrt1.ExpiresAt, utcNow, revokedReason, currentUserId, utcNow))];
-                blacklistedAccessTokenSession = new BlacklistedAccessTokenSession(userSession1.Id, jti, accessTokenExpiration, utcNow, revokedReason, currentUserId, utcNow);
+                blacklistedAccessTokenSession = new BlacklistedAccessTokenSession(currentUserSessionId, jti, accessTokenExpiration, utcNow, revokedReason, currentUserId, utcNow);
             }
             await _unitOfWork.ExecuteInTransactionAsync(async ct =>
             {
