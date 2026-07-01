@@ -5,14 +5,14 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Refresh
 {
     public record RefreshCommand : IRequest<Result<RefreshResponse>>
     {
+        public string AccessToken { get; init; }
+
         public string RefreshTokenRaw { get; init; }
 
-        public string DeviceIdentifier { get; init; }
-
-        public RefreshCommand(string refreshTokenRaw, string deviceIdentifier)
+        public RefreshCommand(string accessToken, string refreshTokenRaw)
         {
+            AccessToken = accessToken;
             RefreshTokenRaw = refreshTokenRaw;
-            DeviceIdentifier = deviceIdentifier;
         }
     }
 }

@@ -63,13 +63,20 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Refresh
 
         public async Task<Result<RefreshResponse>> Handle(RefreshCommand request, CancellationToken cancellationToken)
         {
-            var asTracking = false;
             var validation = await _validator.ValidateAsync(request, cancellationToken);
             if (!validation.IsValid)
             {
                 _logger.LogWarning("RefreshCommand: validación fallida. Errores: {Errors}", string.Join(" | ", validation.Errors.Select(e => e.ErrorMessage)));
                 return Result<RefreshResponse>.Fail(validation.ToDomainErrors());
             }
+
+
+
+
+            var asTracking = false;
+
+
+
             var utcNow = _dateTimeService.UtcNow;
             RefreshTokenParser.TryParse(request.RefreshTokenRaw, out var identifier, out var refreshTokenPlain);
             var userSessionRefreshToken = identifier is not null ? await _userSessionRefreshTokenRepository.GetByIdentifierAsync(identifier, asTracking, cancellationToken) : null;

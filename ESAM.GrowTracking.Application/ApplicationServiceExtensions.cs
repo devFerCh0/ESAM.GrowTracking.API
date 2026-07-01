@@ -5,6 +5,7 @@ using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserRoleCampus;
 using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserWorkProfile;
 using ESAM.GrowTracking.Application.Features.Auth.GetUserRoleCampuses;
 using ESAM.GrowTracking.Application.Features.Auth.Login;
+using ESAM.GrowTracking.Application.Features.Auth.Logout;
 using ESAM.GrowTracking.Application.Services;
 using ESAM.GrowTracking.Application.Settings;
 using FluentValidation;
@@ -62,8 +63,8 @@ namespace ESAM.GrowTracking.Application
                 mrsc.RegisterServicesFromAssembly(typeof(AssumeWorkProfileCommand).Assembly);
                 mrsc.RegisterServicesFromAssembly(typeof(GetCurrentUserRoleCampusQuery).Assembly);
                 mrsc.RegisterServicesFromAssembly(typeof(GetCurrentUserWorkProfileQuery).Assembly);
+                mrsc.RegisterServicesFromAssembly(typeof(LogoutCommand).Assembly);
                 //    mrsc.RegisterServicesFromAssembly(typeof(RefreshCommand).Assembly);
-                //    mrsc.RegisterServicesFromAssembly(typeof(LogoutCommand).Assembly);
             });
         }
 
@@ -73,8 +74,8 @@ namespace ESAM.GrowTracking.Application
             services.AddValidatorsFromAssemblyContaining<GetUserRoleCampusesQueryValidator>();
             services.AddValidatorsFromAssemblyContaining<AssumeRoleCampusCommandValidator>();
             services.AddValidatorsFromAssemblyContaining<AssumeWorkProfileCommandValidator>();
+            services.AddValidatorsFromAssemblyContaining<LogoutCommandValidator>();
             //.AddValidatorsFromAssemblyContaining<RefreshCommandValidator>()
-            //.AddValidatorsFromAssemblyContaining<LogoutCommandValidator>();
         }
     }
 }

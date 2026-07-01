@@ -4,12 +4,9 @@
     {
         public string? RefreshTokenRaw { get; init; }
 
-        public string? DeviceIdentifier { get; init; }
-
-        public LogoutRequest(string? refreshTokenRaw, string? deviceIdentifier)
+        public LogoutRequest(string? refreshTokenRaw)
         {
             RefreshTokenRaw = refreshTokenRaw;
-            DeviceIdentifier = deviceIdentifier;
         }
     }
 }

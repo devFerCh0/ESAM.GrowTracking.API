@@ -8,7 +8,7 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
         public LogoutCommandValidator()
         {
             RuleFor(lc => lc.RefreshTokenRaw).Cascade(CascadeMode.Stop)
-                .MinimumLength(3).WithMessage(CommandValidationMessages.RefreshTokenMinLength)
+                .MinimumLength(32).WithMessage(CommandValidationMessages.RefreshTokenMinLength)
                 .MaximumLength(256).WithMessage(CommandValidationMessages.RefreshTokenMaxLength)
                 .Must(rt =>
                 {

@@ -3,9 +3,7 @@ using ESAM.GrowTracking.Application.Enums;
 using ESAM.GrowTracking.Application.Extensions;
 using ESAM.GrowTracking.Application.Helpers;
 using ESAM.GrowTracking.Application.Results;
-using ESAM.GrowTracking.Domain.Abstractions.DataAccess;
 using ESAM.GrowTracking.Domain.Abstractions.DataAccess.Repositories;
-using ESAM.GrowTracking.Domain.Entities;
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -20,21 +18,19 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
         private readonly IValidator<LogoutCommand> _validator;
         private readonly IAccessTokenClaimsValidatorService _accessTokenClaimsValidatorService;
         private readonly IDateTimeService _dateTimeService;
-        private readonly IUnitOfWork _unitOfWork;
         private readonly IUserSessionRefreshTokenRepository _userSessionRefreshTokenRepository;
         private readonly IUserSessionRepository _userSessionRepository;
         private readonly IUserSessionService _userSessionService;
         private readonly IHashService _hashService;
 
         public LogoutCommandHandler(ILogger<LogoutCommandHandler> logger, IValidator<LogoutCommand> validator, IAccessTokenClaimsValidatorService accessTokenClaimsValidatorService,
-            IDateTimeService dateTimeService, IUnitOfWork unitOfWork, IUserSessionRefreshTokenRepository userSessionRefreshTokenRepository,
-            IUserSessionRepository userSessionRepository, IUserSessionService userSessionService, IHashService hashService)
+            IDateTimeService dateTimeService, IUserSessionRefreshTokenRepository userSessionRefreshTokenRepository, IUserSessionRepository userSessionRepository, 
+            IUserSessionService userSessionService, IHashService hashService)
         {
             ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(validator);
             ArgumentNullException.ThrowIfNull(accessTokenClaimsValidatorService);
             ArgumentNullException.ThrowIfNull(dateTimeService);
-            ArgumentNullException.ThrowIfNull(unitOfWork);
             ArgumentNullException.ThrowIfNull(userSessionRefreshTokenRepository);
             ArgumentNullException.ThrowIfNull(userSessionRepository);
             ArgumentNullException.ThrowIfNull(userSessionService);
@@ -43,7 +39,6 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
             _validator = validator;
             _accessTokenClaimsValidatorService = accessTokenClaimsValidatorService;
             _dateTimeService = dateTimeService;
-            _unitOfWork = unitOfWork;
             _userSessionRefreshTokenRepository = userSessionRefreshTokenRepository;
             _userSessionRepository = userSessionRepository;
             _userSessionService = userSessionService;
@@ -104,10 +99,8 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                         {
                             _logger.LogWarning("Logout: Se recibió un Access Token Temporal (JTI: {Jti}) junto con un Refresh Token cuyo registro de sesión " + 
                                 "({SessionId}) no existe en BD para el usuario {UserId}.", currentJti, userSessionRefreshToken.UserSessionId, currentUserId);
-                            var blacklistedAccessTokenTemporary = new BlacklistedAccessTokenTemporary(currentUserId, currentJti, currentAccessTokenExpiration, utcNow,
-                                "Logout: Intento de uso de Refresh Token huérfano con Access Token Temporal.", currentUserId, utcNow);
-                            await _unitOfWork.BlacklistedAccessTokensTemporary.InsertAsync(blacklistedAccessTokenTemporary, cancellationToken);
-                            await _unitOfWork.SaveChangesAsync(cancellationToken);
+                            await _userSessionService.BlacklistedAccessTokenTemporaryAsync(currentUserId, currentJti, currentAccessTokenExpiration,
+                                "Logout: Intento de uso de Refresh Token huérfano con Access Token Temporal.", utcNow, cancellationToken);
                             return Result.Ok();
                         }
                     }
@@ -115,10 +108,8 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                     {
                         _logger.LogWarning("Logout: Se recibió un Access Token Temporal (JTI: {Jti}) junto con un identificador de Refresh Token " + 
                             "inexistente en BD para el usuario {UserId}.", currentJti, currentUserId);
-                        var blacklistedAccessTokenTemporary = new BlacklistedAccessTokenTemporary(currentUserId, currentJti, currentAccessTokenExpiration, utcNow,
-                            "Logout: Intento de uso de Refresh Token no registrado con Access Token Temporal.", currentUserId, utcNow);
-                        await _unitOfWork.BlacklistedAccessTokensTemporary.InsertAsync(blacklistedAccessTokenTemporary, cancellationToken);
-                        await _unitOfWork.SaveChangesAsync(cancellationToken);
+                        await _userSessionService.BlacklistedAccessTokenTemporaryAsync(currentUserId, currentJti, currentAccessTokenExpiration,
+                            "Logout: Intento de uso de Refresh Token no registrado con Access Token Temporal.", utcNow, cancellationToken);
                         return Result.Ok();
                     }
                 }
@@ -126,20 +117,16 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                 {
                     _logger.LogWarning("Logout: Se recibió un Access Token Temporal (JTI: {Jti}) junto con un Refresh Token malformado para el usuario {UserId}.", currentJti, 
                         currentUserId);
-                    var blacklistedAccessTokenTemporary = new BlacklistedAccessTokenTemporary(currentUserId, currentJti, currentAccessTokenExpiration, utcNow,
-                        "Logout: Intento de uso de Refresh Token malformado con Access Token Temporal.", currentUserId, utcNow);
-                    await _unitOfWork.BlacklistedAccessTokensTemporary.InsertAsync(blacklistedAccessTokenTemporary, cancellationToken);
-                    await _unitOfWork.SaveChangesAsync(cancellationToken);
+                    await _userSessionService.BlacklistedAccessTokenTemporaryAsync(currentUserId, currentJti, currentAccessTokenExpiration,
+                        "Logout: Intento de uso de Refresh Token malformado con Access Token Temporal.", utcNow, cancellationToken);
                     return Result.Ok();
                 }
             }
             else
             {
                 _logger.LogInformation("Logout: Access Token Temporal (JTI: {Jti}) revocado correctamente para el usuario {UserId}.", currentJti, currentUserId);
-                var blacklistedAccessTokenTemporary = new BlacklistedAccessTokenTemporary(currentUserId, currentJti, currentAccessTokenExpiration, utcNow,
-                    "Logout: Cierre de sesión temporal exitoso.", currentUserId, utcNow);
-                await _unitOfWork.BlacklistedAccessTokensTemporary.InsertAsync(blacklistedAccessTokenTemporary, cancellationToken);
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                await _userSessionService.BlacklistedAccessTokenTemporaryAsync(currentUserId, currentJti, currentAccessTokenExpiration,
+                    "Logout: Cierre de sesión temporal exitoso.", utcNow, cancellationToken);
                 return Result.Ok();
             }
         }
@@ -216,10 +203,8 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                                 {
                                     _logger.LogWarning("Logout: Credenciales válidas pero la sesión {SessionId} o el dispositivo {DeviceId} no coinciden/no existen para el " + 
                                         "usuario {UserId}. JTI: {Jti}.", currentUserSessionId, currentUserDeviceId, currentUserId, currentJti);
-                                    var blacklistedAccessTokenSession = new BlacklistedAccessTokenSession(currentUserSessionId, currentJti, currentAccessTokenExpiration, utcNow,
-                                        "Logout: Sesión o dispositivo de usuario no encontrados durante un cierre de sesión válido.", currentUserId, utcNow);
-                                    await _unitOfWork.BlacklistedAccessTokensSession.InsertAsync(blacklistedAccessTokenSession, cancellationToken);
-                                    await _unitOfWork.SaveChangesAsync(cancellationToken);
+                                    await _userSessionService.BlacklistedAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
+                                        "Logout: Sesión o dispositivo de usuario no encontrados durante un cierre de sesión válido.", utcNow, cancellationToken);
                                     return Result.Ok();
                                 }
                             }
@@ -241,10 +226,8 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                                     {
                                         _logger.LogWarning("Logout: Fallo criptográfico y sesión {SessionId} inexistente para el usuario {UserId}. JTI: {Jti}.", 
                                             currentUserSessionId, currentUserId, currentJti);
-                                        var blacklistedAccessTokenSession = new BlacklistedAccessTokenSession(currentUserSessionId, currentJti, currentAccessTokenExpiration, 
-                                            utcNow, "Logout: Discrepancia criptográfica y sesión no encontrada.", currentUserId, utcNow);
-                                        await _unitOfWork.BlacklistedAccessTokensSession.InsertAsync(blacklistedAccessTokenSession, cancellationToken);
-                                        await _unitOfWork.SaveChangesAsync(cancellationToken);
+                                        await _userSessionService.BlacklistedAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
+                                            "Logout: Discrepancia criptográfica y sesión no encontrada.", utcNow, cancellationToken);
                                         return Result.Ok();
                                     }
                                 }
@@ -288,10 +271,8 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                                         _logger.LogWarning("Logout: Conflicto cruzado total. Ni la sesión del Access Token ({Session1}) ni la del Refresh Token ({Session2}) " + 
                                             "existen. Fallo criptográfico. JTI: {Jti}, UserId: {UserId}.", currentUserSessionId, userSessionRefreshToken.UserSessionId, currentJti, 
                                             currentUserId);
-                                        var blacklistedAccessTokenSession = new BlacklistedAccessTokenSession(currentUserSessionId, currentJti, currentAccessTokenExpiration, utcNow,
-                                            "Logout: Conflicto de sesión cruzada (Hash inválido) y ambas sesiones son inexistentes.", currentUserId, utcNow);
-                                        await _unitOfWork.BlacklistedAccessTokensSession.InsertAsync(blacklistedAccessTokenSession, cancellationToken);
-                                        await _unitOfWork.SaveChangesAsync(cancellationToken);
+                                        await _userSessionService.BlacklistedAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
+                                            "Logout: Conflicto de sesión cruzada (Hash inválido) y ambas sesiones son inexistentes.", utcNow, cancellationToken);
                                         return Result.Ok();
                                     }
                                 }
@@ -314,10 +295,8 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                                 {
                                     _logger.LogWarning("Logout: Refresh Token parseado parcialmente (sin tokenPlain) y sesión {SessionId} inexistente. JTI: {Jti}, " + 
                                         "UserId: {UserId}.", currentUserSessionId, currentJti, currentUserId);
-                                    var blacklistedAccessTokenSession = new BlacklistedAccessTokenSession(currentUserSessionId, currentJti, currentAccessTokenExpiration, utcNow,
-                                        "Logout: Payload de Refresh Token ausente y sesión no encontrada.", currentUserId, utcNow);
-                                    await _unitOfWork.BlacklistedAccessTokensSession.InsertAsync(blacklistedAccessTokenSession, cancellationToken);
-                                    await _unitOfWork.SaveChangesAsync(cancellationToken);
+                                    await _userSessionService.BlacklistedAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
+                                        "Logout: Payload de Refresh Token ausente y sesión no encontrada.", utcNow, cancellationToken);
                                     return Result.Ok();
                                 }
                             }
@@ -356,10 +335,8 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                                 {
                                     _logger.LogWarning("Logout: Conflicto cruzado sin tokenPlain y ambas sesiones ({Session1}, {Session2}) son inexistentes. " + 
                                         "JTI: {Jti}, UserId: {UserId}.", currentUserSessionId, userSessionRefreshToken.UserSessionId, currentJti, currentUserId);
-                                    var blacklistedAccessTokenSession = new BlacklistedAccessTokenSession(currentUserSessionId, currentJti, currentAccessTokenExpiration, utcNow,
-                                        "Logout: Conflicto de sesión cruzada (Sin Payload RT) y sesiones inexistentes.", currentUserId, utcNow);
-                                    await _unitOfWork.BlacklistedAccessTokensSession.InsertAsync(blacklistedAccessTokenSession, cancellationToken);
-                                    await _unitOfWork.SaveChangesAsync(cancellationToken);
+                                    await _userSessionService.BlacklistedAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
+                                        "Logout: Conflicto de sesión cruzada (Sin Payload RT) y sesiones inexistentes.", utcNow, cancellationToken);
                                     return Result.Ok();
                                 }
                             }
@@ -380,10 +357,8 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                         {
                             _logger.LogWarning("Logout: El identificador de Refresh Token provisto y la sesión actual {SessionId} no existen en base de datos. " + 
                                 "JTI: {Jti}, UserId: {UserId}.", currentUserSessionId, currentJti, currentUserId);
-                            var blacklistedAccessTokenSession = new BlacklistedAccessTokenSession(currentUserSessionId, currentJti, currentAccessTokenExpiration, utcNow,
-                                "Logout: Identificador de Refresh Token y Sesión no registrados en el sistema.", currentUserId, utcNow);
-                            await _unitOfWork.BlacklistedAccessTokensSession.InsertAsync(blacklistedAccessTokenSession, cancellationToken);
-                            await _unitOfWork.SaveChangesAsync(cancellationToken);
+                            await _userSessionService.BlacklistedAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
+                                "Logout: Identificador de Refresh Token y Sesión no registrados en el sistema.", utcNow, cancellationToken);
                             return Result.Ok();
                         }
                     }
@@ -403,10 +378,8 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                     {
                         _logger.LogWarning("Logout: Refresh Token malformado y sesión actual {SessionId} inexistente. JTI: {Jti}, UserId: {UserId}.", currentUserSessionId, 
                             currentJti, currentUserId);
-                        var blacklistedAccessTokenSession = new BlacklistedAccessTokenSession(currentUserSessionId, currentJti, currentAccessTokenExpiration, utcNow,
-                            "Logout: Cadena de Refresh Token malformada y sesión inexistente.", currentUserId, utcNow);
-                        await _unitOfWork.BlacklistedAccessTokensSession.InsertAsync(blacklistedAccessTokenSession, cancellationToken);
-                        await _unitOfWork.SaveChangesAsync(cancellationToken);
+                        await _userSessionService.BlacklistedAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
+                            "Logout: Cadena de Refresh Token malformada y sesión inexistente.", utcNow, cancellationToken);
                         return Result.Ok();
                     }
                 }
@@ -426,10 +399,8 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                 {
                     _logger.LogWarning("Logout: Cierre de sesión sin Refresh Token y la sesión {SessionId} del token ya no existe. JTI: {Jti}, UserId: {UserId}.", 
                         currentUserSessionId, currentJti, currentUserId);
-                    var blacklistedAccessTokenSession = new BlacklistedAccessTokenSession(currentUserSessionId, currentJti, currentAccessTokenExpiration, utcNow,
-                        "Logout: Cierre sin Refresh Token para una sesión ya inexistente.", currentUserId, utcNow);
-                    await _unitOfWork.BlacklistedAccessTokensSession.InsertAsync(blacklistedAccessTokenSession, cancellationToken);
-                    await _unitOfWork.SaveChangesAsync(cancellationToken);
+                    await _userSessionService.BlacklistedAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
+                        "Logout: Cierre sin Refresh Token para una sesión ya inexistente.", utcNow, cancellationToken);
                     return Result.Ok();
                 }
             }

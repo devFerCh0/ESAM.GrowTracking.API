@@ -8,14 +8,14 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Refresh
         public RefreshCommandValidator()
         {
             RuleFor(rc => rc.RefreshTokenRaw).Cascade(CascadeMode.Stop)
-                .MinimumLength(3).WithMessage(CommandValidationMessages.RefreshTokenMinLength)
+                .MinimumLength(32).WithMessage(CommandValidationMessages.RefreshTokenMinLength)
                 .MaximumLength(256).WithMessage(CommandValidationMessages.RefreshTokenMaxLength)
+                .Must(rt =>
+                {
+                    var p = rt!.Split('.');
+                    return p.Length == 2 && p[0].Length > 0 && p[1].Length > 0;
+                }).WithMessage(CommandValidationMessages.RefreshTokenInvalid)
                 .When(rc => !string.IsNullOrWhiteSpace(rc.RefreshTokenRaw));
-            RuleFor(rc => rc.DeviceIdentifier).Cascade(CascadeMode.Stop)
-                .NotEmpty().WithMessage(ValidationMessages.DeviceIdentifierRequired)
-                .MinimumLength(3).WithMessage(ValidationMessages.DeviceIdentifierMinLength)
-                .MaximumLength(256).WithMessage(ValidationMessages.DeviceIdentifierMaxLength)
-                .Must(ValidationRules.IsValidGuid).WithMessage(ValidationMessages.DeviceIdentifierInvalid);
         }
     }
 }

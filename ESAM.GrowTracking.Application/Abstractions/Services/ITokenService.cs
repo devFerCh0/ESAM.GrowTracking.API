@@ -11,5 +11,7 @@ namespace ESAM.GrowTracking.Application.Abstractions.Services
             int workProfileId, WorkProfileType workProfileType, int? roleId = null, int? campusId = null);
 
         RefreshTokenDTO GenerateRefreshToken(DateTime utcNow, int lifetimeDays);
+
+        Task<AccessTokenClaimsDTO> ExtractAccessTokenClaimsAsync(string accessToken);
     }
 }

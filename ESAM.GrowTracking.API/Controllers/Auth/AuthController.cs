@@ -9,6 +9,7 @@ using ESAM.GrowTracking.API.Controllers.Auth.GetCurrentUserWorkProfile.HttpRespo
 using ESAM.GrowTracking.API.Controllers.Auth.GetUserRoleCampuses;
 using ESAM.GrowTracking.API.Controllers.Auth.Login;
 using ESAM.GrowTracking.API.Controllers.Auth.Login.HttpResponses;
+using ESAM.GrowTracking.API.Controllers.Auth.Logout;
 using ESAM.GrowTracking.API.Extensions;
 using ESAM.GrowTracking.API.Responses;
 using ESAM.GrowTracking.API.Security;
@@ -19,10 +20,12 @@ using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserRoleCampus;
 using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserWorkProfile;
 using ESAM.GrowTracking.Application.Features.Auth.GetUserRoleCampuses;
 using ESAM.GrowTracking.Application.Features.Auth.Login;
+using ESAM.GrowTracking.Application.Features.Auth.Logout;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace ESAM.GrowTracking.API.Controllers.Auth
 {
@@ -191,6 +194,31 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
             return Ok(ApiSuccessResponse<GetCurrentUserWorkProfileHttpResponse>.From(currentUserWorkProfile, HttpContext.TraceIdentifier));
         }
 
+        [Authorize]
+        [HttpPost("logout")]
+        [Consumes("application/json")]
+        [ProducesResponseType(typeof(ApiSuccessResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<ApiSuccessResponse>> LogoutAsync([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] LogoutRequest? request,
+            CancellationToken cancellationToken)
+        {
+            var resolvedRefreshToken = _authSessionCookieService.ResolveRefreshToken(request?.RefreshTokenRaw);
+            var command = new LogoutCommand(resolvedRefreshToken);
+            try
+            {
+                var logoutResult = await _sender.Send(command, cancellationToken);
+                if (logoutResult.IsFailure)
+                    return logoutResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
+                return Ok(ApiSuccessResponse.From(HttpContext.TraceIdentifier));
+            }
+            finally
+            {
+                _authSessionCookieService.ClearSessionCookies();
+            }
+        }
+
 
 
 
@@ -218,31 +246,6 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
         //    var refresh = _mapper.Map<RefreshHttpResponse>(refreshResult.Value);
         //    ApplySessionAndXsrfToken(refresh.RefreshTokenRaw, refresh.RefreshTokenExpiresAt);
         //    return Ok(ApiSuccessResponse<RefreshHttpResponse>.From(refresh, HttpContext.TraceIdentifier));
-        //}
-
-        //[AllowAnonymous]
-        //[HttpPost("logout")]
-        //[Consumes("application/json")]
-        //[ProducesResponseType(typeof(ApiSuccessResponse), StatusCodes.Status200OK)]
-        //[ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
-        //[ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
-        //[ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
-        //public async Task<ActionResult<ApiSuccessResponse>> LogoutAsync([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] LogoutRequest? request,
-        //    CancellationToken cancellationToken)
-        //{
-        //    var resolvedRefreshToken = _authSessionCookieService.ResolveRefreshToken(request?.RefreshTokenRaw);
-        //    var command = new LogoutCommand(resolvedRefreshToken, request?.DeviceIdentifier);
-        //    try
-        //    {
-        //        var logoutResult = await _sender.Send(command, cancellationToken);
-        //        if (logoutResult.IsFailure)
-        //            return logoutResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
-        //        return Ok(ApiSuccessResponse.From(HttpContext.TraceIdentifier));
-        //    }
-        //    finally
-        //    {
-        //        _authSessionCookieService.ClearSessionCookies();
-        //    }
         //}
 
         private void ApplySessionAndXsrfToken(string refreshTokenRaw, DateTime refreshTokenExpiresAt)

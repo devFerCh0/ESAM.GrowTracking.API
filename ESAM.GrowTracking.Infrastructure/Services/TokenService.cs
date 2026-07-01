@@ -2,6 +2,7 @@
 using ESAM.GrowTracking.Application.DTOs;
 using ESAM.GrowTracking.Application.Enums;
 using ESAM.GrowTracking.Domain.Enums;
+using ESAM.GrowTracking.Infrastructure.Extensions;
 using ESAM.GrowTracking.Infrastructure.Security;
 using ESAM.GrowTracking.Infrastructure.Settings;
 using ESAM.GrowTracking.Infrastructure.Utilities;
@@ -81,6 +82,41 @@ namespace ESAM.GrowTracking.Infrastructure.Services
             return new RefreshTokenDTO(identifier, token, expiresIn, expiresAt);
         }
 
+        public async Task<AccessTokenClaimsDTO> ExtractAccessTokenClaimsAsync(string accessToken)
+        {
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new ArgumentException($"{nameof(accessToken)} no puede ser nulo o vacío.", nameof(accessToken));
+            var validationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidIssuer = _jwtSettings.Issuer,
+                ValidateAudience = true,
+                ValidAudience = _jwtSettings.Audience,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = _signingCredentials.Key,
+                ValidAlgorithms = [SecurityAlgorithms.HmacSha256],
+                ValidateLifetime = false,
+                RequireExpirationTime = true,
+                ClockSkew = TimeSpan.Zero
+            };
+            TokenValidationResult validationResult;
+            try
+            {
+                validationResult = await s_jwtHandler.ValidateTokenAsync(accessToken, validationParameters);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "El token de acceso proporcionado tiene un formato inválido.");
+                throw new SecurityTokenException("El token de acceso proporcionado no es válido.", ex);
+            }
+            if (!validationResult.IsValid || validationResult.ClaimsIdentity is null)
+            {
+                _logger.LogWarning(validationResult.Exception, "El token de acceso proporcionado no superó la validación de firma, emisor o audiencia.");
+                throw new SecurityTokenException("El token de acceso proporcionado no es válido.", validationResult.Exception);
+            }
+            return MapToAccessTokenClaims(new ClaimsPrincipal(validationResult.ClaimsIdentity));
+        }
+
         private static List<Claim> BuildBaseAccessTokenClaims(string jti, int userId, string securityStamp, int tokenVersion, int userDeviceId, AccessTokenType accessTokenType,
             DateTime utcNow, DateTime expiresAt)
         {
@@ -131,6 +167,19 @@ namespace ESAM.GrowTracking.Infrastructure.Services
                 throw new ArgumentOutOfRangeException(nameof(userDeviceId), $"{nameof(userDeviceId)} debe ser mayor a cero.");
             if (lifetimeMinutes <= 0)
                 throw new ArgumentOutOfRangeException(nameof(lifetimeMinutes), $"{nameof(lifetimeMinutes)} debe ser mayor a cero.");
+        }
+
+        private static AccessTokenClaimsDTO MapToAccessTokenClaims(ClaimsPrincipal principal)
+        {
+            var jti = principal.GetJti() ?? throw new SecurityTokenException("El token de acceso no contiene un identificador (jti) válido.");
+            var userId = principal.GetUserId() ?? throw new SecurityTokenException("El token de acceso no contiene un UserId válido.");
+            var securityStamp = principal.GetSecurityStamp() ?? throw new SecurityTokenException("El token de acceso no contiene un SecurityStamp válido.");
+            var tokenVersion = principal.GetTokenVersion() ?? throw new SecurityTokenException("El token de acceso no contiene un TokenVersion válido.");
+            var userDeviceId = principal.GetUserDeviceId() ?? throw new SecurityTokenException("El token de acceso no contiene un UserDeviceId válido.");
+            var accessTokenType = principal.GetAccessTokenType() ?? throw new SecurityTokenException("El token de acceso no contiene un AccessTokenType válido.");
+            var accessTokenExpiration = principal.GetAccessTokenExpiration() ?? throw new SecurityTokenException("El token de acceso no contiene una fecha de expiración válida.");
+            return new AccessTokenClaimsDTO(jti, userId, securityStamp, tokenVersion, userDeviceId, accessTokenType, accessTokenExpiration, principal.GetUserSessionId(),
+                principal.GetWorkProfileId(), principal.GetWorkProfileType(), principal.GetRoleId(), principal.GetCampusId());
         }
     }
 }
