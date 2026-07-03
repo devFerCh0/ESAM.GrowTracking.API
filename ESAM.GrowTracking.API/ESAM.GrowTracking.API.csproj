@@ -14,6 +14,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="Controllers\Auth\Refresh\RefreshHttpResponse.cs" />
+    <Compile Include="Controllers\Auth\Refresh\RefreshMappingProfile.cs" />
+    <Compile Include="Controllers\Auth\Refresh\RefreshRequest.cs" />
+    <Compile Include="Controllers\Auth\Refresh\RefreshRequestValidator.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AutoMapper" Version="16.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.26" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.25">

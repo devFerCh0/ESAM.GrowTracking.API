@@ -5,6 +5,7 @@ using ESAM.GrowTracking.Domain.Abstractions.DataAccess;
 using ESAM.GrowTracking.Domain.Abstractions.DataAccess.Repositories;
 using ESAM.GrowTracking.Domain.Entities;
 using Microsoft.Extensions.Options;
+using System.Threading;
 
 namespace ESAM.GrowTracking.Application.Services
 {
@@ -16,9 +17,12 @@ namespace ESAM.GrowTracking.Application.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IUserSessionRefreshTokenRepository _userSessionRefreshTokenRepository;
         private readonly IBlacklistedRefreshTokenRepository _blacklistedRefreshTokenRepository;
+        private readonly IBlacklistedAccessTokenTemporaryRepository _blacklistedAccessTokenTemporaryRepository;
+        private readonly IBlacklistedAccessTokenSessionRepository _blacklistedAccessTokenSessionRepository;
 
         public UserSessionService(ITokenService tokenService, IOptions<TokenLifetimeSettings> tokenLifetimeSettingsOptions, IHashService hashService, IUnitOfWork unitOfWork, 
-            IUserSessionRefreshTokenRepository userSessionRefreshTokenRepository, IBlacklistedRefreshTokenRepository blacklistedRefreshTokenRepository)
+            IUserSessionRefreshTokenRepository userSessionRefreshTokenRepository, IBlacklistedRefreshTokenRepository blacklistedRefreshTokenRepository, 
+            IBlacklistedAccessTokenTemporaryRepository blacklistedAccessTokenTemporaryRepository, IBlacklistedAccessTokenSessionRepository blacklistedAccessTokenSessionRepository)
         {
             ArgumentNullException.ThrowIfNull(tokenService);
             ArgumentNullException.ThrowIfNull(tokenLifetimeSettingsOptions);
@@ -26,12 +30,16 @@ namespace ESAM.GrowTracking.Application.Services
             ArgumentNullException.ThrowIfNull(unitOfWork);
             ArgumentNullException.ThrowIfNull(userSessionRefreshTokenRepository);
             ArgumentNullException.ThrowIfNull(blacklistedRefreshTokenRepository);
+            ArgumentNullException.ThrowIfNull(blacklistedAccessTokenTemporaryRepository);
+            ArgumentNullException.ThrowIfNull(blacklistedAccessTokenSessionRepository);
             _tokenService = tokenService;
             _tokenLifetimeSettings = tokenLifetimeSettingsOptions.Value ?? throw new ArgumentNullException(nameof(tokenLifetimeSettingsOptions));
             _hashService = hashService;
             _unitOfWork = unitOfWork;
             _userSessionRefreshTokenRepository = userSessionRefreshTokenRepository;
             _blacklistedRefreshTokenRepository = blacklistedRefreshTokenRepository;
+            _blacklistedAccessTokenTemporaryRepository = blacklistedAccessTokenTemporaryRepository;
+            _blacklistedAccessTokenSessionRepository = blacklistedAccessTokenSessionRepository;
         }
 
         public async Task<(RefreshTokenDTO, UserSession)> CreateUserSessionAsync(int currentUserId, int currentUserDeviceId, string? ipAddress, string? userAgent, 
@@ -74,28 +82,30 @@ namespace ESAM.GrowTracking.Application.Services
             return (refreshToken, userSession);
         }
 
-        public async Task RevokeUserSessionAsync(UserSession userSession, string revokedReason, int currentUserId, DateTime utcNow, bool asTracking = false, 
-            CancellationToken cancellationToken = default)
-        {
-            var (userSessionToRevoke, userSessionRefreshTokensToRevoke, blacklistedRefreshTokens) = await PrepareSessionRevocationAsync(userSession, revokedReason, currentUserId, 
-                utcNow, asTracking, cancellationToken);
-            await _unitOfWork.ExecuteInTransactionAsync(async ct =>
-            {
-                if (userSessionToRevoke is not null)
-                    await _unitOfWork.UserSessions.UpdateAsync(userSessionToRevoke, ct);
-                if (userSessionRefreshTokensToRevoke.Count > 0)
-                    await _unitOfWork.UserSessionRefreshTokens.UpdateRangeAsync(userSessionRefreshTokensToRevoke, ct);
-                if (blacklistedRefreshTokens.Count > 0)
-                    await _unitOfWork.BlacklistedRefreshTokens.InsertRangeAsync(blacklistedRefreshTokens, ct);
-            }, cancellationToken: cancellationToken);
-        }
+        //public async Task RevokeUserSessionAsync(UserSession userSession, string revokedReason, int currentUserId, DateTime utcNow, bool asTracking = false, 
+        //    CancellationToken cancellationToken = default)
+        //{
+        //    var (userSessionToRevoke, userSessionRefreshTokensToRevoke, blacklistedRefreshTokens) = await PrepareSessionRevocationAsync(userSession, revokedReason, currentUserId, 
+        //        utcNow, asTracking, cancellationToken);
+        //    await _unitOfWork.ExecuteInTransactionAsync(async ct =>
+        //    {
+        //        if (userSessionToRevoke is not null)
+        //            await _unitOfWork.UserSessions.UpdateAsync(userSessionToRevoke, ct);
+        //        if (userSessionRefreshTokensToRevoke.Count > 0)
+        //            await _unitOfWork.UserSessionRefreshTokens.UpdateRangeAsync(userSessionRefreshTokensToRevoke, ct);
+        //        if (blacklistedRefreshTokens.Count > 0)
+        //            await _unitOfWork.BlacklistedRefreshTokens.InsertRangeAsync(blacklistedRefreshTokens, ct);
+        //    }, cancellationToken: cancellationToken);
+        //}
 
         public async Task RevokeUserSessionAndAccessTokenTemporaryAsync(UserSession userSession, string jti, DateTime accessTokenExpiration, string revokedReason, 
             int currentUserId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
         {
             var (userSessionToRevoke, userSessionRefreshTokensToRevoke, blacklistedRefreshTokens) = await PrepareSessionRevocationAsync(userSession, revokedReason, currentUserId, 
                 utcNow, asTracking, cancellationToken);
-            var blacklistedAccessTokenTemporary = new BlacklistedAccessTokenTemporary(currentUserId, jti, accessTokenExpiration, utcNow, revokedReason, currentUserId, utcNow);
+            var doesBlacklistedAccessTokenTemporaryNotExist = await _blacklistedAccessTokenTemporaryRepository.DoesNotExistAsync(jti, asTracking, cancellationToken);
+            var blacklistedAccessTokenTemporary = doesBlacklistedAccessTokenTemporaryNotExist ? new BlacklistedAccessTokenTemporary(currentUserId, jti, accessTokenExpiration, 
+                utcNow, revokedReason, currentUserId, utcNow) : null;
             await _unitOfWork.ExecuteInTransactionAsync(async ct =>
             {
                 if (userSessionToRevoke is not null)
@@ -104,7 +114,8 @@ namespace ESAM.GrowTracking.Application.Services
                     await _unitOfWork.UserSessionRefreshTokens.UpdateRangeAsync(userSessionRefreshTokensToRevoke, ct);
                 if (blacklistedRefreshTokens.Count > 0)
                     await _unitOfWork.BlacklistedRefreshTokens.InsertRangeAsync(blacklistedRefreshTokens, ct);
-                await _unitOfWork.BlacklistedAccessTokensTemporary.InsertAsync(blacklistedAccessTokenTemporary, ct);
+                if (blacklistedAccessTokenTemporary is not null)
+                    await _unitOfWork.BlacklistedAccessTokensTemporary.InsertAsync(blacklistedAccessTokenTemporary, ct);
             }, cancellationToken: cancellationToken);
         }
 
@@ -113,7 +124,9 @@ namespace ESAM.GrowTracking.Application.Services
         {
             var (userSessionToRevoke, userSessionRefreshTokensToRevoke, blacklistedRefreshTokens) = await PrepareSessionRevocationAsync(userSession, revokedReason, currentUserId, 
                 utcNow, asTracking, cancellationToken);
-            var blacklistedAccessTokenSession = new BlacklistedAccessTokenSession(currentUserSessionId, jti, accessTokenExpiration, utcNow, revokedReason, currentUserId, utcNow);
+            var doesBlacklistedAccessTokenSessionNotExist = await _blacklistedAccessTokenSessionRepository.DoesNotExistAsync(jti, asTracking, cancellationToken);
+            var blacklistedAccessTokenSession = doesBlacklistedAccessTokenSessionNotExist ? new BlacklistedAccessTokenSession(currentUserSessionId, jti, accessTokenExpiration,
+                utcNow, revokedReason, currentUserId, utcNow) : null;
             await _unitOfWork.ExecuteInTransactionAsync(async ct =>
             {
                 if (userSessionToRevoke is not null)
@@ -122,7 +135,8 @@ namespace ESAM.GrowTracking.Application.Services
                     await _unitOfWork.UserSessionRefreshTokens.UpdateRangeAsync(userSessionRefreshTokensToRevoke, ct);
                 if (blacklistedRefreshTokens.Count > 0)
                     await _unitOfWork.BlacklistedRefreshTokens.InsertRangeAsync(blacklistedRefreshTokens, ct);
-                await _unitOfWork.BlacklistedAccessTokensSession.InsertAsync(blacklistedAccessTokenSession, ct);
+                if (blacklistedAccessTokenSession is not null)
+                    await _unitOfWork.BlacklistedAccessTokensSession.InsertAsync(blacklistedAccessTokenSession, ct);
             }, cancellationToken: cancellationToken);
         }
 
@@ -133,7 +147,9 @@ namespace ESAM.GrowTracking.Application.Services
                 ? await PrepareSessionRevocationAsync(userSession1, revokedReason, currentUserId, utcNow, asTracking, cancellationToken) : (null, [], []);
             var (userSessionToRevoke2, userSessionRefreshTokensToRevoke2, blacklistedRefreshTokens2) = userSession2 is not null
                 ? await PrepareSessionRevocationAsync(userSession2, revokedReason, currentUserId, utcNow, asTracking, cancellationToken) : (null, [], []);
-            var blacklistedAccessTokenSession = new BlacklistedAccessTokenSession(currentUserSessionId, jti, accessTokenExpiration, utcNow, revokedReason, currentUserId, utcNow);
+            var doesBlacklistedAccessTokenSessionNotExist = await _blacklistedAccessTokenSessionRepository.DoesNotExistAsync(jti, asTracking, cancellationToken);
+            var blacklistedAccessTokenSession = doesBlacklistedAccessTokenSessionNotExist ? new BlacklistedAccessTokenSession(currentUserSessionId, jti, accessTokenExpiration,
+                utcNow, revokedReason, currentUserId, utcNow) : null;
             await _unitOfWork.ExecuteInTransactionAsync(async ct =>
             {
                 if (userSessionToRevoke1 is not null)
@@ -148,26 +164,35 @@ namespace ESAM.GrowTracking.Application.Services
                     await _unitOfWork.BlacklistedRefreshTokens.InsertRangeAsync(blacklistedRefreshTokens1, ct);
                 if (blacklistedRefreshTokens2.Count > 0)
                     await _unitOfWork.BlacklistedRefreshTokens.InsertRangeAsync(blacklistedRefreshTokens2, ct);
-                await _unitOfWork.BlacklistedAccessTokensSession.InsertAsync(blacklistedAccessTokenSession, ct);
+                if (blacklistedAccessTokenSession is not null)
+                    await _unitOfWork.BlacklistedAccessTokensSession.InsertAsync(blacklistedAccessTokenSession, ct);
             }, cancellationToken: cancellationToken);
         }
 
-        public async Task BlacklistedAccessTokenTemporaryAsync(int currentUserId, string currentJti, DateTime currentAccessTokenExpiration, string reason, DateTime utcNow, 
-            CancellationToken cancellationToken = default)
+        public async Task BlacklistedAccessTokenTemporaryAsync(int currentUserId, string currentJti, DateTime currentAccessTokenExpiration, string reason, DateTime utcNow,
+            bool asTracking = false, CancellationToken cancellationToken = default)
         {
-            var blacklistedAccessTokenTemporary = new BlacklistedAccessTokenTemporary(currentUserId, currentJti, currentAccessTokenExpiration, utcNow, 
-                reason, currentUserId, utcNow);
-            await _unitOfWork.BlacklistedAccessTokensTemporary.InsertAsync(blacklistedAccessTokenTemporary, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            var doesBlacklistedAccessTokenTemporaryNotExist = await _blacklistedAccessTokenTemporaryRepository.DoesNotExistAsync(currentJti, asTracking, cancellationToken);
+            var blacklistedAccessTokenTemporary = doesBlacklistedAccessTokenTemporaryNotExist ? new BlacklistedAccessTokenTemporary(currentUserId, currentJti, 
+                currentAccessTokenExpiration, utcNow, reason, currentUserId, utcNow) : null;
+            if (blacklistedAccessTokenTemporary is not null)
+            {
+                await _unitOfWork.BlacklistedAccessTokensTemporary.InsertAsync(blacklistedAccessTokenTemporary, cancellationToken);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+            }
         }
 
-        public async Task BlacklistedAccessTokenSessionAsync(int currentUserSessionId, string currentJti, DateTime currentAccessTokenExpiration, int currentUserId, string reason, 
-            DateTime utcNow, CancellationToken cancellationToken = default)
+        public async Task BlacklistedAccessTokenSessionAsync(int currentUserSessionId, string currentJti, DateTime currentAccessTokenExpiration, int currentUserId, string reason,
+            DateTime utcNow, bool asTracking = false,  CancellationToken cancellationToken = default)
         {
-            var blacklistedAccessTokenSession = new BlacklistedAccessTokenSession(currentUserSessionId, currentJti, currentAccessTokenExpiration, utcNow, reason, currentUserId, 
-                utcNow);
-            await _unitOfWork.BlacklistedAccessTokensSession.InsertAsync(blacklistedAccessTokenSession, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            var doesBlacklistedAccessTokenSessionNotExist = await _blacklistedAccessTokenSessionRepository.DoesNotExistAsync(currentJti, asTracking, cancellationToken);
+            var blacklistedAccessTokenSession = doesBlacklistedAccessTokenSessionNotExist ? new BlacklistedAccessTokenSession(currentUserSessionId, currentJti, 
+                currentAccessTokenExpiration, utcNow, reason, currentUserId, utcNow) : null;
+            if (blacklistedAccessTokenSession is not null)
+            {
+                await _unitOfWork.BlacklistedAccessTokensSession.InsertAsync(blacklistedAccessTokenSession, cancellationToken);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+            }
         }
 
         public async Task<RefreshTokenDTO> RotateUserSessionAsync(UserSession userSession, UserSessionRefreshToken userSessionRefreshToken, string jti, 
@@ -181,10 +206,11 @@ namespace ESAM.GrowTracking.Application.Services
             userSession.UpdateLastActivity(utcNow, currentUserId, utcNow);
             userSessionRefreshToken.Revoke(utcNow, revokedReason, currentUserId, utcNow);
             userSessionRefreshToken.UpdateLastUsedAt(utcNow, currentUserId, utcNow);
-            var blacklistedRefreshToken = new BlacklistedRefreshToken(userSessionRefreshToken.Id, userSessionRefreshToken.Identifier, userSessionRefreshToken.ExpiresAt,
-                utcNow, revokedReason, currentUserId, utcNow);
-            var blacklistedAccessTokenSession = new BlacklistedAccessTokenSession(userSession.Id, jti, accessTokenExpiration, utcNow, revokedReason, currentUserId, utcNow);
-
+            var doesBlacklistedRefreshTokenNotExist = await _blacklistedRefreshTokenRepository.DoesNotExistAsync(userSessionRefreshToken.Identifier, asTracking, cancellationToken);
+            var blacklistedRefreshToken = doesBlacklistedRefreshTokenNotExist ? new BlacklistedRefreshToken(userSessionRefreshToken.Id, userSessionRefreshToken.Identifier, 
+                userSessionRefreshToken.ExpiresAt, utcNow, revokedReason, currentUserId, utcNow) : null;var doesBlacklistedAccessTokenSessionNotExist = await _blacklistedAccessTokenSessionRepository.DoesNotExistAsync(jti, asTracking, cancellationToken);
+            var blacklistedAccessTokenSession = doesBlacklistedAccessTokenSessionNotExist ? new BlacklistedAccessTokenSession(userSession.Id, jti, accessTokenExpiration,  utcNow, 
+                revokedReason, currentUserId, utcNow) : null;
             await _unitOfWork.ExecuteInTransactionAsync(async ct =>
             {
                 await _unitOfWork.UserSessionRefreshTokens.InsertAsync(newUserSessionRefreshToken, ct);
@@ -192,15 +218,18 @@ namespace ESAM.GrowTracking.Application.Services
                 await _unitOfWork.UserSessions.UpdateAsync(userSession, ct);
                 userSessionRefreshToken.UpdateReplacedByUserSessionRefreshTokenId(newUserSessionRefreshToken.Id);
                 await _unitOfWork.UserSessionRefreshTokens.UpdateAsync(userSessionRefreshToken, ct);
-                await _unitOfWork.BlacklistedRefreshTokens.InsertAsync(blacklistedRefreshToken, ct);
-                await _unitOfWork.BlacklistedAccessTokensSession.InsertAsync(blacklistedAccessTokenSession, ct);
+                if (blacklistedRefreshToken is not null)
+                    await _unitOfWork.BlacklistedRefreshTokens.InsertAsync(blacklistedRefreshToken, ct);
+                if (blacklistedAccessTokenSession is not null)
+                    await _unitOfWork.BlacklistedAccessTokensSession.InsertAsync(blacklistedAccessTokenSession, ct);
             }, cancellationToken: cancellationToken);
             return refreshToken;
         }
 
-        private (UserSession UserSession, UserSessionWorkProfileSelected UserSessionWorkProfileSelected, UserSessionRefreshToken UserSessionRefreshToken, 
-            BlacklistedAccessTokenTemporary BlacklistedAccessTokenTemporary, RefreshTokenDTO RefreshToken) PrepareSessionCreationAsync(int currentUserId, int currentUserDeviceId, 
-                string? ipAddress, string? userAgent, bool isPersistent, int currentWorkProfileId, string jti, DateTime accessTokenExpiration, DateTime utcNow)
+        private async Task<(UserSession UserSession, UserSessionWorkProfileSelected UserSessionWorkProfileSelected, UserSessionRefreshToken UserSessionRefreshToken, 
+            BlacklistedAccessTokenTemporary? BlacklistedAccessTokenTemporary, RefreshTokenDTO RefreshToken)> PrepareSessionCreationAsync(int currentUserId, int currentUserDeviceId, 
+                string? ipAddress, string? userAgent, bool isPersistent, int currentWorkProfileId, string jti, DateTime accessTokenExpiration, DateTime utcNow, 
+                bool asTracking = false, CancellationToken cancellationToken = default)
         {
             var (refreshToken, tokenSalt, tokenHash) = GenerateRefreshTokenWithHash(utcNow);
             var userSession = new UserSession(currentUserId, currentUserDeviceId, ipAddress, userAgent, utcNow.AddDays(_tokenLifetimeSettings.SessionIdleWindowDays),
@@ -209,8 +238,9 @@ namespace ESAM.GrowTracking.Application.Services
             userSession.UpdateLastActivity(utcNow, currentUserId, utcNow);
             var userSessionRefreshToken = new UserSessionRefreshToken(refreshToken.Identifier, tokenSalt, tokenHash, refreshToken.ExpiresAt, currentUserId, utcNow);
             userSessionRefreshToken.UpdateLastUsedAt(utcNow, currentUserId, utcNow);
-            var blacklistedAccessTokenTemporary = new BlacklistedAccessTokenTemporary(currentUserId, jti, accessTokenExpiration, utcNow,
-                "Inicio de sesión asumido (Autenticado): Access token temporal revocado.", currentUserId, utcNow);
+            var doesBlacklistedAccessTokenTemporaryNotExist = await _blacklistedAccessTokenTemporaryRepository.DoesNotExistAsync(jti, asTracking, cancellationToken);
+            var blacklistedAccessTokenTemporary = doesBlacklistedAccessTokenTemporaryNotExist ? new BlacklistedAccessTokenTemporary(currentUserId, jti, accessTokenExpiration, 
+                utcNow, "Inicio de sesión asumido (Autenticado): Access token temporal revocado.", currentUserId, utcNow) : null;
             return (userSession, userSessionWorkProfileSelected, userSessionRefreshToken, blacklistedAccessTokenTemporary, refreshToken);
         }
 

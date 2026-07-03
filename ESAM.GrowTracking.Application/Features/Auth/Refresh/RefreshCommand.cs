@@ -7,9 +7,9 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Refresh
     {
         public string AccessToken { get; init; }
 
-        public string RefreshTokenRaw { get; init; }
+        public string? RefreshTokenRaw { get; init; }
 
-        public RefreshCommand(string accessToken, string refreshTokenRaw)
+        public RefreshCommand(string accessToken, string? refreshTokenRaw)
         {
             AccessToken = accessToken;
             RefreshTokenRaw = refreshTokenRaw;

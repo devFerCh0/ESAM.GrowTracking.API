@@ -2,14 +2,14 @@
 {
     public record RefreshRequest
     {
+        public string? AccessToken { get; init; }
+
         public string? RefreshTokenRaw { get; init; }
 
-        public string? DeviceIdentifier { get; init; }
-
-        public RefreshRequest(string? refreshTokenRaw, string? deviceIdentifier)
+        public RefreshRequest(string? accessToken, string? refreshTokenRaw)
         {
+            AccessToken = accessToken;
             RefreshTokenRaw = refreshTokenRaw;
-            DeviceIdentifier = deviceIdentifier;
         }
     }
 }

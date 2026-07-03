@@ -12,5 +12,7 @@
         public const string WorkProfileIdRequired = "El perfil de trabajo es obligatorio.";
         public const string RoleIdRequired = "El rol es obligatorio.";
         public const string CampusIdRequired = "La sede es obligatoria.";
+        public const string RefreshTokenRequired = "El refresh token es obligatorio.";
+        public const string AccessTokenRequired = "El access token no es válido.";
     }
 }

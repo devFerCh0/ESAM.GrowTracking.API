@@ -10,6 +10,7 @@ using ESAM.GrowTracking.API.Controllers.Auth.GetUserRoleCampuses;
 using ESAM.GrowTracking.API.Controllers.Auth.Login;
 using ESAM.GrowTracking.API.Controllers.Auth.Login.HttpResponses;
 using ESAM.GrowTracking.API.Controllers.Auth.Logout;
+using ESAM.GrowTracking.API.Controllers.Auth.Refresh;
 using ESAM.GrowTracking.API.Extensions;
 using ESAM.GrowTracking.API.Responses;
 using ESAM.GrowTracking.API.Security;
@@ -21,11 +22,11 @@ using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserWorkProfile;
 using ESAM.GrowTracking.Application.Features.Auth.GetUserRoleCampuses;
 using ESAM.GrowTracking.Application.Features.Auth.Login;
 using ESAM.GrowTracking.Application.Features.Auth.Logout;
+using ESAM.GrowTracking.Application.Features.Auth.Refresh;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace ESAM.GrowTracking.API.Controllers.Auth
 {
@@ -37,18 +38,20 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
         private readonly IValidator<LoginRequest> _loginRequesValidator;
         private readonly IValidator<AssumeRoleCampusRequest> _assumeRoleCampusRequestValidator;
         private readonly IValidator<AssumeWorkProfileRequest> _assumeWorkProfileRequestValidator;
+        private readonly IValidator<RefreshRequest> _refreshRequesValidator;
         private readonly IMapper _mapper;
         private readonly ISender _sender;
         private readonly IErrorToHttpMapper _errorToHttpMapper;
         private readonly IAuthSessionCookieService _authSessionCookieService;
 
         public AuthController(IValidator<LoginRequest> loginRequesValidator, IValidator<AssumeRoleCampusRequest> assumeRoleCampusRequestValidator, 
-            IValidator<AssumeWorkProfileRequest> assumeWorkProfileRequestValidator, IMapper mapper, ISender sender, IErrorToHttpMapper errorToHttpMapper, 
+            IValidator<AssumeWorkProfileRequest> assumeWorkProfileRequestValidator, IValidator<RefreshRequest> refreshRequesValidator, IMapper mapper, ISender sender, IErrorToHttpMapper errorToHttpMapper, 
             IAuthSessionCookieService authSessionCookieService)
         {
             ArgumentNullException.ThrowIfNull(loginRequesValidator);
             ArgumentNullException.ThrowIfNull(assumeRoleCampusRequestValidator);
             ArgumentNullException.ThrowIfNull(assumeWorkProfileRequestValidator);
+            ArgumentNullException.ThrowIfNull(refreshRequesValidator);
             ArgumentNullException.ThrowIfNull(mapper);
             ArgumentNullException.ThrowIfNull(sender);
             ArgumentNullException.ThrowIfNull(errorToHttpMapper);
@@ -56,6 +59,7 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
             _loginRequesValidator = loginRequesValidator;
             _assumeRoleCampusRequestValidator = assumeRoleCampusRequestValidator;
             _assumeWorkProfileRequestValidator = assumeWorkProfileRequestValidator;
+            _refreshRequesValidator = refreshRequesValidator;
             _mapper = mapper;
             _sender = sender;
             _errorToHttpMapper = errorToHttpMapper;
@@ -201,10 +205,9 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<ApiSuccessResponse>> LogoutAsync([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] LogoutRequest? request,
-            CancellationToken cancellationToken)
+        public async Task<ActionResult<ApiSuccessResponse>> LogoutAsync([FromBody] LogoutRequest request, CancellationToken cancellationToken)
         {
-            var resolvedRefreshToken = _authSessionCookieService.ResolveRefreshToken(request?.RefreshTokenRaw);
+            var resolvedRefreshToken = _authSessionCookieService.ResolveRefreshToken(request.RefreshTokenRaw);
             var command = new LogoutCommand(resolvedRefreshToken);
             try
             {
@@ -219,34 +222,33 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
             }
         }
 
-
-
-
-
-        //[AllowAnonymous]
-        //[HttpPost("refresh")]
-        //[Consumes("application/json")]
-        //[ProducesResponseType(typeof(ApiSuccessResponse<RefreshHttpResponse>), StatusCodes.Status200OK)]
-        //[ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
-        //[ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
-        //[ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
-        //[ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
-        //public async Task<ActionResult<ApiSuccessResponse<RefreshHttpResponse>>> RefreshAsync([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] RefreshRequest? request,
-        //    CancellationToken cancellationToken)
-        //{
-        //    var resolvedRefreshToken = _authSessionCookieService.ResolveRefreshToken(request?.RefreshTokenRaw);
-        //    var command = new RefreshCommand(resolvedRefreshToken, request?.DeviceIdentifier);
-        //    var refreshResult = await _sender.Send(command, cancellationToken);
-        //    if (refreshResult.IsFailure)
-        //    {
-        //        if (_authSessionCookieService.RequiresCookieClearOnFailure(refreshResult.Errors))
-        //            _authSessionCookieService.ClearSessionCookies();
-        //        return refreshResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
-        //    }
-        //    var refresh = _mapper.Map<RefreshHttpResponse>(refreshResult.Value);
-        //    ApplySessionAndXsrfToken(refresh.RefreshTokenRaw, refresh.RefreshTokenExpiresAt);
-        //    return Ok(ApiSuccessResponse<RefreshHttpResponse>.From(refresh, HttpContext.TraceIdentifier));
-        //}
+        [AllowAnonymous]
+        [HttpPost("refresh")]
+        [Consumes("application/json")]
+        [ProducesResponseType(typeof(ApiSuccessResponse<RefreshHttpResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<ApiSuccessResponse<RefreshHttpResponse>>> RefreshAsync([FromBody] RefreshRequest request, CancellationToken cancellationToken)
+        {
+            var resolvedRefreshToken = _authSessionCookieService.ResolveRefreshToken(request.RefreshTokenRaw);
+            request = request with { RefreshTokenRaw = resolvedRefreshToken };
+            var validation = await _refreshRequesValidator.ValidateAsync(request, cancellationToken);
+            if (!validation.IsValid)
+                return validation.ToRequestErrorsActionResult(HttpContext.TraceIdentifier);
+            var command = _mapper.Map<RefreshCommand>(request);
+            var refreshResult = await _sender.Send(command, cancellationToken);
+            if (refreshResult.IsFailure)
+            {
+                if (_authSessionCookieService.RequiresCookieClearOnFailure(refreshResult.Errors))
+                    _authSessionCookieService.ClearSessionCookies();
+                return refreshResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
+            }
+            var refresh = _mapper.Map<RefreshHttpResponse>(refreshResult.Value);
+            ApplySessionAndXsrfToken(refresh.RefreshTokenRaw, refresh.RefreshTokenExpiresAt);
+            return Ok(ApiSuccessResponse<RefreshHttpResponse>.From(refresh, HttpContext.TraceIdentifier));
+        }
 
         private void ApplySessionAndXsrfToken(string refreshTokenRaw, DateTime refreshTokenExpiresAt)
         {

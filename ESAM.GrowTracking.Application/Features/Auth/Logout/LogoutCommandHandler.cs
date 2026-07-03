@@ -70,10 +70,6 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
             }
         }
 
-        // CUANDO EL CLAIM CURRENTACCESSTOKENTYPE DEL ACCESS TOKEN ES DE TIPO TEMPORARY: NO SE TIENE SESION DE USUARIO Y POR LO TANTO TAMPOCO SE TIENE REFRESH TOKEN.
-        // SI SE TIENE REFRESH TOKEN ES ALGO ANOMALO POR LO TANTO HAY QUE HACER SEGUIMIENTO PARA REVOCARLOM, SI SE ENCUENTRA QUE EL REFRESH TOKEN TIENE UNA SESION,
-        // SE REVOCA LA SESION POR ANOMALIA Y SE REVOCA EL ACCESSTOKEN TEMPORAL Y SE MANDA A LA LISTA NEGRA DE TOKENS TEMPORALES
-        // EL ACCESS TOKEN SE REVOCA TENGA O NO TENGA REFRESH TOKEN Y SE VA SU LISTA NEGRA DE TOKEN TEMPORALES
         private async Task<Result> LogoutAccessTokenTemporary(string? refreshTokenRaw, string currentJti, DateTime currentAccessTokenExpiration, int currentUserId, DateTime utcNow, 
             bool asTracking = false, CancellationToken cancellationToken = default)
         {
@@ -88,7 +84,8 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                         var mismatchedUserSession = await _userSessionRepository.GetByIdAsync(userSessionRefreshToken.UserSessionId, asTracking, cancellationToken);
                         if (mismatchedUserSession is not null)
                         {
-                            _logger.LogWarning("Logout: Token Temporal (JTI: {Jti}) con RT válido de sesión {SessionId} (UserId: {UserId}).", currentJti, mismatchedUserSession.Id, currentUserId);
+                            _logger.LogWarning("Logout: Token Temporal (JTI: {Jti}) con RT válido de sesión {SessionId} (UserId: {UserId}).", currentJti, mismatchedUserSession.Id, 
+                                currentUserId);
                             await _userSessionService.RevokeUserSessionAndAccessTokenTemporaryAsync(mismatchedUserSession, currentJti, currentAccessTokenExpiration,
                                 "Logout: Uso anómalo de RT con Token Temporal.", currentUserId, utcNow, asTracking, cancellationToken);
                             return Result.Ok();
@@ -126,8 +123,6 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
             }
         }
 
-        // CUANDO EL CLAIM CURRENTACCESSTOKENTYPE DEL ACCESS TOKEN ES DE TIPO SESSION: SE TIENE SESION DE USUARIO Y POR LO TANTO SE TIENE REFRESH TOKEN.
-        // EL ACCESS TOKEN SE REVOCA Y SE VA SU LISTA NEGRA DE TOKEN SESSION
         private async Task<Result> LogoutAccessTokenSession(string? refreshTokenRaw, string currentJti, DateTime currentAccessTokenExpiration, int currentUserId, 
             int currentUserSessionId, int currentUserDeviceId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
         {
@@ -144,7 +139,7 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                             var computedHash = _hashService.ComputeHash(tokenPlain, userSessionRefreshToken.Salt);
                             if (CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(computedHash), Encoding.UTF8.GetBytes(userSessionRefreshToken.TokenHash)))
                             {
-                                var userSession = await _userSessionRepository.GetByIdAndUserIdAndUserDeviceIdAsync(currentUserSessionId, currentUserId, currentUserDeviceId, 
+                                var userSession = await _userSessionRepository.GetByIdAndUserIdAndUserDeviceIdAsync(currentUserSessionId, currentUserId, currentUserDeviceId,
                                     asTracking, cancellationToken);
                                 if (userSession is not null)
                                 {
@@ -158,7 +153,7 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                                     }
                                     else if (userSession.ExpiresAt <= utcNow || userSessionRefreshToken.ExpiresAt <= utcNow)
                                     {
-                                        _logger.LogWarning("Logout: Sesión {SessionId} o RT expirados por inactividad. JTI: {Jti}, UserId: {UserId}.", currentUserSessionId, 
+                                        _logger.LogWarning("Logout: Sesión {SessionId} o RT expirados por inactividad. JTI: {Jti}, UserId: {UserId}.", currentUserSessionId,
                                             currentJti, currentUserId);
                                         await _userSessionService.RevokeUserSessionAndAccessTokenSessionAsync(userSession, currentJti, currentAccessTokenExpiration,
                                             "Logout: Tiempo de inactividad superado.", currentUserId, currentUserSessionId, utcNow, asTracking, cancellationToken);
@@ -166,18 +161,20 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                                     }
                                     else if (userSession.IsRevoked || userSessionRefreshToken.IsRevoked)
                                     {
-                                        _logger.LogWarning("Logout: Intento sobre sesión {SessionId} o RT ya revocados. JTI: {Jti}, UserId: {UserId}.", currentUserSessionId, 
+                                        _logger.LogWarning("Logout: Intento sobre sesión {SessionId} o RT ya revocados. JTI: {Jti}, UserId: {UserId}.", currentUserSessionId,
                                             currentJti, currentUserId);
                                         await _userSessionService.RevokeUserSessionAndAccessTokenSessionAsync(userSession, currentJti, currentAccessTokenExpiration,
-                                            "Logout: Cierre sobre credenciales previamente revocadas.", currentUserId, currentUserSessionId, utcNow, asTracking, cancellationToken);
+                                            "Logout: Cierre sobre credenciales previamente revocadas.", currentUserId, currentUserSessionId, utcNow, asTracking,
+                                            cancellationToken);
                                         return Result.Ok();
                                     }
                                     else if (userSessionRefreshToken.ReplacedByUserSessionRefreshTokenId.HasValue)
                                     {
-                                        _logger.LogWarning("Logout: Ataque de repetición. RT rotado en sesión {SessionId}. JTI: {Jti}, UserId: {UserId}.", currentUserSessionId, 
+                                        _logger.LogWarning("Logout: Ataque de repetición. RT rotado en sesión {SessionId}. JTI: {Jti}, UserId: {UserId}.", currentUserSessionId,
                                             currentJti, currentUserId);
                                         await _userSessionService.RevokeUserSessionAndAccessTokenSessionAsync(userSession, currentJti, currentAccessTokenExpiration,
-                                            "Logout: Posible ataque de repetición. RT reemplazado.", currentUserId, currentUserSessionId, utcNow, asTracking, cancellationToken);
+                                            "Logout: Posible ataque de repetición. RT reemplazado.", currentUserId, currentUserSessionId, utcNow, asTracking,
+                                            cancellationToken);
                                         return Result.Ok();
                                     }
                                     else
@@ -191,7 +188,7 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                                 }
                                 else
                                 {
-                                    _logger.LogWarning("Logout: Sesión {SessionId} o dispositivo {DeviceId} no coinciden. JTI: {Jti}, UserId: {UserId}.", currentUserSessionId, 
+                                    _logger.LogWarning("Logout: Sesión {SessionId} o dispositivo {DeviceId} no coinciden. JTI: {Jti}, UserId: {UserId}.", currentUserSessionId,
                                         currentUserDeviceId, currentJti, currentUserId);
                                     await _userSessionService.BlacklistedAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
                                         "Logout: Datos de dispositivo o sesión no coinciden.", utcNow, cancellationToken);
@@ -215,7 +212,7 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                                     {
                                         _logger.LogWarning("Logout: Fallo de hash y sesión {SessionId} inexistente. JTI: {Jti}, UserId: {UserId}.", currentUserSessionId, 
                                             currentJti, currentUserId);
-                                        await _userSessionService.BlacklistedAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
+                                        await _userSessionService.BlacklistedAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId, 
                                             "Logout: Discrepancia criptográfica y sesión no encontrada.", utcNow, cancellationToken);
                                         return Result.Ok();
                                     }
@@ -226,7 +223,7 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                                     var mismatchedUserSession1 = await _userSessionRepository.GetByIdAsync(currentUserSessionId, asTracking, cancellationToken);
                                     if (mismatchedUserSession is not null && mismatchedUserSession1 is not null)
                                     {
-                                        _logger.LogWarning("Logout: Conflicto cruzado con fallo de hash. AT: {Session1}, RT: {Session2}. JTI: {Jti}, UserId: {UserId}.", 
+                                        _logger.LogWarning("Logout: Conflicto cruzado con fallo de hash. AT: {Session1}, RT: {Session2}. JTI: {Jti}, UserId: {UserId}.",
                                             currentUserSessionId, userSessionRefreshToken.UserSessionId, currentJti, currentUserId);
                                         await _userSessionService.RevokeUserSessionAndAccessTokenSessionAsync(mismatchedUserSession, mismatchedUserSession1, currentJti,
                                             currentAccessTokenExpiration, "Logout: Conflicto de sesión cruzada y fallo criptográfico.", currentUserId, currentUserSessionId, utcNow, 
@@ -235,7 +232,7 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                                     }
                                     else if (mismatchedUserSession is not null && mismatchedUserSession1 is null)
                                     {
-                                        _logger.LogWarning("Logout: Sesión cruzada. AT huérfano y hash inválido. AT: {Session1}, RT: {Session2}. JTI: {Jti}, UserId: {UserId}.", 
+                                        _logger.LogWarning("Logout: Sesión cruzada. AT huérfano y hash inválido. AT: {Session1}, RT: {Session2}. JTI: {Jti}, UserId: {UserId}.",
                                             currentUserSessionId, userSessionRefreshToken.UserSessionId, currentJti, currentUserId);
                                         await _userSessionService.RevokeUserSessionAndAccessTokenSessionAsync(mismatchedUserSession, currentJti, currentAccessTokenExpiration,
                                             "Logout: Conflicto cruzado y AT huérfano.", currentUserId, currentUserSessionId, utcNow, asTracking, cancellationToken);
@@ -243,7 +240,7 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                                     }
                                     else if (mismatchedUserSession is null && mismatchedUserSession1 is not null)
                                     {
-                                        _logger.LogWarning("Logout: Sesión cruzada. RT huérfano y hash inválido. AT: {Session1}, RT: {Session2}. JTI: {Jti}, UserId: {UserId}.", 
+                                        _logger.LogWarning("Logout: Sesión cruzada. RT huérfano y hash inválido. AT: {Session1}, RT: {Session2}. JTI: {Jti}, UserId: {UserId}.",
                                             currentUserSessionId, userSessionRefreshToken.UserSessionId, currentJti, currentUserId);
                                         await _userSessionService.RevokeUserSessionAndAccessTokenSessionAsync(mismatchedUserSession1, currentJti, currentAccessTokenExpiration,
                                             "Logout: Conflicto cruzado y RT huérfano.", currentUserId, currentUserSessionId, utcNow, asTracking, cancellationToken);
@@ -251,10 +248,10 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                                     }
                                     else
                                     {
-                                        _logger.LogWarning("Logout: Conflicto cruzado total. Sesiones inexistentes y hash inválido. AT: {Session1}, RT: {Session2}. JTI: {Jti}, " +
-                                            "UserId: {UserId}.", currentUserSessionId, userSessionRefreshToken.UserSessionId, currentJti, currentUserId);
-                                        await _userSessionService.BlacklistedAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
-                                            "Logout: Conflicto cruzado y sesiones inexistentes.", utcNow, cancellationToken);
+                                        _logger.LogWarning("Logout: Conflicto cruzado total. Sesiones inexistentes y hash inválido. AT: {Session1}, RT: {Session2}. " +
+                                            "JTI: {Jti}, UserId: {UserId}.", currentUserSessionId, userSessionRefreshToken.UserSessionId, currentJti, currentUserId);
+                                        await _userSessionService.BlacklistedAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration,
+                                            currentUserId, "Logout: Conflicto cruzado y sesiones inexistentes.", utcNow, cancellationToken);
                                         return Result.Ok();
                                     }
                                 }
@@ -267,7 +264,7 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                                 var mismatchedUserSession = await _userSessionRepository.GetByIdAsync(currentUserSessionId, asTracking, cancellationToken);
                                 if (mismatchedUserSession is not null)
                                 {
-                                    _logger.LogWarning("Logout: Payload de RT ausente para sesión {SessionId}. JTI: {Jti}, UserId: {UserId}.", currentUserSessionId, currentJti, 
+                                    _logger.LogWarning("Logout: Payload de RT ausente para sesión {SessionId}. JTI: {Jti}, UserId: {UserId}.", currentUserSessionId, currentJti,
                                         currentUserId);
                                     await _userSessionService.RevokeUserSessionAndAccessTokenSessionAsync(mismatchedUserSession, currentJti, currentAccessTokenExpiration,
                                         "Logout: Payload de Refresh Token ausente.", currentUserId, currentUserSessionId, utcNow, asTracking, cancellationToken);
@@ -275,7 +272,7 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                                 }
                                 else
                                 {
-                                    _logger.LogWarning("Logout: Payload de RT ausente y sesión {SessionId} inexistente. JTI: {Jti}, UserId: {UserId}.", currentUserSessionId, 
+                                    _logger.LogWarning("Logout: Payload de RT ausente y sesión {SessionId} inexistente. JTI: {Jti}, UserId: {UserId}.", currentUserSessionId,
                                         currentJti, currentUserId);
                                     await _userSessionService.BlacklistedAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
                                         "Logout: Payload ausente y sesión no encontrada.", utcNow, cancellationToken);
@@ -290,14 +287,14 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                                 {
                                     _logger.LogWarning("Logout: Conflicto cruzado sin payload en RT. AT: {Session1}, RT: {Session2}. JTI: {Jti}, UserId: {UserId}.", 
                                         currentUserSessionId, userSessionRefreshToken.UserSessionId, currentJti, currentUserId);
-                                    await _userSessionService.RevokeUserSessionAndAccessTokenSessionAsync(mismatchedUserSession, mismatchedUserSession1, currentJti,
-                                        currentAccessTokenExpiration, "Logout: Conflicto cruzado sin Payload RT.", currentUserId, currentUserSessionId, utcNow, asTracking, 
+                                    await _userSessionService.RevokeUserSessionAndAccessTokenSessionAsync(mismatchedUserSession, mismatchedUserSession1, currentJti, 
+                                        currentAccessTokenExpiration, "Logout: Conflicto cruzado sin Payload RT.", currentUserId, currentUserSessionId, utcNow, asTracking,
                                         cancellationToken);
                                     return Result.Ok();
                                 }
                                 else if (mismatchedUserSession is not null && mismatchedUserSession1 is null)
                                 {
-                                    _logger.LogWarning("Logout: Conflicto cruzado sin payload. AT huérfano. AT: {Session1}, RT: {Session2}. JTI: {Jti}, UserId: {UserId}.", 
+                                    _logger.LogWarning("Logout: Conflicto cruzado sin payload. AT huérfano. AT: {Session1}, RT: {Session2}. JTI: {Jti}, UserId: {UserId}.",
                                         currentUserSessionId, userSessionRefreshToken.UserSessionId, currentJti, currentUserId);
                                     await _userSessionService.RevokeUserSessionAndAccessTokenSessionAsync(mismatchedUserSession, currentJti, currentAccessTokenExpiration,
                                         "Logout: Conflicto cruzado sin Payload. AT huérfano.", currentUserId, currentUserSessionId, utcNow, asTracking, cancellationToken);
@@ -305,7 +302,7 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                                 }
                                 else if (mismatchedUserSession is null && mismatchedUserSession1 is not null)
                                 {
-                                    _logger.LogWarning("Logout: Conflicto cruzado sin payload. RT huérfano. AT: {Session1}, RT: {Session2}. JTI: {Jti}, UserId: {UserId}.", 
+                                    _logger.LogWarning("Logout: Conflicto cruzado sin payload. RT huérfano. AT: {Session1}, RT: {Session2}. JTI: {Jti}, UserId: {UserId}.",
                                         currentUserSessionId, userSessionRefreshToken.UserSessionId, currentJti, currentUserId);
                                     await _userSessionService.RevokeUserSessionAndAccessTokenSessionAsync(mismatchedUserSession1, currentJti, currentAccessTokenExpiration,
                                         "Logout: Conflicto cruzado sin Payload. RT huérfano.", currentUserId, currentUserSessionId, utcNow, asTracking, cancellationToken);
@@ -313,8 +310,8 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                                 }
                                 else
                                 {
-                                    _logger.LogWarning("Logout: Conflicto cruzado sin payload, sesiones inexistentes. AT: {Session1}, RT: {Session2}. JTI: {Jti}, UserId: {UserId}.", 
-                                        currentUserSessionId, userSessionRefreshToken.UserSessionId, currentJti, currentUserId);
+                                    _logger.LogWarning("Logout: Conflicto cruzado sin payload, sesiones inexistentes. AT: {Session1}, RT: {Session2}. JTI: {Jti}, " +
+                                        "UserId: {UserId}.", currentUserSessionId, userSessionRefreshToken.UserSessionId, currentJti, currentUserId);
                                     await _userSessionService.BlacklistedAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
                                         "Logout: Conflicto cruzado sin Payload y sin sesiones.", utcNow, cancellationToken);
                                     return Result.Ok();
@@ -335,7 +332,7 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                         }
                         else
                         {
-                            _logger.LogWarning("Logout: RT no registrado y sesión {SessionId} inexistente. JTI: {Jti}, UserId: {UserId}.", currentUserSessionId, currentJti, 
+                            _logger.LogWarning("Logout: RT no registrado y sesión {SessionId} inexistente. JTI: {Jti}, UserId: {UserId}.", currentUserSessionId, currentJti,
                                 currentUserId);
                             await _userSessionService.BlacklistedAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
                                 "Logout: RT y sesión no registrados.", utcNow, cancellationToken);
@@ -348,7 +345,7 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                     var mismatchedUserSession = await _userSessionRepository.GetByIdAsync(currentUserSessionId, asTracking, cancellationToken);
                     if (mismatchedUserSession is not null)
                     {
-                        _logger.LogWarning("Logout: Identificador de RT malformado para sesión {SessionId}. JTI: {Jti}, UserId: {UserId}.", currentUserSessionId, currentJti, 
+                        _logger.LogWarning("Logout: Identificador de RT malformado para sesión {SessionId}. JTI: {Jti}, UserId: {UserId}.", currentUserSessionId, currentJti,
                             currentUserId);
                         await _userSessionService.RevokeUserSessionAndAccessTokenSessionAsync(mismatchedUserSession, currentJti, currentAccessTokenExpiration,
                             "Logout: Refresh Token malformado.", currentUserId, currentUserSessionId, utcNow, asTracking, cancellationToken);
@@ -356,7 +353,8 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Logout
                     }
                     else
                     {
-                        _logger.LogWarning("Logout: RT malformado y sesión {SessionId} inexistente. JTI: {Jti}, UserId: {UserId}.", currentUserSessionId, currentJti, currentUserId);
+                        _logger.LogWarning("Logout: RT malformado y sesión {SessionId} inexistente. JTI: {Jti}, UserId: {UserId}.", currentUserSessionId, currentJti, 
+                            currentUserId);
                         await _userSessionService.BlacklistedAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
                             "Logout: RT malformado y sesión inexistente.", utcNow, cancellationToken);
                         return Result.Ok();

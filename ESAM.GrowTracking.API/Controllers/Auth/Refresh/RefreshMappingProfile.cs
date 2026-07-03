@@ -7,6 +7,7 @@ namespace ESAM.GrowTracking.API.Controllers.Auth.Refresh
     {
         public RefreshMappingProfile()
         {
+            CreateMap<RefreshRequest, RefreshCommand>();
             CreateMap<RefreshResponse, RefreshHttpResponse>();
         }
     }
