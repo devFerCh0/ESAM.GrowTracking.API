@@ -38,6 +38,7 @@
     <Compile Include="Features\Auth\Logout\LogoutCommandHandler.cs" />
     <Compile Include="Features\Auth\Logout\LogoutCommandValidator.cs" />
     <Compile Include="Features\Auth\Refresh\RefreshCommand.cs" />
+    <Compile Include="Features\Auth\Refresh\RefreshCommandHandler.cs" />
     <Compile Include="Features\Auth\Refresh\RefreshCommandValidator.cs" />
     <Compile Include="Features\Auth\Refresh\RefreshResponse.cs" />
     <Compile Include="ValueObjects\Error.cs" />

@@ -84,8 +84,6 @@ namespace ESAM.GrowTracking.Infrastructure.Services
 
         public async Task<AccessTokenClaimsDTO> ExtractAccessTokenClaimsAsync(string accessToken)
         {
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new ArgumentException($"{nameof(accessToken)} no puede ser nulo o vacío.", nameof(accessToken));
             var validationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = true,
@@ -171,15 +169,9 @@ namespace ESAM.GrowTracking.Infrastructure.Services
 
         private static AccessTokenClaimsDTO MapToAccessTokenClaims(ClaimsPrincipal principal)
         {
-            var jti = principal.GetJti() ?? throw new SecurityTokenException("El token de acceso no contiene un identificador (jti) válido.");
-            var userId = principal.GetUserId() ?? throw new SecurityTokenException("El token de acceso no contiene un UserId válido.");
-            var securityStamp = principal.GetSecurityStamp() ?? throw new SecurityTokenException("El token de acceso no contiene un SecurityStamp válido.");
-            var tokenVersion = principal.GetTokenVersion() ?? throw new SecurityTokenException("El token de acceso no contiene un TokenVersion válido.");
-            var userDeviceId = principal.GetUserDeviceId() ?? throw new SecurityTokenException("El token de acceso no contiene un UserDeviceId válido.");
-            var accessTokenType = principal.GetAccessTokenType() ?? throw new SecurityTokenException("El token de acceso no contiene un AccessTokenType válido.");
-            var accessTokenExpiration = principal.GetAccessTokenExpiration() ?? throw new SecurityTokenException("El token de acceso no contiene una fecha de expiración válida.");
-            return new AccessTokenClaimsDTO(jti, userId, securityStamp, tokenVersion, userDeviceId, accessTokenType, accessTokenExpiration, principal.GetUserSessionId(),
-                principal.GetWorkProfileId(), principal.GetWorkProfileType(), principal.GetRoleId(), principal.GetCampusId());
+            return new AccessTokenClaimsDTO(principal.GetJti(), principal.GetUserId(), principal.GetSecurityStamp(), principal.GetTokenVersion(), principal.GetUserDeviceId(),
+                principal.GetAccessTokenType(), principal.GetAccessTokenExpiration(), principal.GetUserSessionId(), principal.GetWorkProfileId(), principal.GetWorkProfileType(), 
+                principal.GetRoleId(), principal.GetCampusId());
         }
     }
 }

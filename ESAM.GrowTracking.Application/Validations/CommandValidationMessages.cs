@@ -27,8 +27,12 @@
         public const string RoleIdInvalid = "El rol no es válido.";
         public const string CampusIdRequired = "La sede es obligatoria.";
         public const string CampusIdInvalid = "la sede no es válida.";
+        public const string RefreshTokenRequired = "El refresh token es obligatorio.";
         public const string RefreshTokenMinLength = "El refresh token debe de tener al menos 32 caracteres.";
         public const string RefreshTokenMaxLength = "El refresh token no puede exceder los 256 caracteres.";
         public const string RefreshTokenInvalid = "El refresh token no es válido.";
+        public const string AccessTokenRequired = "El access token no es válido.";
+        public const string AccessTokenMinLength = "El access token debe de tener al menos 256 caracteres.";
+        public const string AccessTokenMaxLength = "El access token no puede exceder los 1024 caracteres.";
     }
 }

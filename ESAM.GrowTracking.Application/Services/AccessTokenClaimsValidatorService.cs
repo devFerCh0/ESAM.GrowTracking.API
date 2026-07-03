@@ -1,4 +1,5 @@
 ﻿using ESAM.GrowTracking.Application.Abstractions.Services;
+using ESAM.GrowTracking.Application.DTOs;
 using ESAM.GrowTracking.Application.Enums;
 
 namespace ESAM.GrowTracking.Application.Services
@@ -6,11 +7,15 @@ namespace ESAM.GrowTracking.Application.Services
     public class AccessTokenClaimsValidatorService : IAccessTokenClaimsValidatorService
     {
         private readonly ICurrentUserService _currentUserService;
+        private readonly ITokenService _tokenService;
+        private AccessTokenClaimsDTO? _overriddenClaims;
 
-        public AccessTokenClaimsValidatorService(ICurrentUserService currentUserService)
+        public AccessTokenClaimsValidatorService(ICurrentUserService currentUserService, ITokenService tokenService)
         {
             ArgumentNullException.ThrowIfNull(currentUserService);
+            ArgumentNullException.ThrowIfNull(tokenService);
             _currentUserService = currentUserService;
+            _tokenService = tokenService;
         }
 
         public bool IsAuthenticated => _currentUserService.IsAuthenticated;
@@ -19,7 +24,7 @@ namespace ESAM.GrowTracking.Application.Services
         {
             get
             {
-                var currentAccessTokenType = _currentUserService.AccessTokenType;
+                var currentAccessTokenType = _overriddenClaims?.AccessTokenType ?? _currentUserService.AccessTokenType;
                 if (currentAccessTokenType is null)
                     throw new ArgumentNullException(nameof(currentAccessTokenType));
                 return currentAccessTokenType.Value;
@@ -30,7 +35,7 @@ namespace ESAM.GrowTracking.Application.Services
         {
             get
             {
-                var currentUserId = _currentUserService.UserId;
+                var currentUserId = _overriddenClaims?.UserId ?? _currentUserService.UserId;
                 if (currentUserId is null)
                     throw new ArgumentNullException(nameof(currentUserId));
                 if (currentUserId <= 0)
@@ -43,7 +48,7 @@ namespace ESAM.GrowTracking.Application.Services
         {
             get
             {
-                var currentSecurityStamp = _currentUserService.SecurityStamp;
+                var currentSecurityStamp = _overriddenClaims?.SecurityStamp ?? _currentUserService.SecurityStamp;
                 if (string.IsNullOrWhiteSpace(currentSecurityStamp))
                     throw new ArgumentException(nameof(currentSecurityStamp));
                 return currentSecurityStamp;
@@ -54,7 +59,7 @@ namespace ESAM.GrowTracking.Application.Services
         {
             get
             {
-                var currentTokenVersion = _currentUserService.TokenVersion;
+                var currentTokenVersion = _overriddenClaims?.TokenVersion ?? _currentUserService.TokenVersion;
                 if (currentTokenVersion is null)
                     throw new ArgumentNullException(nameof(currentTokenVersion));
                 if (currentTokenVersion < 0)
@@ -67,7 +72,7 @@ namespace ESAM.GrowTracking.Application.Services
         {
             get
             {
-                var currentJti = _currentUserService.Jti;
+                var currentJti = _overriddenClaims?.Jti ?? _currentUserService.Jti;
                 if (string.IsNullOrWhiteSpace(currentJti))
                     throw new ArgumentException(nameof(currentJti));
                 return currentJti;
@@ -78,7 +83,7 @@ namespace ESAM.GrowTracking.Application.Services
         {
             get
             {
-                var currentAccessTokenExpiration = _currentUserService.AccessTokenExpiration;
+                var currentAccessTokenExpiration = _overriddenClaims?.AccessTokenExpiration ?? _currentUserService.AccessTokenExpiration;
                 if (currentAccessTokenExpiration is null)
                     throw new ArgumentException(nameof(currentAccessTokenExpiration));
                 return currentAccessTokenExpiration.Value;
@@ -89,7 +94,7 @@ namespace ESAM.GrowTracking.Application.Services
         {
             get
             {
-                var currentUserDeviceId = _currentUserService.UserDeviceId;
+                var currentUserDeviceId = _overriddenClaims?.UserDeviceId ?? _currentUserService.UserDeviceId;
                 if (currentUserDeviceId is null)
                     throw new ArgumentNullException(nameof(currentUserDeviceId));
                 if (currentUserDeviceId <= 0)
@@ -102,7 +107,7 @@ namespace ESAM.GrowTracking.Application.Services
         {
             get
             {
-                var currentUserSessionId = _currentUserService.UserSessionId;
+                var currentUserSessionId = _overriddenClaims?.UserSessionId ?? _currentUserService.UserSessionId;
                 if (currentUserSessionId is null)
                     throw new ArgumentNullException(nameof(currentUserSessionId));
                 if (currentUserSessionId <= 0)
@@ -126,7 +131,7 @@ namespace ESAM.GrowTracking.Application.Services
         {
             get
             {
-                var currentWorkProfileId = _currentUserService.WorkProfileId;
+                var currentWorkProfileId = _overriddenClaims?.WorkProfileId ?? _currentUserService.WorkProfileId;
                 if (currentWorkProfileId is null)
                     throw new ArgumentNullException(nameof(currentWorkProfileId));
                 if (currentWorkProfileId <= 0)
@@ -139,7 +144,7 @@ namespace ESAM.GrowTracking.Application.Services
         {
             get
             {
-                var currentRoleId = _currentUserService.RoleId;
+                var currentRoleId = _overriddenClaims?.RoleId ?? _currentUserService.RoleId;
                 if (currentRoleId is null)
                     throw new ArgumentNullException(nameof(currentRoleId));
                 if (currentRoleId <= 0)
@@ -152,7 +157,7 @@ namespace ESAM.GrowTracking.Application.Services
         {
             get
             {
-                var currentCampusId = _currentUserService.CampusId;
+                var currentCampusId = _overriddenClaims?.CampusId ?? _currentUserService.CampusId;
                 if (currentCampusId is null)
                     throw new ArgumentNullException(nameof(currentCampusId));
                 if (currentCampusId <= 0)
@@ -161,6 +166,9 @@ namespace ESAM.GrowTracking.Application.Services
             }
         }
 
-
+        public async Task UseExplicitAccessTokenAsync(string accessToken)
+        {
+            _overriddenClaims = await _tokenService.ExtractAccessTokenClaimsAsync(accessToken);
+        }
     }
 }

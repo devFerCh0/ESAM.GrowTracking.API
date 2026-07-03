@@ -29,5 +29,7 @@ namespace ESAM.GrowTracking.Application.Abstractions.Services
         int CurrentRoleId { get; }
 
         int CurrentCampusId { get; }
+
+        Task UseExplicitAccessTokenAsync(string accessToken);
     }
 }
