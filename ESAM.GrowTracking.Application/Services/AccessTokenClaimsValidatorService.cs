@@ -1,6 +1,7 @@
 ﻿using ESAM.GrowTracking.Application.Abstractions.Services;
 using ESAM.GrowTracking.Application.DTOs;
 using ESAM.GrowTracking.Application.Enums;
+using ESAM.GrowTracking.Domain.Enums;
 
 namespace ESAM.GrowTracking.Application.Services
 {
@@ -137,6 +138,17 @@ namespace ESAM.GrowTracking.Application.Services
                 if (currentWorkProfileId <= 0)
                     throw new ArgumentOutOfRangeException(nameof(currentWorkProfileId));
                 return currentWorkProfileId.Value;
+            }
+        }
+
+        public WorkProfileType CurrentWorkProfileType
+        {
+            get
+            {
+                var currentWorkProfileType = _overriddenClaims?.WorkProfileType ?? _currentUserService.WorkProfileType;
+                if (currentWorkProfileType is null)
+                    throw new ArgumentNullException(nameof(currentWorkProfileType));
+                return currentWorkProfileType.Value;
             }
         }
 

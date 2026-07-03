@@ -1,4 +1,5 @@
 ﻿using ESAM.GrowTracking.Application.Enums;
+using ESAM.GrowTracking.Domain.Enums;
 
 namespace ESAM.GrowTracking.Application.Abstractions.Services
 {
@@ -25,6 +26,8 @@ namespace ESAM.GrowTracking.Application.Abstractions.Services
         bool CurrentIsPersistent { get; }
 
         int CurrentWorkProfileId { get; }
+
+        WorkProfileType CurrentWorkProfileType { get; }
 
         int CurrentRoleId { get; }
 

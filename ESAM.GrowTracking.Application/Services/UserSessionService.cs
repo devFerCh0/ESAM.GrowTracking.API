@@ -170,36 +170,33 @@ namespace ESAM.GrowTracking.Application.Services
             await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
 
-        //public async Task<RefreshTokenDTO> RotateUserSessionAsync(UserSession userSession, UserSessionRefreshToken userSessionRefreshToken, string? jti, 
-        //    DateTime? accessTokenExpiration, string revokedReason, int currentUserId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
-        //{
-        //    var (refreshToken, tokenSalt, tokenHash) = GenerateRefreshTokenWithHash(utcNow);
-        //    var newUserSessionRefreshToken = new UserSessionRefreshToken(refreshToken.Identifier, tokenSalt, tokenHash, refreshToken.ExpiresAt, userSession.UserId, userSession.Id, 
-        //        userSessionRefreshToken.RotationCount + 1, utcNow);
-        //    newUserSessionRefreshToken.UpdateLastUsedAt(utcNow, userSession.UserId, utcNow);
-        //    userSession.UpdateExpiresAt(utcNow.AddDays(_tokenLifetimeSettings.SessionIdleWindowDays), currentUserId, utcNow);
-        //    userSession.UpdateLastActivity(utcNow, currentUserId, utcNow);
-        //    userSessionRefreshToken.Revoke(utcNow, revokedReason, currentUserId, utcNow);
-        //    userSessionRefreshToken.UpdateLastUsedAt(utcNow, currentUserId, utcNow);
-        //    var blacklistedRefreshToken = await _blacklistedTokenService.TryGenerateBlacklistedRefreshTokenAsync(userSessionRefreshToken.Id, userSessionRefreshToken.Identifier, 
-        //        userSessionRefreshToken.ExpiresAt, utcNow, revokedReason, currentUserId, utcNow, asTracking, cancellationToken);
-        //    var blacklistedAccessTokenPermanent = (jti is not null && accessTokenExpiration is not null) ? 
-        //        await _blacklistedTokenService.TryGenerateBlacklistedAccessTokenPermanentAsync(userSession.Id, jti, accessTokenExpiration.Value, utcNow, revokedReason, 
-        //        currentUserId, utcNow, asTracking, cancellationToken) : null;
-        //    await _unitOfWork.ExecuteInTransactionAsync(async ct =>
-        //    {
-        //        await _unitOfWork.UserSessionRefreshTokens.InsertAsync(newUserSessionRefreshToken, ct);
-        //        await _unitOfWork.SaveChangesAsync(ct);
-        //        await _unitOfWork.UserSessions.UpdateAsync(userSession, ct);
-        //        userSessionRefreshToken.UpdateReplacedByUserSessionRefreshTokenId(newUserSessionRefreshToken.Id);
-        //        await _unitOfWork.UserSessionRefreshTokens.UpdateAsync(userSessionRefreshToken, ct);
-        //        if (blacklistedRefreshToken is not null)
-        //            await _unitOfWork.BlacklistedRefreshTokens.InsertAsync(blacklistedRefreshToken, ct);
-        //        if (blacklistedAccessTokenPermanent is not null)
-        //            await _unitOfWork.BlacklistedAccessTokensPermanent.InsertAsync(blacklistedAccessTokenPermanent, ct);
-        //    }, cancellationToken: cancellationToken);
-        //    return refreshToken;
-        //}
+        public async Task<RefreshTokenDTO> RotateUserSessionAsync(UserSession userSession, UserSessionRefreshToken userSessionRefreshToken, string jti, 
+            DateTime accessTokenExpiration, string revokedReason, int currentUserId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
+        {
+            var (refreshToken, tokenSalt, tokenHash) = GenerateRefreshTokenWithHash(utcNow);
+            var newUserSessionRefreshToken = new UserSessionRefreshToken(userSession.Id, refreshToken.Identifier, tokenSalt, tokenHash, refreshToken.ExpiresAt, userSession.UserId, 
+                utcNow);
+            newUserSessionRefreshToken.UpdateLastUsedAt(utcNow, userSession.UserId, utcNow);
+            userSession.UpdateExpiresAt(utcNow.AddDays(_tokenLifetimeSettings.SessionIdleWindowDays), currentUserId, utcNow);
+            userSession.UpdateLastActivity(utcNow, currentUserId, utcNow);
+            userSessionRefreshToken.Revoke(utcNow, revokedReason, currentUserId, utcNow);
+            userSessionRefreshToken.UpdateLastUsedAt(utcNow, currentUserId, utcNow);
+            var blacklistedRefreshToken = new BlacklistedRefreshToken(userSessionRefreshToken.Id, userSessionRefreshToken.Identifier, userSessionRefreshToken.ExpiresAt,
+                utcNow, revokedReason, currentUserId, utcNow);
+            var blacklistedAccessTokenSession = new BlacklistedAccessTokenSession(userSession.Id, jti, accessTokenExpiration, utcNow, revokedReason, currentUserId, utcNow);
+
+            await _unitOfWork.ExecuteInTransactionAsync(async ct =>
+            {
+                await _unitOfWork.UserSessionRefreshTokens.InsertAsync(newUserSessionRefreshToken, ct);
+                await _unitOfWork.SaveChangesAsync(ct);
+                await _unitOfWork.UserSessions.UpdateAsync(userSession, ct);
+                userSessionRefreshToken.UpdateReplacedByUserSessionRefreshTokenId(newUserSessionRefreshToken.Id);
+                await _unitOfWork.UserSessionRefreshTokens.UpdateAsync(userSessionRefreshToken, ct);
+                await _unitOfWork.BlacklistedRefreshTokens.InsertAsync(blacklistedRefreshToken, ct);
+                await _unitOfWork.BlacklistedAccessTokensSession.InsertAsync(blacklistedAccessTokenSession, ct);
+            }, cancellationToken: cancellationToken);
+            return refreshToken;
+        }
 
         private (UserSession UserSession, UserSessionWorkProfileSelected UserSessionWorkProfileSelected, UserSessionRefreshToken UserSessionRefreshToken, 
             BlacklistedAccessTokenTemporary BlacklistedAccessTokenTemporary, RefreshTokenDTO RefreshToken) PrepareSessionCreationAsync(int currentUserId, int currentUserDeviceId, 

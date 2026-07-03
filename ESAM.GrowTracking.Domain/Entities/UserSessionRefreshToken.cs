@@ -52,17 +52,16 @@ namespace ESAM.GrowTracking.Domain.Entities
             SetCreatedAudit(createdBy, createdAt);
         }
 
-        //public UserSessionRefreshToken(string identifier, string salt, string tokenHash, DateTime expiresAt, int createdBy, int userSessionId = 0, int rotationCount = 0, 
-        //    DateTime? createdAt = null)
-        //{
-        //    UserSessionId = userSessionId;
-        //    Identifier = identifier;
-        //    Salt = salt;
-        //    TokenHash = tokenHash;
-        //    ExpiresAt = expiresAt;
-        //    RotationCount = rotationCount;
-        //    SetCreatedAudit(createdBy, createdAt);
-        //}
+        public UserSessionRefreshToken(int userSessionId, string identifier, string salt, string tokenHash, DateTime expiresAt, int createdBy, DateTime? createdAt = null)
+        {
+            UserSessionId = userSessionId;
+            Identifier = identifier;
+            Salt = salt;
+            TokenHash = tokenHash;
+            ExpiresAt = expiresAt;
+            RotationCount++;
+            SetCreatedAudit(createdBy, createdAt);
+        }
 
         public void UpdateLastUsedAt(DateTime lastUsedAt, int updatedBy, DateTime? updatedAt = null)
         {
@@ -83,9 +82,9 @@ namespace ESAM.GrowTracking.Domain.Entities
             SetUpdatedAudit(updatedBy, updatedAt);
         }
 
-        //public void UpdateReplacedByUserSessionRefreshTokenId(int replacedByUserSessionRefreshTokenId)
-        //{
-        //    ReplacedByUserSessionRefreshTokenId = replacedByUserSessionRefreshTokenId;
-        //}
+        public void UpdateReplacedByUserSessionRefreshTokenId(int replacedByUserSessionRefreshTokenId)
+        {
+            ReplacedByUserSessionRefreshTokenId = replacedByUserSessionRefreshTokenId;
+        }
     }
 }

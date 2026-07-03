@@ -78,10 +78,10 @@ namespace ESAM.GrowTracking.Domain.Entities
             SetUpdatedAudit(updatedBy, updatedAt);
         }
 
-        //public void UpdateExpiresAt(DateTime expiresAt, int updatedBy, DateTime? updatedAt = null)
-        //{
-        //    ExpiresAt = expiresAt;
-        //    SetUpdatedAudit(updatedBy, updatedAt);
-        //}
+        public void UpdateExpiresAt(DateTime expiresAt, int updatedBy, DateTime? updatedAt = null)
+        {
+            ExpiresAt = expiresAt;
+            SetUpdatedAudit(updatedBy, updatedAt);
+        }
     }
 }

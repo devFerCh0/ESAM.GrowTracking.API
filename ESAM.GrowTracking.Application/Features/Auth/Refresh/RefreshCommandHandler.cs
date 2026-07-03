@@ -1,15 +1,18 @@
-﻿using ESAM.GrowTracking.Application.Abstractions.Services;
+﻿using System.Security.Cryptography;
+using System.Text;
+using ESAM.GrowTracking.Application.Abstractions.Services;
 using ESAM.GrowTracking.Application.Enums;
 using ESAM.GrowTracking.Application.Extensions;
 using ESAM.GrowTracking.Application.Helpers;
 using ESAM.GrowTracking.Application.Results;
+using ESAM.GrowTracking.Application.Settings;
 using ESAM.GrowTracking.Application.ValueObjects;
 using ESAM.GrowTracking.Domain.Abstractions.DataAccess.Repositories;
+using ESAM.GrowTracking.Domain.Entities;
+using ESAM.GrowTracking.Domain.Enums;
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.Logging;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace ESAM.GrowTracking.Application.Features.Auth.Refresh
 {
@@ -23,11 +26,13 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Refresh
         private readonly IUserSessionService _userSessionService;
         private readonly IUserSessionRepository _userSessionRepository;
         private readonly IHashService _hashService;
+        private readonly ISecurityValidatorService _securityValidatorService;
+        private readonly ITokenService _tokenService;
 
         public RefreshCommandHandler(ILogger<RefreshCommandHandler> logger, IValidator<RefreshCommand> validator, 
             IAccessTokenClaimsValidatorService accessTokenClaimsValidatorService, IDateTimeService dateTimeService, 
             IUserSessionRefreshTokenRepository userSessionRefreshTokenRepository, IUserSessionService userSessionService, IUserSessionRepository userSessionRepository,
-            IHashService hashService)
+            IHashService hashService, ISecurityValidatorService securityValidatorService, ITokenService tokenService)
 
         {
             ArgumentNullException.ThrowIfNull(logger);
@@ -38,6 +43,8 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Refresh
             ArgumentNullException.ThrowIfNull(userSessionService);
             ArgumentNullException.ThrowIfNull(userSessionRepository);
             ArgumentNullException.ThrowIfNull(hashService);
+            ArgumentNullException.ThrowIfNull(securityValidatorService);
+            ArgumentNullException.ThrowIfNull(tokenService);
             _logger = logger;
             _validator = validator;
             _accessTokenClaimsValidatorService = accessTokenClaimsValidatorService;
@@ -46,6 +53,8 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Refresh
             _userSessionService = userSessionService;
             _userSessionRepository = userSessionRepository;
             _hashService = hashService;
+            _securityValidatorService = securityValidatorService;
+            _tokenService = tokenService;
 
             //ArgumentNullException.ThrowIfNull(currentUserService);
             //ArgumentNullException.ThrowIfNull(blacklistedTokenService);
@@ -178,11 +187,71 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Refresh
                                 }
                                 else
                                 {
-                                    _logger.LogInformation("Logout: Sesión {SessionId} y Access Token (JTI: {Jti}) revocados correctamente para el usuario " +
-                                        "{UserId}.", currentUserSessionId, currentJti, currentUserId);
-                                    await _userSessionService.RevokeUserSessionAndAccessTokenSessionAsync(userSession, currentJti, currentAccessTokenExpiration,
-                                        "Logout: Cierre de sesión exitoso.", currentUserId, currentUserSessionId, utcNow, asTracking, cancellationToken);
-                                    return Result<RefreshResponse>.Ok();
+                                    var currentSecurityStamp = _accessTokenClaimsValidatorService.CurrentSecurityStamp;
+                                    var currentTokenVersion = _accessTokenClaimsValidatorService.CurrentTokenVersion;
+                                    var currentWorkProfileId = _accessTokenClaimsValidatorService.CurrentWorkProfileId;
+                                    var currentWorkProfileType = _accessTokenClaimsValidatorService.CurrentWorkProfileType;
+                                    if (currentWorkProfileType == WorkProfileType.OnlyWorkProfile)
+                                    {
+                                        var ValidateAccessTokenSessionResult = await _securityValidatorService.ValidateAccessTokenSessionAsync(currentJti, currentUserId, 
+                                            currentSecurityStamp, currentTokenVersion, currentUserDeviceId, currentUserSessionId, currentWorkProfileId, currentWorkProfileType, 
+                                            cancellationToken);
+                                        if (ValidateAccessTokenSessionResult.IsFailure)
+                                        {
+                                            _logger.LogWarning("Refresh: Invalidación de seguridad para sesión {SessionId}. El estado del usuario, SecurityStamp o " + 
+                                                "versión de token han cambiado. JTI: {Jti}.", currentUserSessionId, currentJti);
+                                            await _userSessionService.RevokeUserSessionAndAccessTokenSessionAsync(userSession, currentJti, currentAccessTokenExpiration,
+                                                "Refresh: Estado de usuario o contexto de seguridad alterado (SecurityStamp/TokenVersion/Dispositivo).", currentUserId, 
+                                                currentUserSessionId, utcNow, asTracking, cancellationToken);
+                                            return Result<RefreshResponse>.Fail(Error.Unauthorized("Tu sesión ha expirado por un cambio en la seguridad de la cuenta. " + 
+                                                "Inicia sesión nuevamente."));
+                                        }
+                                        else
+                                        {
+                                            _logger.LogInformation("Refresh: Validación exitosa para sesión {SessionId}. Procediendo con rotación. JTI: {Jti}.", currentUserSessionId, currentJti);
+
+                                            // 1. Inválida el Refresh Token actual marcándolo como reemplazado/rotado.
+                                            // 2. Genera un nuevo Access Token.
+                                            // 3. Genera un nuevo Refresh Token (Plain text y Hash).
+                                            // 4. Guarda el nuevo Refresh Token en BD asociado a esta misma sesión (o nueva si renuevas ID).
+                                            // 5. Extiende los tiempos de expiración de la Sesión (`ExpiresAt`) si tu lógica lo requiere.
+                                            // 6. Retorna Result.Ok(new TokenResponse(newAccessToken, newRefreshToken, ...));
+
+                                            return Result.Ok(); // Reemplazar con el retorno de tus nuevos tokens.
+                                        }
+                                    }
+                                    else
+                                    {
+
+                                        var currentRoleId = _accessTokenClaimsValidatorService.CurrentRoleId;
+                                        var currentCampusId = _accessTokenClaimsValidatorService.CurrentCampusId;
+                                        var ValidateAccessTokenSessionResult = await _securityValidatorService.ValidateAccessTokenSessionAsync(currentJti, currentUserId,
+                                            currentSecurityStamp, currentTokenVersion, currentUserDeviceId, currentUserSessionId, currentWorkProfileId, currentWorkProfileType,
+                                            currentRoleId, currentCampusId, cancellationToken);
+                                        if (ValidateAccessTokenSessionResult.IsFailure)
+                                        {
+                                            _logger.LogWarning("Refresh: Invalidación de seguridad/permisos para sesión {SessionId}. Cambios detectados en estado, " + 
+                                                "SecurityStamp, Rol o Campus. JTI: {Jti}.", currentUserSessionId, currentJti);
+                                            await _userSessionService.RevokeUserSessionAndAccessTokenSessionAsync(userSession, currentJti, currentAccessTokenExpiration,
+                                                "Refresh: Contexto de seguridad alterado o revocación de permisos (Rol/Campus/SecurityStamp).", currentUserId, currentUserSessionId, 
+                                                utcNow, asTracking, cancellationToken);
+                                            return Result<RefreshResponse>.Fail(Error.Unauthorized("Los permisos de tu cuenta o perfil han cambiado. Inicia sesión nuevamente."));
+                                        }
+                                        else
+                                        {
+
+                                            _logger.LogInformation("Refresh: Validación exitosa para sesión {SessionId}. Procediendo con rotación. JTI: {Jti}.", currentUserSessionId, currentJti);
+
+                                            // 1. Inválida el Refresh Token actual marcándolo como reemplazado/rotado.
+                                            // 2. Genera un nuevo Access Token.
+                                            // 3. Genera un nuevo Refresh Token (Plain text y Hash).
+                                            // 4. Guarda el nuevo Refresh Token en BD asociado a esta misma sesión (o nueva si renuevas ID).
+                                            // 5. Extiende los tiempos de expiración de la Sesión (`ExpiresAt`) si tu lógica lo requiere.
+                                            // 6. Retorna Result.Ok(new TokenResponse(newAccessToken, newRefreshToken, ...));
+
+                                            return Result.Ok(); // Reemplazar con el retorno de tus nuevos tokens.
+                                        }
+                                    }
                                 }
                             }
                             else
@@ -344,6 +413,30 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Refresh
                     return Result<RefreshResponse>.Fail(Error.Validation("Token erróneo y sesión inválida."));
                 }
             }
+        }
+
+        private async Task<Result<RefreshResponse>> ExecuteTokenRotationAsync(UserSession userSession, UserSessionRefreshToken userSessionRefreshToken, User user, 
+            string revokedReason, int currentUserId, DateTime utcNow, string currentJti, DateTime currentAccessTokenExpiration, int workProfileId, bool asTracking = false, 
+            CancellationToken cancellationToken = default)
+        {
+            var rotatedRefreshToken = await _userSessionService.RotateUserSessionAsync(userSession, userSessionRefreshToken, currentJti, currentAccessTokenExpiration,
+                revokedReason, currentUserId, utcNow, asTracking, cancellationToken);
+            var accessToken = _tokenService.GenerateSessionAccessToken(currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId, currentUserSessionId, utcNow,
+                _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, workProfileId, roleId, campusId);
+            return Result<RefreshResponse>.Ok(new RefreshResponse(accessToken.Token, accessToken.ExpiresIn, accessToken.ExpiresAt, rotatedRefreshToken.Identifier,
+                rotatedRefreshToken.Token, rotatedRefreshToken.ExpiresIn, rotatedRefreshToken.ExpiresAt));
+        }
+
+        private async Task<Result<RefreshResponse>> ExecuteTokenRotationAsync(UserSession userSession, UserSessionRefreshToken userSessionRefreshToken, User user,
+            string revokedReason, int currentUserId, DateTime utcNow, string currentJti, DateTime currentAccessTokenExpiration, int workProfileId, int? roleId = null,
+            int? campusId = null, bool asTracking = false, CancellationToken cancellationToken = default)
+        {
+            var rotatedRefreshToken = await _userSessionService.RotateUserSessionAsync(userSession, userSessionRefreshToken, currentJti, currentAccessTokenExpiration,
+                revokedReason, currentUserId, utcNow, asTracking, cancellationToken);
+            var accessToken = _tokenService.GenerateSessionAccessToken(user.Id, user.SecurityStamp, user.TokenVersion, userSession.UserDeviceId, userSession.Id, utcNow,
+                _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, workProfileId, roleId, campusId);
+            return Result<RefreshResponse>.Ok(new RefreshResponse(accessToken.Token, accessToken.ExpiresIn, accessToken.ExpiresAt, rotatedRefreshToken.Identifier,
+                rotatedRefreshToken.Token, rotatedRefreshToken.ExpiresIn, rotatedRefreshToken.ExpiresAt));
         }
 
         //public async Task<Result<RefreshResponse>> Handle(RefreshCommand request, CancellationToken cancellationToken)
