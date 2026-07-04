@@ -90,7 +90,7 @@ namespace ESAM.GrowTracking.Application.Features.Auth.AssumeWorkProfile
             var currentAccessTokenExpiration = _accessTokenClaimsValidatorService.CurrentAccessTokenExpiration;
             var utcNow = _dateTimeService.UtcNow;
             var (refreshToken, userSession) = await _userSessionService.CreateUserSessionAsync(currentUserId, currentUserDeviceId, ipAddress, userAgent, currentIsPersistent,
-                request.WorkProfileId, currentJti, currentAccessTokenExpiration, utcNow, cancellationToken);
+                request.WorkProfileId, currentJti, currentAccessTokenExpiration, utcNow, asTracking, cancellationToken);
             var assumeWorkProfileUser = await _userQuery.GetAssumeWorkProfileUserByUserIdAndUserSessionIdAsync(currentUserId, userSession.Id, asTracking, cancellationToken);
             if (assumeWorkProfileUser is null)
             {

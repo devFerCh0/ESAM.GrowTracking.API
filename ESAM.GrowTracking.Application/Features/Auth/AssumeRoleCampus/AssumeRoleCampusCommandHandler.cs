@@ -101,7 +101,7 @@ namespace ESAM.GrowTracking.Application.Features.Auth.AssumeRoleCampus
             var currentAccessTokenExpiration = _accessTokenClaimsValidatorService.CurrentAccessTokenExpiration;
             var utcNow = _dateTimeService.UtcNow;
             var (refreshToken, userSession) = await _userSessionService.CreateUserSessionAsync(currentUserId, currentUserDeviceId, ipAddress, userAgent, currentIsPersistent, 
-                request.WorkProfileId, request.RoleId, request.CampusId, currentJti, currentAccessTokenExpiration, utcNow, cancellationToken);
+                request.WorkProfileId, request.RoleId, request.CampusId, currentJti, currentAccessTokenExpiration, utcNow, asTracking, cancellationToken);
             var assumeRoleCampusUser = await _userQuery.GetAssumeRoleCampusUserByUserIdAndUserSessionIdAsync(currentUserId, userSession.Id, asTracking, cancellationToken);
             if (assumeRoleCampusUser is null)
             {

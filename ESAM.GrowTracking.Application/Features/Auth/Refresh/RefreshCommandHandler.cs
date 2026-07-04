@@ -108,32 +108,32 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Refresh
                         else
                         {
                             _logger.LogWarning("Refresh: Intento con Token Temporal (JTI: {Jti}) y RT de sesión inexistente.", currentJti);
-                            await _userSessionService.BlacklistedAccessTokenTemporaryAsync(currentUserId, currentJti, currentAccessTokenExpiration,
-                                "Refresh: Uso de Refresh Token huérfano con Access Token Temporal.", utcNow, cancellationToken);
+                            await _userSessionService.RevokeAccessTokenTemporaryAsync(currentUserId, currentJti, currentAccessTokenExpiration,
+                                "Refresh: Uso de Refresh Token huérfano con Access Token Temporal.", utcNow, asTracking, cancellationToken);
                             return Result<RefreshResponse>.Fail(Error.Forbidden("Renovación denegada. Token temporal inválido."));
                         }
                     }
                     else
                     {
                         _logger.LogWarning("Refresh: Intento con Token Temporal (JTI: {Jti}) y RT inexistente.", currentJti);
-                        await _userSessionService.BlacklistedAccessTokenTemporaryAsync(currentUserId, currentJti, currentAccessTokenExpiration,
-                            "Refresh: Uso de Refresh Token no registrado con Access Token Temporal.", utcNow, cancellationToken);
+                        await _userSessionService.RevokeAccessTokenTemporaryAsync(currentUserId, currentJti, currentAccessTokenExpiration,
+                            "Refresh: Uso de Refresh Token no registrado con Access Token Temporal.", utcNow, asTracking, cancellationToken);
                         return Result<RefreshResponse>.Fail(Error.Forbidden("Renovación denegada. Credenciales no registradas."));
                     }
                 }
                 else
                 {
                     _logger.LogWarning("Refresh: Intento con Token Temporal (JTI: {Jti}) y RT malformado.", currentJti);
-                    await _userSessionService.BlacklistedAccessTokenTemporaryAsync(currentUserId, currentJti, currentAccessTokenExpiration,
-                        "Refresh: Uso de Refresh Token malformado con Access Token Temporal.", utcNow, cancellationToken);
+                    await _userSessionService.RevokeAccessTokenTemporaryAsync(currentUserId, currentJti, currentAccessTokenExpiration,
+                        "Refresh: Uso de Refresh Token malformado con Access Token Temporal.", utcNow, asTracking, cancellationToken);
                     return Result<RefreshResponse>.Fail(Error.Validation("Formato de token inválido."));
                 }
             }
             else
             {
                 _logger.LogWarning("Refresh: Intento de renovar Token Temporal sin RT (JTI: {Jti}).", currentJti);
-                await _userSessionService.BlacklistedAccessTokenTemporaryAsync(currentUserId, currentJti, currentAccessTokenExpiration,
-                    "Refresh: Intento de renovación de token temporal.", utcNow, cancellationToken);
+                await _userSessionService.RevokeAccessTokenTemporaryAsync(currentUserId, currentJti, currentAccessTokenExpiration,
+                    "Refresh: Intento de renovación de token temporal.", utcNow, asTracking, cancellationToken);
                 return Result<RefreshResponse>.Fail(Error.Validation("Los tokens temporales no admiten renovación."));
             }
         }
@@ -258,8 +258,8 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Refresh
                                 {
                                     _logger.LogWarning("Refresh: Sesión {SessionId} o dispositivo {DeviceId} no coinciden. JTI: {Jti}.", currentUserSessionId, currentUserDeviceId,
                                         currentJti);
-                                    await _userSessionService.BlacklistedAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
-                                        "Refresh: Datos de dispositivo o sesión no encontrados.", utcNow, cancellationToken);
+                                    await _userSessionService.RevokeAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
+                                        "Refresh: Datos de dispositivo o sesión no encontrados.", utcNow, asTracking, cancellationToken);
                                     return Result<RefreshResponse>.Fail(Error.Unauthorized("Sesión no válida o dispositivo no reconocido."));
                                 }
                             }
@@ -279,8 +279,8 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Refresh
                                     else
                                     {
                                         _logger.LogWarning("Refresh: Fallo de hash y sesión {SessionId} inexistente. JTI: {Jti}.", currentUserSessionId, currentJti);
-                                        await _userSessionService.BlacklistedAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
-                                            "Refresh: Discrepancia criptográfica y sesión no encontrada.", utcNow, cancellationToken);
+                                        await _userSessionService.RevokeAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
+                                            "Refresh: Discrepancia criptográfica y sesión no encontrada.", utcNow, asTracking, cancellationToken);
                                         return Result<RefreshResponse>.Fail(Error.Unauthorized("Sesión inexistente o inválida."));
                                     }
                                 }
@@ -313,8 +313,8 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Refresh
                                     else
                                     {
                                         _logger.LogWarning("Refresh: Sesión cruzada total. Ambas sesiones no existen y hash inválido. JTI: {Jti}.", currentJti);
-                                        await _userSessionService.BlacklistedAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
-                                            "Refresh: Conflicto de sesión cruzada inexistente.", utcNow, cancellationToken);
+                                        await _userSessionService.RevokeAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
+                                            "Refresh: Conflicto de sesión cruzada inexistente.", utcNow, asTracking, cancellationToken);
                                         return Result<RefreshResponse>.Fail(Error.Forbidden("Inconsistencia total de sesión."));
                                     }
                                 }
@@ -335,8 +335,8 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Refresh
                                 else
                                 {
                                     _logger.LogWarning("Refresh: Payload de RT ausente y sesión {SessionId} inexistente. JTI: {Jti}.", currentUserSessionId, currentJti);
-                                    await _userSessionService.BlacklistedAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
-                                        "Refresh: Payload ausente y sesión no encontrada.", utcNow, cancellationToken);
+                                    await _userSessionService.RevokeAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
+                                        "Refresh: Payload ausente y sesión no encontrada.", utcNow, asTracking, cancellationToken);
                                     return Result<RefreshResponse>.Fail(Error.Validation("Token incompleto y sesión no válida."));
                                 }
                             }
@@ -369,8 +369,8 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Refresh
                                 else
                                 {
                                     _logger.LogWarning("Refresh: Conflicto cruzado sin payload, sesiones inexistentes. JTI: {Jti}.", currentJti);
-                                    await _userSessionService.BlacklistedAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
-                                        "Refresh: Conflicto cruzado sin Payload y sin sesiones.", utcNow, cancellationToken);
+                                    await _userSessionService.RevokeAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
+                                        "Refresh: Conflicto cruzado sin Payload y sin sesiones.", utcNow, asTracking, cancellationToken);
                                     return Result<RefreshResponse>.Fail(Error.Forbidden("Datos de sesión inexistentes."));
                                 }
                             }
@@ -389,8 +389,8 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Refresh
                         else
                         {
                             _logger.LogWarning("Refresh: RT no registrado y sesión {SessionId} inexistente. JTI: {Jti}.", currentUserSessionId, currentJti);
-                            await _userSessionService.BlacklistedAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
-                                "Refresh: RT y sesión no registrados.", utcNow, cancellationToken);
+                            await _userSessionService.RevokeAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
+                                "Refresh: RT y sesión no registrados.", utcNow, asTracking, cancellationToken);
                             return Result<RefreshResponse>.Fail(Error.Unauthorized("Credenciales no reconocidas."));
                         }
                     }
@@ -408,8 +408,8 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Refresh
                     else
                     {
                         _logger.LogWarning("Refresh: RT malformado y sesión {SessionId} inexistente. JTI: {Jti}.", currentUserSessionId, currentJti);
-                        await _userSessionService.BlacklistedAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
-                            "Refresh: RT malformado y sesión inexistente.", utcNow, cancellationToken);
+                        await _userSessionService.RevokeAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
+                            "Refresh: RT malformado y sesión inexistente.", utcNow, asTracking, cancellationToken);
                         return Result<RefreshResponse>.Fail(Error.Validation("Token erróneo y sesión inválida."));
                     }
                 }
@@ -427,8 +427,8 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Refresh
                 else
                 {
                     _logger.LogWarning("Refresh: Intento sin RT y sesión {SessionId} inexistente. JTI: {Jti}.", currentUserSessionId, currentJti);
-                    await _userSessionService.BlacklistedAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
-                        "Refresh: Petición sin RT para sesión inexistente.", utcNow, cancellationToken);
+                    await _userSessionService.RevokeAccessTokenSessionAsync(currentUserSessionId, currentJti, currentAccessTokenExpiration, currentUserId,
+                        "Refresh: Petición sin RT para sesión inexistente.", utcNow, asTracking, cancellationToken);
                     return Result<RefreshResponse>.Fail(Error.Validation("Datos insuficientes para renovar la sesión."));
                 }
             }
