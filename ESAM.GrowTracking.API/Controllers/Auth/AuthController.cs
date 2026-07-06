@@ -198,30 +198,6 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
             return Ok(ApiSuccessResponse<GetCurrentUserWorkProfileHttpResponse>.From(currentUserWorkProfile, HttpContext.TraceIdentifier));
         }
 
-        [Authorize]
-        [HttpPost("logout")]
-        [Consumes("application/json")]
-        [ProducesResponseType(typeof(ApiSuccessResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<ApiSuccessResponse>> LogoutAsync([FromBody] LogoutRequest request, CancellationToken cancellationToken)
-        {
-            var resolvedRefreshToken = _authSessionCookieService.ResolveRefreshToken(request.RefreshTokenRaw);
-            var command = new LogoutCommand(resolvedRefreshToken);
-            try
-            {
-                var logoutResult = await _sender.Send(command, cancellationToken);
-                if (logoutResult.IsFailure)
-                    return logoutResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
-                return Ok(ApiSuccessResponse.From(HttpContext.TraceIdentifier));
-            }
-            finally
-            {
-                _authSessionCookieService.ClearSessionCookies();
-            }
-        }
-
         [AllowAnonymous]
         [HttpPost("refresh")]
         [Consumes("application/json")]
@@ -248,6 +224,30 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
             var refresh = _mapper.Map<RefreshHttpResponse>(refreshResult.Value);
             ApplySessionAndXsrfToken(refresh.RefreshTokenRaw, refresh.RefreshTokenExpiresAt);
             return Ok(ApiSuccessResponse<RefreshHttpResponse>.From(refresh, HttpContext.TraceIdentifier));
+        }
+
+        [Authorize]
+        [HttpPost("logout")]
+        [Consumes("application/json")]
+        [ProducesResponseType(typeof(ApiSuccessResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<ApiSuccessResponse>> LogoutAsync([FromBody] LogoutRequest request, CancellationToken cancellationToken)
+        {
+            var resolvedRefreshToken = _authSessionCookieService.ResolveRefreshToken(request.RefreshTokenRaw);
+            var command = new LogoutCommand(resolvedRefreshToken);
+            try
+            {
+                var logoutResult = await _sender.Send(command, cancellationToken);
+                if (logoutResult.IsFailure)
+                    return logoutResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
+                return Ok(ApiSuccessResponse.From(HttpContext.TraceIdentifier));
+            }
+            finally
+            {
+                _authSessionCookieService.ClearSessionCookies();
+            }
         }
 
         private void ApplySessionAndXsrfToken(string refreshTokenRaw, DateTime refreshTokenExpiresAt)

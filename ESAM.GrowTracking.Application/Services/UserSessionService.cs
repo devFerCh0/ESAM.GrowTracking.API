@@ -201,8 +201,8 @@ namespace ESAM.GrowTracking.Application.Services
             DateTime accessTokenExpiration, string revokedReason, int currentUserId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
         {
             var (refreshToken, tokenSalt, tokenHash) = GenerateRefreshTokenWithHash(utcNow);
-            var newUserSessionRefreshToken = new UserSessionRefreshToken(userSession.Id, refreshToken.Identifier, tokenSalt, tokenHash, refreshToken.ExpiresAt, userSession.UserId, 
-                utcNow);
+            var newUserSessionRefreshToken = new UserSessionRefreshToken(userSession.Id, refreshToken.Identifier, tokenSalt, tokenHash, refreshToken.ExpiresAt, 
+                userSessionRefreshToken.RotationCount + 1, userSession.UserId, utcNow);
             newUserSessionRefreshToken.UpdateLastUsedAt(utcNow, userSession.UserId, utcNow);
             userSession.UpdateExpiresAt(utcNow.AddDays(_tokenLifetimeSettings.SessionIdleWindowDays), currentUserId, utcNow);
             userSession.UpdateLastActivity(utcNow, currentUserId, utcNow);
@@ -210,7 +210,8 @@ namespace ESAM.GrowTracking.Application.Services
             userSessionRefreshToken.UpdateLastUsedAt(utcNow, currentUserId, utcNow);
             var doesBlacklistedRefreshTokenNotExist = await _blacklistedRefreshTokenRepository.DoesNotExistAsync(userSessionRefreshToken.Identifier, asTracking, cancellationToken);
             var blacklistedRefreshToken = doesBlacklistedRefreshTokenNotExist ? new BlacklistedRefreshToken(userSessionRefreshToken.Id, userSessionRefreshToken.Identifier, 
-                userSessionRefreshToken.ExpiresAt, utcNow, revokedReason, currentUserId, utcNow) : null;var doesBlacklistedAccessTokenSessionNotExist = await _blacklistedAccessTokenSessionRepository.DoesNotExistAsync(jti, asTracking, cancellationToken);
+                userSessionRefreshToken.ExpiresAt, utcNow, revokedReason, currentUserId, utcNow) : null;
+            var doesBlacklistedAccessTokenSessionNotExist = await _blacklistedAccessTokenSessionRepository.DoesNotExistAsync(jti, asTracking, cancellationToken);
             var blacklistedAccessTokenSession = doesBlacklistedAccessTokenSessionNotExist ? new BlacklistedAccessTokenSession(userSession.Id, jti, accessTokenExpiration,  utcNow, 
                 revokedReason, currentUserId, utcNow) : null;
             await _unitOfWork.ExecuteInTransactionAsync(async ct =>

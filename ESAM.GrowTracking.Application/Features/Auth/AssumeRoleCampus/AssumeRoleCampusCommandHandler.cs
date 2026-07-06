@@ -2,7 +2,6 @@
 using ESAM.GrowTracking.Application.Abstractions.Services;
 using ESAM.GrowTracking.Application.Extensions;
 using ESAM.GrowTracking.Application.Features.Auth.AssumeRoleCampus.Responses;
-using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserRoleCampus.Responses;
 using ESAM.GrowTracking.Application.Results;
 using ESAM.GrowTracking.Application.Settings;
 using ESAM.GrowTracking.Application.ValueObjects;

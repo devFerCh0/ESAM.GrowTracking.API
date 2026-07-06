@@ -47,6 +47,8 @@ namespace ESAM.GrowTracking.Application
             services.AddScoped<IAccessTokenClaimsValidatorService, AccessTokenClaimsValidatorService>();
             services.AddScoped<ISecurityValidatorService, SecurityValidatorService>();
             services.AddScoped<IUserSessionService, UserSessionService>();
+            services.AddScoped<IAuthSessionIntegrityValidatorService, AuthSessionIntegrityValidatorService>();
+
             //services.AddScoped<IBlacklistedTokenService, BlacklistedTokenService>();
             //services.AddScoped<ICurrentUserValidatorService, CurrentUserValidatorService>();
             //services.AddScoped<IPurgeExpiredTokensService, PurgeExpiredTokensService>();

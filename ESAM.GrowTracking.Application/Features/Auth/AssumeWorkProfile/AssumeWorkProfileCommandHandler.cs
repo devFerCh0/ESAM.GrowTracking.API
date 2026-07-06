@@ -109,6 +109,12 @@ namespace ESAM.GrowTracking.Application.Features.Auth.AssumeWorkProfile
                 _logger.LogError("AssumeWorkProfileCommand: sesión ausente en los datos retornados. UserId={UserId}, UserSessionId={UserSessionId}", currentUserId, userSession.Id);
                 return Result<AssumeWorkProfileResponse>.Fail(Error.ServerError("No se encontró la sesión del usuario."));
             }
+            if (assumeWorkProfileUser.AssumeWorkProfileUserSession.AssumeWorkProfileSessionWorkProfileSelected is null)
+            {
+                _logger.LogError("AssumeWorkProfileCommand: perfil de trabajo ausente en los datos retornados. UserId={UserId}, UserSessionId={UserSessionId}", currentUserId, 
+                    userSession.Id);
+                return Result<AssumeWorkProfileResponse>.Fail(Error.ServerError("No se encontró perfil de trabajo de usuario seleccionado."));
+            }
             var currentSecurityStamp = _accessTokenClaimsValidatorService.CurrentSecurityStamp;
             var currentTokenVersion = _accessTokenClaimsValidatorService.CurrentTokenVersion;
             var accessToken = _tokenService.GenerateSessionAccessToken(currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId, userSession.Id, utcNow,

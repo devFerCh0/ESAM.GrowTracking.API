@@ -30,7 +30,7 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Login
                 .MaximumLength(100).WithMessage(CommandValidationMessages.DeviceNameMaxLength)
                 .Must(CommandValidationRules.HasNoControlChars).WithMessage(CommandValidationMessages.DeviceNameInvalid);
             RuleFor(lc => lc.ApiClientType).Cascade(CascadeMode.Stop)
-                .NotEmpty().WithMessage(CommandValidationMessages.DeviceNameRequired)
+                .NotEmpty().WithMessage(CommandValidationMessages.ApiClientTypeRequired)
                 .IsInEnum().WithMessage(CommandValidationMessages.ApiClientTypeInvalid);
         }
     }

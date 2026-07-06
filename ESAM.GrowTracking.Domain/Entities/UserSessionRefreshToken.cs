@@ -52,14 +52,15 @@ namespace ESAM.GrowTracking.Domain.Entities
             SetCreatedAudit(createdBy, createdAt);
         }
 
-        public UserSessionRefreshToken(int userSessionId, string identifier, string salt, string tokenHash, DateTime expiresAt, int createdBy, DateTime? createdAt = null)
+        public UserSessionRefreshToken(int userSessionId, string identifier, string salt, string tokenHash, DateTime expiresAt, int rotationCount, int createdBy,
+            DateTime? createdAt = null)
         {
             UserSessionId = userSessionId;
             Identifier = identifier;
             Salt = salt;
             TokenHash = tokenHash;
             ExpiresAt = expiresAt;
-            RotationCount++;
+            RotationCount = rotationCount;
             SetCreatedAudit(createdBy, createdAt);
         }
 

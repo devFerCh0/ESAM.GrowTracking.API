@@ -57,8 +57,4 @@
     <ProjectReference Include="..\ESAM.GrowTracking.Domain\ESAM.GrowTracking.Domain.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Abstractions\Services\Results\" />
-  </ItemGroup>
-
 </Project>
