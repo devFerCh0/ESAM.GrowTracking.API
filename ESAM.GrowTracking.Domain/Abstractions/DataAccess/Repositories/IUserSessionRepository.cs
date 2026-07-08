@@ -13,5 +13,7 @@ namespace ESAM.GrowTracking.Domain.Abstractions.DataAccess.Repositories
         Task<UserSession?> GetByIdAndUserIdAndUserDeviceIdAsync(int id, int userId, int userDeviceId, bool asTracking = false, CancellationToken cancellationToken = default);
         
         Task<UserSession?> GetByIdAndUserIdAsync(int id, int userId, bool asTracking = false, CancellationToken cancellationToken = default);
+
+        Task<List<UserSession>> GetActiveByUserIdAsync(int userId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default);
     }
 }

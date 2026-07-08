@@ -37,5 +37,11 @@ namespace ESAM.GrowTracking.Persistence.DataAccess.Repositories
             var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
             return await query.FirstOrDefaultAsync(us => us.Id == id && us.UserId == userId, cancellationToken);
         }
+
+        public async Task<List<UserSession>> GetActiveByUserIdAsync(int userId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
+        {
+            var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
+            return await query.Where(us => us.UserId == userId && !us.IsRevoked && us.ExpiresAt > utcNow && us.AbsoluteExpiresAt > utcNow).ToListAsync(cancellationToken);
+        }
     }
 }
