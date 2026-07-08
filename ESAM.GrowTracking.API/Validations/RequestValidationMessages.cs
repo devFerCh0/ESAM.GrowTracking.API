@@ -14,5 +14,7 @@
         public const string CampusIdRequired = "La sede es obligatoria.";
         public const string RefreshTokenRequired = "El refresh token es obligatorio.";
         public const string AccessTokenRequired = "El access token no es válido.";
+        public const string UserIdRequired = "El usuario es obligatorio.";
+        public const string UserSessionIdRequired = "La sesión de usuario es obligatoria.";
     }
 }

@@ -34,5 +34,9 @@
         public const string AccessTokenRequired = "El access token no es válido.";
         public const string AccessTokenMinLength = "El access token debe de tener al menos 256 caracteres.";
         public const string AccessTokenMaxLength = "El access token no puede exceder los 1024 caracteres.";
+        public const string UserIdRequired = "El usuario es obligatorio.";
+        public const string UserIdInvalid = "El usuario no es válido.";
+        public const string UserSessionIdRequired = "La sesión de usuario es obligatoria.";
+        public const string UserSessionIdInvalid = "La sesión de usuario no es válida.";
     }
 }

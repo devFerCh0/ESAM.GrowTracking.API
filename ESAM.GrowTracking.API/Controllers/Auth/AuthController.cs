@@ -4,6 +4,8 @@ using ESAM.GrowTracking.API.Controllers.Auth.AssumeRoleCampus;
 using ESAM.GrowTracking.API.Controllers.Auth.AssumeRoleCampus.HttpResponses;
 using ESAM.GrowTracking.API.Controllers.Auth.AssumeWorkProfile;
 using ESAM.GrowTracking.API.Controllers.Auth.AssumeWorkProfile.HttpResponses;
+using ESAM.GrowTracking.API.Controllers.Auth.GetActiveCurrentUserSessions.HttpResponses;
+using ESAM.GrowTracking.API.Controllers.Auth.GetActiveUserSessions.HttpResponses;
 using ESAM.GrowTracking.API.Controllers.Auth.GetCurrentUserRoleCampus.HttpResponses;
 using ESAM.GrowTracking.API.Controllers.Auth.GetCurrentUserWorkProfile.HttpResponses;
 using ESAM.GrowTracking.API.Controllers.Auth.GetUserRoleCampuses;
@@ -11,18 +13,24 @@ using ESAM.GrowTracking.API.Controllers.Auth.Login;
 using ESAM.GrowTracking.API.Controllers.Auth.Login.HttpResponses;
 using ESAM.GrowTracking.API.Controllers.Auth.Logout;
 using ESAM.GrowTracking.API.Controllers.Auth.Refresh;
+using ESAM.GrowTracking.API.Controllers.Auth.RevokeCurrentUserSession;
+using ESAM.GrowTracking.API.Controllers.Auth.RevokeUserSession;
 using ESAM.GrowTracking.API.Extensions;
 using ESAM.GrowTracking.API.Responses;
 using ESAM.GrowTracking.API.Security;
 using ESAM.GrowTracking.Application.Abstractions.Services;
 using ESAM.GrowTracking.Application.Features.Auth.AssumeRoleCampus;
 using ESAM.GrowTracking.Application.Features.Auth.AssumeWorkProfile;
+using ESAM.GrowTracking.Application.Features.Auth.GetActiveCurrentUserSessions;
+using ESAM.GrowTracking.Application.Features.Auth.GetActiveUserSessions;
 using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserRoleCampus;
 using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserWorkProfile;
 using ESAM.GrowTracking.Application.Features.Auth.GetUserRoleCampuses;
 using ESAM.GrowTracking.Application.Features.Auth.Login;
 using ESAM.GrowTracking.Application.Features.Auth.Logout;
 using ESAM.GrowTracking.Application.Features.Auth.Refresh;
+using ESAM.GrowTracking.Application.Features.Auth.RevokeCurrentUserSession;
+using ESAM.GrowTracking.Application.Features.Auth.RevokeUserSession;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -39,19 +47,24 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
         private readonly IValidator<AssumeRoleCampusRequest> _assumeRoleCampusRequestValidator;
         private readonly IValidator<AssumeWorkProfileRequest> _assumeWorkProfileRequestValidator;
         private readonly IValidator<RefreshRequest> _refreshRequesValidator;
+        private readonly IValidator<RevokeUserSessionRequest> _revokeUserSessionRequestValidator;
+        private readonly IValidator<RevokeCurrentUserSessionRequest> _revokeCurrentUserSessionRequestValidator;
         private readonly IMapper _mapper;
         private readonly ISender _sender;
         private readonly IErrorToHttpMapper _errorToHttpMapper;
         private readonly IAuthSessionCookieService _authSessionCookieService;
 
         public AuthController(IValidator<LoginRequest> loginRequesValidator, IValidator<AssumeRoleCampusRequest> assumeRoleCampusRequestValidator, 
-            IValidator<AssumeWorkProfileRequest> assumeWorkProfileRequestValidator, IValidator<RefreshRequest> refreshRequesValidator, IMapper mapper, ISender sender, IErrorToHttpMapper errorToHttpMapper, 
-            IAuthSessionCookieService authSessionCookieService)
+            IValidator<AssumeWorkProfileRequest> assumeWorkProfileRequestValidator, IValidator<RefreshRequest> refreshRequesValidator, 
+            IValidator<RevokeUserSessionRequest> revokeUserSessionRequestValidator, IValidator<RevokeCurrentUserSessionRequest> revokeCurrentUserSessionRequestValidator, 
+            IMapper mapper, ISender sender, IErrorToHttpMapper errorToHttpMapper, IAuthSessionCookieService authSessionCookieService)
         {
             ArgumentNullException.ThrowIfNull(loginRequesValidator);
             ArgumentNullException.ThrowIfNull(assumeRoleCampusRequestValidator);
             ArgumentNullException.ThrowIfNull(assumeWorkProfileRequestValidator);
             ArgumentNullException.ThrowIfNull(refreshRequesValidator);
+            ArgumentNullException.ThrowIfNull(revokeUserSessionRequestValidator);
+            ArgumentNullException.ThrowIfNull(revokeCurrentUserSessionRequestValidator);
             ArgumentNullException.ThrowIfNull(mapper);
             ArgumentNullException.ThrowIfNull(sender);
             ArgumentNullException.ThrowIfNull(errorToHttpMapper);
@@ -60,6 +73,8 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
             _assumeRoleCampusRequestValidator = assumeRoleCampusRequestValidator;
             _assumeWorkProfileRequestValidator = assumeWorkProfileRequestValidator;
             _refreshRequesValidator = refreshRequesValidator;
+            _revokeUserSessionRequestValidator = revokeUserSessionRequestValidator;
+            _revokeCurrentUserSessionRequestValidator = revokeCurrentUserSessionRequestValidator;
             _mapper = mapper;
             _sender = sender;
             _errorToHttpMapper = errorToHttpMapper;
@@ -248,6 +263,85 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
             {
                 _authSessionCookieService.ClearSessionCookies();
             }
+        }
+
+        [Authorize(Policy = AuthorizationPolicies.RequireSessionTypeAccessToken)]
+        [HttpGet("active-user-sessions/{userId:int}")]
+        [ProducesResponseType(typeof(ApiSuccessResponse<List<GetActiveUserSessionsHttpResponse>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<ApiSuccessResponse<List<GetActiveUserSessionsHttpResponse>>>> GetActiveUserSessionsAsync([FromRoute] int userId, 
+            CancellationToken cancellationToken)
+        {
+            var query = new GetActiveUserSessionsQuery(userId);
+            var activeUserSessionsResult = await _sender.Send(query, cancellationToken);
+            if (activeUserSessionsResult.IsFailure)
+                return activeUserSessionsResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
+            var activeUserSessions = _mapper.Map<List<GetActiveUserSessionsHttpResponse>>(activeUserSessionsResult.Value);
+            return Ok(ApiSuccessResponse<List<GetActiveUserSessionsHttpResponse>>.From(activeUserSessions, HttpContext.TraceIdentifier));
+        }
+
+        [Authorize(Policy = AuthorizationPolicies.RequireSessionTypeAccessToken)]
+        [HttpGet("active-current-user-sessions")]
+        [ProducesResponseType(typeof(ApiSuccessResponse<List<GetActiveCurrentUserSessionsHttpResponse>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<ApiSuccessResponse<List<GetActiveCurrentUserSessionsHttpResponse>>>> GetActiveCurrentUserSessionsAsync(CancellationToken cancellationToken)
+        {
+            var query = new GetActiveCurrentUserSessionsQuery();
+            var activeCurrentUserSessionsResult = await _sender.Send(query, cancellationToken);
+            if (activeCurrentUserSessionsResult.IsFailure)
+                return activeCurrentUserSessionsResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
+            var activeCurrentUserSessions = _mapper.Map<List<GetActiveCurrentUserSessionsHttpResponse>>(activeCurrentUserSessionsResult.Value);
+            return Ok(ApiSuccessResponse<List<GetActiveCurrentUserSessionsHttpResponse>>.From(activeCurrentUserSessions, HttpContext.TraceIdentifier));
+        }
+
+        [Authorize(Policy = AuthorizationPolicies.RequireSessionTypeAccessToken)]
+        [HttpPost("revoke-user-session")]
+        [Consumes("application/json")]
+        [ProducesResponseType(typeof(ApiSuccessResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<ApiSuccessResponse>> RevokeUserSessionAsync([FromBody] RevokeUserSessionRequest request, CancellationToken cancellationToken)
+        {
+            var validation = await _revokeUserSessionRequestValidator.ValidateAsync(request, cancellationToken);
+            if (!validation.IsValid)
+                return validation.ToRequestErrorsActionResult(HttpContext.TraceIdentifier);
+            var command = _mapper.Map<RevokeUserSessionCommand>(request);
+            var revokeUserSessionResult = await _sender.Send(command, cancellationToken);
+            if (revokeUserSessionResult.IsFailure)
+                return revokeUserSessionResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
+            return Ok(ApiSuccessResponse.From(HttpContext.TraceIdentifier));
+        }
+
+        [Authorize(Policy = AuthorizationPolicies.RequireSessionTypeAccessToken)]
+        [HttpPost("revoke-current-user-session")]
+        [Consumes("application/json")]
+        [ProducesResponseType(typeof(ApiSuccessResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<ApiSuccessResponse>> RevokeCurrentUserSessionAsync([FromBody] RevokeCurrentUserSessionRequest request, CancellationToken cancellationToken)
+        {
+            var validation = await _revokeCurrentUserSessionRequestValidator.ValidateAsync(request, cancellationToken);
+            if (!validation.IsValid)
+                return validation.ToRequestErrorsActionResult(HttpContext.TraceIdentifier);
+            var command = _mapper.Map<RevokeCurrentUserSessionCommand>(request);
+            var revokeCurrentUserSessionResult = await _sender.Send(command, cancellationToken);
+            if (revokeCurrentUserSessionResult.IsFailure)
+                return revokeCurrentUserSessionResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
+            return Ok(ApiSuccessResponse.From(HttpContext.TraceIdentifier));
         }
 
         private void ApplySessionAndXsrfToken(string refreshTokenRaw, DateTime refreshTokenExpiresAt)

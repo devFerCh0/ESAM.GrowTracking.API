@@ -4,11 +4,15 @@ using ESAM.GrowTracking.API.Adapters;
 using ESAM.GrowTracking.API.ConfigureOptions;
 using ESAM.GrowTracking.API.Controllers.Auth.AssumeRoleCampus;
 using ESAM.GrowTracking.API.Controllers.Auth.AssumeWorkProfile;
+using ESAM.GrowTracking.API.Controllers.Auth.GetActiveCurrentUserSessions;
+using ESAM.GrowTracking.API.Controllers.Auth.GetActiveUserSessions;
 using ESAM.GrowTracking.API.Controllers.Auth.GetCurrentUserRoleCampus;
 using ESAM.GrowTracking.API.Controllers.Auth.GetCurrentUserWorkProfile;
 using ESAM.GrowTracking.API.Controllers.Auth.GetUserRoleCampuses;
 using ESAM.GrowTracking.API.Controllers.Auth.Login;
 using ESAM.GrowTracking.API.Controllers.Auth.Refresh;
+using ESAM.GrowTracking.API.Controllers.Auth.RevokeCurrentUserSession;
+using ESAM.GrowTracking.API.Controllers.Auth.RevokeUserSession;
 using ESAM.GrowTracking.API.Filters;
 using ESAM.GrowTracking.API.HealthChecks;
 using ESAM.GrowTracking.API.Mappers;
@@ -250,6 +254,10 @@ namespace ESAM.GrowTracking.API
                 mce.AddMaps(typeof(GetCurrentUserRoleCampusMappingProfile).Assembly);
                 mce.AddMaps(typeof(GetCurrentUserWorkProfileMappingProfile).Assembly);
                 mce.AddMaps(typeof(RefreshMappingProfile).Assembly);
+                mce.AddMaps(typeof(GetActiveUserSessionMappingProfile).Assembly);
+                mce.AddMaps(typeof(GetActiveCurrentUserSessionMappingProfile).Assembly);
+                mce.AddMaps(typeof(RevokeUserSessionMappingProfile).Assembly);
+                mce.AddMaps(typeof(RevokeCurrentUserSessionMappingProfile).Assembly);
             });
             return services;
         }
@@ -261,6 +269,8 @@ namespace ESAM.GrowTracking.API
             services.AddValidatorsFromAssemblyContaining<AssumeRoleCampusRequestValidator>();
             services.AddValidatorsFromAssemblyContaining<AssumeWorkProfileRequestValidator>();
             services.AddValidatorsFromAssemblyContaining<RefreshRequestValidator>();
+            services.AddValidatorsFromAssemblyContaining<RevokeUserSessionRequestValidator>();
+            services.AddValidatorsFromAssemblyContaining<RevokeCurrentUserSessionRequestValidator>();
             return services;
         }
     }

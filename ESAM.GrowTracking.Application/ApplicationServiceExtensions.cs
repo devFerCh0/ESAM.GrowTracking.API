@@ -1,12 +1,16 @@
 ﻿using ESAM.GrowTracking.Application.Abstractions.Services;
 using ESAM.GrowTracking.Application.Features.Auth.AssumeRoleCampus;
 using ESAM.GrowTracking.Application.Features.Auth.AssumeWorkProfile;
+using ESAM.GrowTracking.Application.Features.Auth.GetActiveCurrentUserSessions;
+using ESAM.GrowTracking.Application.Features.Auth.GetActiveUserSessions;
 using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserRoleCampus;
 using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserWorkProfile;
 using ESAM.GrowTracking.Application.Features.Auth.GetUserRoleCampuses;
 using ESAM.GrowTracking.Application.Features.Auth.Login;
 using ESAM.GrowTracking.Application.Features.Auth.Logout;
 using ESAM.GrowTracking.Application.Features.Auth.Refresh;
+using ESAM.GrowTracking.Application.Features.Auth.RevokeCurrentUserSession;
+using ESAM.GrowTracking.Application.Features.Auth.RevokeUserSession;
 using ESAM.GrowTracking.Application.Services;
 using ESAM.GrowTracking.Application.Settings;
 using FluentValidation;
@@ -68,6 +72,10 @@ namespace ESAM.GrowTracking.Application
                 mrsc.RegisterServicesFromAssembly(typeof(GetCurrentUserWorkProfileQuery).Assembly);
                 mrsc.RegisterServicesFromAssembly(typeof(LogoutCommand).Assembly);
                 mrsc.RegisterServicesFromAssembly(typeof(RefreshCommand).Assembly);
+                mrsc.RegisterServicesFromAssembly(typeof(GetActiveUserSessionsQuery).Assembly);
+                mrsc.RegisterServicesFromAssembly(typeof(GetActiveCurrentUserSessionsQuery).Assembly);
+                mrsc.RegisterServicesFromAssembly(typeof(RevokeUserSessionCommand).Assembly);
+                mrsc.RegisterServicesFromAssembly(typeof(RevokeCurrentUserSessionCommand).Assembly);
             });
         }
 
@@ -79,6 +87,9 @@ namespace ESAM.GrowTracking.Application
             services.AddValidatorsFromAssemblyContaining<AssumeWorkProfileCommandValidator>();
             services.AddValidatorsFromAssemblyContaining<LogoutCommandValidator>();
             services.AddValidatorsFromAssemblyContaining<RefreshCommandValidator>();
+            services.AddValidatorsFromAssemblyContaining<GetActiveUserSessionsQueryValidator>();
+            services.AddValidatorsFromAssemblyContaining<RevokeUserSessionCommandValidator>();
+            services.AddValidatorsFromAssemblyContaining<RevokeCurrentUserSessionCommandValidator>();
         }
     }
 }

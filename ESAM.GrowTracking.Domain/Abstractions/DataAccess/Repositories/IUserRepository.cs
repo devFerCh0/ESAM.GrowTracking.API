@@ -9,5 +9,7 @@ namespace ESAM.GrowTracking.Domain.Abstractions.DataAccess.Repositories
         Task<bool> IsActiveAndUnlockedAsync(int id, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default);
 
         Task<bool> HasValidSecurityCredentialsAsync(int id, string securityStamp, int tokenVersion, bool asTracking = false, CancellationToken cancellationToken = default);
+        
+        Task<bool> ExistsAsync(int id, bool asTracking = false, CancellationToken cancellationToken = default);
     }
 }

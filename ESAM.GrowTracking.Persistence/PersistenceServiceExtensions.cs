@@ -94,6 +94,7 @@ namespace ESAM.GrowTracking.Persistence
             services.AddScoped(typeof(IQuery<,>), typeof(Query<,>));
             services.AddScoped<IUserQuery, UserQuery>();
             services.AddScoped<IUserRoleCampusQuery, UserRoleCampusQuery>();
+            services.AddScoped<IUserSessionQuery, UserSessionQuery>();
         }
     }
 }
