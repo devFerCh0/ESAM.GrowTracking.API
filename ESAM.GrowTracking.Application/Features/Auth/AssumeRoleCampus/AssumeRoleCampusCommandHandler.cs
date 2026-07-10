@@ -99,8 +99,11 @@ namespace ESAM.GrowTracking.Application.Features.Auth.AssumeRoleCampus
             var currentJti = _accessTokenClaimsValidatorService.CurrentJti;
             var currentAccessTokenExpiration = _accessTokenClaimsValidatorService.CurrentAccessTokenExpiration;
             var utcNow = _dateTimeService.UtcNow;
-            var (refreshToken, userSession) = await _userSessionService.CreateUserSessionAsync(currentUserId, currentUserDeviceId, ipAddress, userAgent, currentIsPersistent, 
-                request.WorkProfileId, request.RoleId, request.CampusId, currentJti, currentAccessTokenExpiration, utcNow, asTracking, cancellationToken);
+            var (refreshToken, userSession, userSessionWorkProfileSelectedId, userSessionRoleCampusSelectedId) = await _userSessionService.CreateUserSessionAsync(currentUserId,
+                currentUserDeviceId, ipAddress, userAgent, currentIsPersistent, request.WorkProfileId, request.RoleId, request.CampusId, currentJti, currentAccessTokenExpiration, 
+                utcNow, asTracking, cancellationToken);
+            //var (refreshToken, userSession) = await _userSessionService.CreateUserSessionAsync(currentUserId, currentUserDeviceId, ipAddress, userAgent, currentIsPersistent, 
+            //    request.WorkProfileId, request.RoleId, request.CampusId, currentJti, currentAccessTokenExpiration, utcNow, asTracking, cancellationToken);
             var assumeRoleCampusUser = await _userQuery.GetAssumeRoleCampusUserByUserIdAndUserSessionIdAsync(currentUserId, userSession.Id, asTracking, cancellationToken);
             if (assumeRoleCampusUser is null)
             {
@@ -140,7 +143,10 @@ namespace ESAM.GrowTracking.Application.Features.Auth.AssumeRoleCampus
             var currentSecurityStamp = _accessTokenClaimsValidatorService.CurrentSecurityStamp;
             var currentTokenVersion = _accessTokenClaimsValidatorService.CurrentTokenVersion;
             var accessToken = _tokenService.GenerateSessionAccessToken(currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId, userSession.Id, utcNow,
-                _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, request.WorkProfileId, WorkProfileType.WithRoles, request.RoleId, request.CampusId);
+                _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, userSessionWorkProfileSelectedId, request.WorkProfileId, WorkProfileType.WithRoles, 
+                userSessionRoleCampusSelectedId, request.RoleId, request.CampusId);
+            //var accessToken = _tokenService.GenerateSessionAccessToken(currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId, userSession.Id, utcNow,
+            //    _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, request.WorkProfileId, WorkProfileType.WithRoles, request.RoleId, request.CampusId);
             return Result<AssumeRoleCampusResponse>.Ok(new AssumeRoleCampusResponse(accessToken.Token, accessToken.ExpiresIn, accessToken.ExpiresAt, refreshToken.Identifier,
                 refreshToken.Token, refreshToken.ExpiresIn, refreshToken.ExpiresAt, assumeRoleCampusUser));
         }

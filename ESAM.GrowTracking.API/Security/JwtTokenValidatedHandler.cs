@@ -66,7 +66,7 @@ namespace ESAM.GrowTracking.API.Security
                 return Result.Fail(Error.Unauthorized("El identificador del dispositivo no es válido o no está presente."));
             }
             if (accessTokenType == AccessTokenType.Temporary)
-                return await _securityValidatorService.ValidateAccessTokenTemporaryAsync(jti, userId.Value, securityStamp, tokenVersion.Value, userDeviceId.Value, 
+                return await _securityValidatorService.ValidateAccessTokenTemporaryAsync(jti, userId.Value, securityStamp, tokenVersion.Value, userDeviceId.Value,
                     cancellationToken);
             else
             {
@@ -75,6 +75,12 @@ namespace ESAM.GrowTracking.API.Security
                 {
                     _logger.LogWarning("JwtTokenValidatedHandler: identificador de la sesión de usuario ausente o inválido en los claims.");
                     return Result.Fail(Error.Unauthorized("El identificador de la sesión de usuario no es válido o no está presente."));
+                }
+                var workProfileSelectedId = principal.GetWorkProfileSelectedId();
+                if (workProfileSelectedId is null)
+                {
+                    _logger.LogWarning("JwtTokenValidatedHandler: identificador de perfil de trabajo seleccionado ausente o inválido en los claims.");
+                    return Result.Fail(Error.Unauthorized("El identificador de perfil de trabajo seleccionado no es válido o no está presente."));
                 }
                 var workProfileId = principal.GetWorkProfileId();
                 if (workProfileId is null)
@@ -90,9 +96,15 @@ namespace ESAM.GrowTracking.API.Security
                 }
                 if (workProfileType == WorkProfileType.OnlyWorkProfile)
                     return await _securityValidatorService.ValidateAccessTokenSessionAsync(jti, userId.Value, securityStamp, tokenVersion.Value, userDeviceId.Value,
-                        userSessionId.Value, workProfileId.Value, workProfileType.Value, cancellationToken);
+                        userSessionId.Value, workProfileSelectedId.Value, workProfileId.Value, workProfileType.Value, cancellationToken);
                 else
                 {
+                    var roleCampusSelectedId = principal.GetRoleCampusSelectedId();
+                    if (roleCampusSelectedId is null)
+                    {
+                        _logger.LogWarning("JwtTokenValidatedHandler: identificador del rol de sede selecionado ausente o inválido en los claims.");
+                        return Result.Fail(Error.Unauthorized("El identificador del rol de sede seleccionado no es válido o no está presente."));
+                    }
                     var roleId = principal.GetRoleId();
                     if (roleId is null)
                     {
@@ -105,10 +117,114 @@ namespace ESAM.GrowTracking.API.Security
                         _logger.LogWarning("JwtTokenValidatedHandler: identificador de la sede ausente o inválido en los claims.");
                         return Result.Fail(Error.Unauthorized("El identificador de la sede no es válido o no está presente."));
                     }
-                    return await _securityValidatorService.ValidateAccessTokenSessionAsync(jti, userId.Value, securityStamp, tokenVersion.Value, userDeviceId.Value, 
-                        userSessionId.Value, workProfileId.Value, workProfileType.Value, roleId.Value, campusId.Value, cancellationToken);
+                    return await _securityValidatorService.ValidateAccessTokenSessionAsync(jti, userId.Value, securityStamp, tokenVersion.Value, userDeviceId.Value,
+                        userSessionId.Value, workProfileSelectedId.Value, workProfileId.Value, workProfileType.Value, roleCampusSelectedId.Value, 
+                        roleId.Value, campusId.Value, cancellationToken);
                 }
             }
         }
     }
+
+    //public sealed class JwtTokenValidatedHandler : IJwtTokenValidatedHandler
+    //{
+    //    private readonly ILogger<JwtTokenValidatedHandler> _logger;
+    //    private readonly ISecurityValidatorService _securityValidatorService;
+
+    //    public JwtTokenValidatedHandler(ILogger<JwtTokenValidatedHandler> logger, ISecurityValidatorService securityValidatorService)
+    //    {
+    //        ArgumentNullException.ThrowIfNull(logger);
+    //        ArgumentNullException.ThrowIfNull(securityValidatorService);
+    //        _logger = logger;
+    //        _securityValidatorService = securityValidatorService;
+    //    }
+
+    //    public async Task<Result> HandleAsync(ClaimsPrincipal? principal, CancellationToken cancellationToken = default)
+    //    {
+    //        if (principal is null)
+    //        {
+    //            _logger.LogWarning("JwtTokenValidatedHandler: token principal ausente o inválido.");
+    //            return Result.Fail(Error.Unauthorized("Token principal ausente o inválido."));
+    //        }
+    //        var accessTokenType = principal.GetAccessTokenType();
+    //        if (accessTokenType is null)
+    //        {
+    //            _logger.LogWarning("JwtTokenValidatedHandler: tipo de token ausente o inválido en los claims.");
+    //            return Result.Fail(Error.Unauthorized("El tipo de token no es válido o no está presente."));
+    //        }
+    //        var jti = principal.GetJti();
+    //        if (string.IsNullOrWhiteSpace(jti))
+    //        {
+    //            _logger.LogWarning("JwtTokenValidatedHandler: JTI ausente o inválido en los claims.");
+    //            return Result.Fail(Error.Unauthorized("El identificador único del token no es válido o no está presente."));
+    //        }
+    //        var userId = principal.GetUserId();
+    //        if (userId is null)
+    //        {
+    //            _logger.LogWarning("JwtTokenValidatedHandler: identificador de usuario ausente o inválido en los claims.");
+    //            return Result.Fail(Error.Unauthorized("El identificador de usuario no es válido o no está presente."));
+    //        }
+    //        var securityStamp = principal.GetSecurityStamp();
+    //        if (string.IsNullOrWhiteSpace(securityStamp))
+    //        {
+    //            _logger.LogWarning("JwtTokenValidatedHandler: sello de seguridad ausente o inválido en los claims.");
+    //            return Result.Fail(Error.Unauthorized("El sello de seguridad no es válido o no está presente."));
+    //        }
+    //        var tokenVersion = principal.GetTokenVersion();
+    //        if (tokenVersion is null)
+    //        {
+    //            _logger.LogWarning("JwtTokenValidatedHandler: versión de token ausente o inválida en los claims.");
+    //            return Result.Fail(Error.Unauthorized("La versión del token no es válida o no está presente."));
+    //        }
+    //        var userDeviceId = principal.GetUserDeviceId();
+    //        if (userDeviceId is null)
+    //        {
+    //            _logger.LogWarning("JwtTokenValidatedHandler: identificador de dispositivo ausente o inválido en los claims.");
+    //            return Result.Fail(Error.Unauthorized("El identificador del dispositivo no es válido o no está presente."));
+    //        }
+    //        if (accessTokenType == AccessTokenType.Temporary)
+    //            return await _securityValidatorService.ValidateAccessTokenTemporaryAsync(jti, userId.Value, securityStamp, tokenVersion.Value, userDeviceId.Value, 
+    //                cancellationToken);
+    //        else
+    //        {
+    //            var userSessionId = principal.GetUserSessionId();
+    //            if (userSessionId is null)
+    //            {
+    //                _logger.LogWarning("JwtTokenValidatedHandler: identificador de la sesión de usuario ausente o inválido en los claims.");
+    //                return Result.Fail(Error.Unauthorized("El identificador de la sesión de usuario no es válido o no está presente."));
+    //            }
+    //            var workProfileId = principal.GetWorkProfileId();
+    //            if (workProfileId is null)
+    //            {
+    //                _logger.LogWarning("JwtTokenValidatedHandler: identificador de perfil de trabajo ausente o inválido en los claims.");
+    //                return Result.Fail(Error.Unauthorized("El identificador de perfil de trabajo no es válido o no está presente."));
+    //            }
+    //            var workProfileType = principal.GetWorkProfileType();
+    //            if (workProfileType is null)
+    //            {
+    //                _logger.LogWarning("JwtTokenValidatedHandler: tipo de perfil de trabajo ausente o inválido en los claims.");
+    //                return Result.Fail(Error.Unauthorized("El tipo de perfil de trabajo no es válido o no está presente."));
+    //            }
+    //            if (workProfileType == WorkProfileType.OnlyWorkProfile)
+    //                return await _securityValidatorService.ValidateAccessTokenSessionAsync(jti, userId.Value, securityStamp, tokenVersion.Value, userDeviceId.Value,
+    //                    userSessionId.Value, workProfileId.Value, workProfileType.Value, cancellationToken);
+    //            else
+    //            {
+    //                var roleId = principal.GetRoleId();
+    //                if (roleId is null)
+    //                {
+    //                    _logger.LogWarning("JwtTokenValidatedHandler: identificador del rol ausente o inválido en los claims.");
+    //                    return Result.Fail(Error.Unauthorized("El identificador del rol no es válido o no está presente."));
+    //                }
+    //                var campusId = principal.GetCampusId();
+    //                if (campusId is null)
+    //                {
+    //                    _logger.LogWarning("JwtTokenValidatedHandler: identificador de la sede ausente o inválido en los claims.");
+    //                    return Result.Fail(Error.Unauthorized("El identificador de la sede no es válido o no está presente."));
+    //                }
+    //                return await _securityValidatorService.ValidateAccessTokenSessionAsync(jti, userId.Value, securityStamp, tokenVersion.Value, userDeviceId.Value, 
+    //                    userSessionId.Value, workProfileId.Value, workProfileType.Value, roleId.Value, campusId.Value, cancellationToken);
+    //            }
+    //        }
+    //    }
+    //}
 }

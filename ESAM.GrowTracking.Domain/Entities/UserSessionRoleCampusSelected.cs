@@ -33,9 +33,24 @@ namespace ESAM.GrowTracking.Domain.Entities
             CreatedAt = createdAt ?? DateTime.UtcNow;
         }
 
+        public UserSessionRoleCampusSelected(int userSessionWorkProfileSelectedId, int userId, int roleId, int campusId, DateTime? createdAt = null)
+        {
+            UserSessionWorkProfileSelectedId = userSessionWorkProfileSelectedId;
+            UserId = userId;
+            RoleId = roleId;
+            CampusId = campusId;
+            IsActive = true;
+            CreatedAt = createdAt ?? DateTime.UtcNow;
+        }
+
         public void AddUserSessionWorkProfileSelectedId(int userSessionWorkProfileSelectedId)
         {
             UserSessionWorkProfileSelectedId = userSessionWorkProfileSelectedId;
+        }
+
+        public void Deactivate()
+        {
+            IsActive = false;
         }
     }
 

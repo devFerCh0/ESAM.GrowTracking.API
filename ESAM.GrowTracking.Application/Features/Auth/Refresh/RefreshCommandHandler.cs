@@ -80,22 +80,25 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Refresh
                 currentUserId, currentUserSessionId, currentUserDeviceId, utcNow, asTracking, cancellationToken);
         }
 
-        private async Task<Result<RefreshResponse>> FinalizeSuccessfulRefreshAsync(UserSession userSession, UserSessionRefreshToken userSessionRefreshToken, string currentJti, 
-            DateTime currentAccessTokenExpiration, int currentUserId, int currentUserSessionId, int currentUserDeviceId, DateTime utcNow, bool asTracking, 
+        private async Task<Result<RefreshResponse>> FinalizeSuccessfulRefreshAsync(UserSession userSession, UserSessionRefreshToken userSessionRefreshToken, string currentJti,
+            DateTime currentAccessTokenExpiration, int currentUserId, int currentUserSessionId, int currentUserDeviceId, DateTime utcNow, bool asTracking,
             CancellationToken cancellationToken)
         {
             var currentSecurityStamp = _accessTokenClaimsValidatorService.CurrentSecurityStamp;
             var currentTokenVersion = _accessTokenClaimsValidatorService.CurrentTokenVersion;
+            var currentUserSessionWorkProfileSelectedId = _accessTokenClaimsValidatorService.CurrentWorkProfileSelectedId;
             var currentWorkProfileId = _accessTokenClaimsValidatorService.CurrentWorkProfileId;
             var currentWorkProfileType = _accessTokenClaimsValidatorService.CurrentWorkProfileType;
+            var currentUserSessionRoleCampusSelectedId = _accessTokenClaimsValidatorService.CurrentRoleCampusSelectedId;
             var currentRoleId = _accessTokenClaimsValidatorService.CurrentRoleId;
             var currentCampusId = _accessTokenClaimsValidatorService.CurrentCampusId;
             var isOnlyWorkProfile = currentWorkProfileType == WorkProfileType.OnlyWorkProfile;
             var securityValidationResult = isOnlyWorkProfile
-                ? await _securityValidatorService.ValidateAccessTokenSessionAsync(currentJti, currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId, 
-                    currentUserSessionId, currentWorkProfileId, currentWorkProfileType, cancellationToken)
-                : await _securityValidatorService.ValidateAccessTokenSessionAsync(currentJti, currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId, 
-                    currentUserSessionId, currentWorkProfileId, currentWorkProfileType, currentRoleId, currentCampusId, cancellationToken);
+                ? await _securityValidatorService.ValidateAccessTokenSessionAsync(currentJti, currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId,
+                    currentUserSessionId, currentUserSessionWorkProfileSelectedId, currentWorkProfileId, currentWorkProfileType, cancellationToken)
+                : await _securityValidatorService.ValidateAccessTokenSessionAsync(currentJti, currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId,
+                    currentUserSessionId, currentUserSessionWorkProfileSelectedId, currentWorkProfileId, currentWorkProfileType, currentUserSessionRoleCampusSelectedId, 
+                    currentRoleId, currentCampusId, cancellationToken);
             if (securityValidationResult.IsFailure)
             {
                 var reason = isOnlyWorkProfile
@@ -113,13 +116,55 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Refresh
             var refreshToken = await _userSessionService.RotateUserSessionAsync(userSession, userSessionRefreshToken, currentJti, currentAccessTokenExpiration,
                 "Refresh: Token reemplazado exitosamente por rotación normal.", currentUserId, utcNow, asTracking, cancellationToken);
             var accessToken = isOnlyWorkProfile
-                ? _tokenService.GenerateSessionAccessToken(currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId, currentUserSessionId, utcNow, 
-                    _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, currentWorkProfileId, currentWorkProfileType)
-                : _tokenService.GenerateSessionAccessToken(currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId, currentUserSessionId, utcNow, 
-                    _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, currentWorkProfileId, currentWorkProfileType, currentRoleId, currentCampusId);
-            return Result<RefreshResponse>.Ok(new RefreshResponse(accessToken.Token, accessToken.ExpiresIn, accessToken.ExpiresAt, refreshToken.Identifier, refreshToken.Token, 
+                ? _tokenService.GenerateSessionAccessToken(currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId, currentUserSessionId, utcNow,
+                    _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, currentUserSessionWorkProfileSelectedId, currentWorkProfileId, currentWorkProfileType)
+                : _tokenService.GenerateSessionAccessToken(currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId, currentUserSessionId, utcNow,
+                    _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, currentUserSessionWorkProfileSelectedId, currentWorkProfileId, currentWorkProfileType, 
+                    currentUserSessionRoleCampusSelectedId, currentRoleId, currentCampusId);
+            return Result<RefreshResponse>.Ok(new RefreshResponse(accessToken.Token, accessToken.ExpiresIn, accessToken.ExpiresAt, refreshToken.Identifier, refreshToken.Token,
                 refreshToken.ExpiresIn, refreshToken.ExpiresAt));
         }
+
+        //private async Task<Result<RefreshResponse>> FinalizeSuccessfulRefreshAsync(UserSession userSession, UserSessionRefreshToken userSessionRefreshToken, string currentJti, 
+        //    DateTime currentAccessTokenExpiration, int currentUserId, int currentUserSessionId, int currentUserDeviceId, DateTime utcNow, bool asTracking, 
+        //    CancellationToken cancellationToken)
+        //{
+        //    var currentSecurityStamp = _accessTokenClaimsValidatorService.CurrentSecurityStamp;
+        //    var currentTokenVersion = _accessTokenClaimsValidatorService.CurrentTokenVersion;
+        //    var currentWorkProfileId = _accessTokenClaimsValidatorService.CurrentWorkProfileId;
+        //    var currentWorkProfileType = _accessTokenClaimsValidatorService.CurrentWorkProfileType;
+        //    var currentRoleId = _accessTokenClaimsValidatorService.CurrentRoleId;
+        //    var currentCampusId = _accessTokenClaimsValidatorService.CurrentCampusId;
+        //    var isOnlyWorkProfile = currentWorkProfileType == WorkProfileType.OnlyWorkProfile;
+        //    var securityValidationResult = isOnlyWorkProfile
+        //        ? await _securityValidatorService.ValidateAccessTokenSessionAsync(currentJti, currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId, 
+        //            currentUserSessionId, currentWorkProfileId, currentWorkProfileType, cancellationToken)
+        //        : await _securityValidatorService.ValidateAccessTokenSessionAsync(currentJti, currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId, 
+        //            currentUserSessionId, currentWorkProfileId, currentWorkProfileType, currentRoleId, currentCampusId, cancellationToken);
+        //    if (securityValidationResult.IsFailure)
+        //    {
+        //        var reason = isOnlyWorkProfile
+        //            ? "Refresh: Estado de usuario o contexto de seguridad alterado (SecurityStamp/TokenVersion/Dispositivo)."
+        //            : "Refresh: Contexto de seguridad alterado o revocación de permisos (Rol/Campus/SecurityStamp).";
+        //        var errorMessage = isOnlyWorkProfile
+        //            ? "Tu sesión ha expirado por un cambio en la seguridad de la cuenta. Inicia sesión nuevamente."
+        //            : "Los permisos de tu cuenta o perfil han cambiado. Inicia sesión nuevamente.";
+        //        _logger.LogWarning("Refresh: Invalidación de seguridad para sesión {SessionId}. JTI: {Jti}. Motivo: {Reason}", currentUserSessionId, currentJti, reason);
+        //        await _userSessionService.RevokeUserSessionAndAccessTokenSessionAsync(userSession, currentJti, currentAccessTokenExpiration, reason, currentUserId,
+        //            currentUserSessionId, utcNow, asTracking, cancellationToken);
+        //        return Result<RefreshResponse>.Fail(Error.Unauthorized(errorMessage));
+        //    }
+        //    _logger.LogInformation("Refresh: Validación exitosa para sesión {SessionId}. Procediendo con rotación. JTI: {Jti}.", currentUserSessionId, currentJti);
+        //    var refreshToken = await _userSessionService.RotateUserSessionAsync(userSession, userSessionRefreshToken, currentJti, currentAccessTokenExpiration,
+        //        "Refresh: Token reemplazado exitosamente por rotación normal.", currentUserId, utcNow, asTracking, cancellationToken);
+        //    var accessToken = isOnlyWorkProfile
+        //        ? _tokenService.GenerateSessionAccessToken(currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId, currentUserSessionId, utcNow, 
+        //            _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, currentWorkProfileId, currentWorkProfileType)
+        //        : _tokenService.GenerateSessionAccessToken(currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId, currentUserSessionId, utcNow, 
+        //            _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, currentWorkProfileId, currentWorkProfileType, currentRoleId, currentCampusId);
+        //    return Result<RefreshResponse>.Ok(new RefreshResponse(accessToken.Token, accessToken.ExpiresIn, accessToken.ExpiresAt, refreshToken.Identifier, refreshToken.Token, 
+        //        refreshToken.ExpiresIn, refreshToken.ExpiresAt));
+        //}
     }
 
     //public class RefreshCommandHandler : IRequestHandler<RefreshCommand, Result<RefreshResponse>>

@@ -5,14 +5,28 @@ namespace ESAM.GrowTracking.Application.Abstractions.Services
 {
     public interface ISecurityValidatorService
     {
-        Task<Result> ValidateAccessTokenTemporaryAsync(string currentJti, int currentUserId, string currentSecurityStamp, int currentTokenVersion, int currentUserDeviceId, 
+        Task<Result> ValidateAccessTokenTemporaryAsync(string currentJti, int currentUserId, string currentSecurityStamp, int currentTokenVersion, int currentUserDeviceId,
             CancellationToken cancellationToken = default);
-
-        Task<Result> ValidateAccessTokenSessionAsync(string currentJti, int currentUserId, string currentSecurityStamp, int currentTokenVersion, int currentUserDeviceId, 
-            int currentUserSessionId, int currentWorkProfileId, WorkProfileType workProfileType, CancellationToken cancellationToken = default);
 
         Task<Result> ValidateAccessTokenSessionAsync(string currentJti, int currentUserId, string currentSecurityStamp, int currentTokenVersion, int currentUserDeviceId,
-            int currentUserSessionId, int currentWorkProfileId, WorkProfileType workProfileType, int currentRoleId, int currentCampusId,
+            int currentUserSessionId, int currentUserSessionWorkProfileSelectedId, int currentWorkProfileId, WorkProfileType workProfileType, 
             CancellationToken cancellationToken = default);
+
+        Task<Result> ValidateAccessTokenSessionAsync(string currentJti, int currentUserId, string currentSecurityStamp, int currentTokenVersion, int currentUserDeviceId,
+            int currentUserSessionId, int currentUserSessionWorkProfileSelectedId, int currentWorkProfileId, WorkProfileType workProfileType, 
+            int currentUserSessionRoleCampusSelectedId, int currentRoleId, int currentCampusId, CancellationToken cancellationToken = default);
     }
+
+    //public interface ISecurityValidatorService
+    //{
+    //    Task<Result> ValidateAccessTokenTemporaryAsync(string currentJti, int currentUserId, string currentSecurityStamp, int currentTokenVersion, int currentUserDeviceId, 
+    //        CancellationToken cancellationToken = default);
+
+    //    Task<Result> ValidateAccessTokenSessionAsync(string currentJti, int currentUserId, string currentSecurityStamp, int currentTokenVersion, int currentUserDeviceId, 
+    //        int currentUserSessionId, int currentWorkProfileId, WorkProfileType workProfileType, CancellationToken cancellationToken = default);
+
+    //    Task<Result> ValidateAccessTokenSessionAsync(string currentJti, int currentUserId, string currentSecurityStamp, int currentTokenVersion, int currentUserDeviceId,
+    //        int currentUserSessionId, int currentWorkProfileId, WorkProfileType workProfileType, int currentRoleId, int currentCampusId,
+    //        CancellationToken cancellationToken = default);
+    //}
 }
