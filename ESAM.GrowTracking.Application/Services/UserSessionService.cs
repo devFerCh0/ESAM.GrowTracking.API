@@ -41,20 +41,21 @@ namespace ESAM.GrowTracking.Application.Services
             _blacklistedAccessTokenSessionRepository = blacklistedAccessTokenSessionRepository;
         }
 
-        public async Task<(RefreshTokenDTO, UserSession)> CreateUserSessionAsync(int currentUserId, int currentUserDeviceId, string? ipAddress, string? userAgent, 
-            bool isPersistent, int currentWorkProfileId, int currentRoleId, int currentCampusId, string jti, DateTime accessTokenExpiration, DateTime utcNow, 
+        public async Task<(RefreshTokenDTO, UserSession)> CreateUserSessionAsync(int currentUserId, int currentUserDeviceId, string? ipAddress, string? userAgent,
+            bool isPersistent, int currentWorkProfileId, int currentRoleId, int currentCampusId, string jti, DateTime accessTokenExpiration, DateTime utcNow,
             bool asTracking = false, CancellationToken cancellationToken = default)
         {
             var (userSession, userSessionWorkProfileSelected, userSessionRefreshToken, refreshToken, blacklistedAccessTokenTemporary) = await PrepareSessionCreationAsync(
                 currentUserId, currentUserDeviceId, ipAddress, userAgent, isPersistent, currentWorkProfileId, jti, accessTokenExpiration, utcNow, asTracking, cancellationToken);
-            var userSessionRoleCampusSelected = new UserSessionRoleCampusSelected(currentUserId, currentRoleId, currentCampusId);
+            var userSessionRoleCampusSelected = new UserSessionRoleCampusSelected(currentUserId, currentRoleId, currentCampusId, utcNow);
             await _unitOfWork.ExecuteInTransactionAsync(async ct =>
             {
                 await _unitOfWork.UserSessions.InsertAsync(userSession, ct);
                 await _unitOfWork.SaveChangesAsync(ct);
                 userSessionWorkProfileSelected.AddUserSessionId(userSession.Id);
                 await _unitOfWork.UserSessionWorkProfilesSelected.InsertAsync(userSessionWorkProfileSelected, ct);
-                userSessionRoleCampusSelected.AddUserSessionId(userSession.Id);
+                await _unitOfWork.SaveChangesAsync(ct);
+                userSessionRoleCampusSelected.AddUserSessionWorkProfileSelectedId(userSessionWorkProfileSelected.Id);
                 await _unitOfWork.UserSessionRoleCampusesSelected.InsertAsync(userSessionRoleCampusSelected, ct);
                 userSessionRefreshToken.AddUserSessionId(userSession.Id);
                 await _unitOfWork.UserSessionRefreshTokens.InsertAsync(userSessionRefreshToken, ct);
@@ -63,6 +64,29 @@ namespace ESAM.GrowTracking.Application.Services
             }, cancellationToken: cancellationToken);
             return (refreshToken, userSession);
         }
+
+        //public async Task<(RefreshTokenDTO, UserSession)> CreateUserSessionAsync(int currentUserId, int currentUserDeviceId, string? ipAddress, string? userAgent, 
+        //    bool isPersistent, int currentWorkProfileId, int currentRoleId, int currentCampusId, string jti, DateTime accessTokenExpiration, DateTime utcNow, 
+        //    bool asTracking = false, CancellationToken cancellationToken = default)
+        //{
+        //    var (userSession, userSessionWorkProfileSelected, userSessionRefreshToken, refreshToken, blacklistedAccessTokenTemporary) = await PrepareSessionCreationAsync(
+        //        currentUserId, currentUserDeviceId, ipAddress, userAgent, isPersistent, currentWorkProfileId, jti, accessTokenExpiration, utcNow, asTracking, cancellationToken);
+        //    var userSessionRoleCampusSelected = new UserSessionRoleCampusSelected(currentUserId, currentRoleId, currentCampusId);
+        //    await _unitOfWork.ExecuteInTransactionAsync(async ct =>
+        //    {
+        //        await _unitOfWork.UserSessions.InsertAsync(userSession, ct);
+        //        await _unitOfWork.SaveChangesAsync(ct);
+        //        userSessionWorkProfileSelected.AddUserSessionId(userSession.Id);
+        //        await _unitOfWork.UserSessionWorkProfilesSelected.InsertAsync(userSessionWorkProfileSelected, ct);
+        //        userSessionRoleCampusSelected.AddUserSessionId(userSession.Id);
+        //        await _unitOfWork.UserSessionRoleCampusesSelected.InsertAsync(userSessionRoleCampusSelected, ct);
+        //        userSessionRefreshToken.AddUserSessionId(userSession.Id);
+        //        await _unitOfWork.UserSessionRefreshTokens.InsertAsync(userSessionRefreshToken, ct);
+        //        if (blacklistedAccessTokenTemporary is not null)
+        //            await _unitOfWork.BlacklistedAccessTokensTemporary.InsertAsync(blacklistedAccessTokenTemporary, ct);
+        //    }, cancellationToken: cancellationToken);
+        //    return (refreshToken, userSession);
+        //}
 
         public async Task<(RefreshTokenDTO, UserSession)> CreateUserSessionAsync(int currentUserId, int currentUserDeviceId, string? ipAddress, string? userAgent, 
             bool isPersistent, int currentWorkProfileId, string jti, DateTime accessTokenExpiration, DateTime utcNow, bool asTracking = false, 
@@ -83,22 +107,6 @@ namespace ESAM.GrowTracking.Application.Services
             }, cancellationToken: cancellationToken);
             return (refreshToken, userSession);
         }
-
-        //public async Task RevokeUserSessionAsync(UserSession userSession, string revokedReason, int currentUserId, DateTime utcNow, bool asTracking = false, 
-        //    CancellationToken cancellationToken = default)
-        //{
-        //    var (userSessionToRevoke, userSessionRefreshTokensToRevoke, blacklistedRefreshTokens) = await PrepareSessionRevocationAsync(userSession, revokedReason, currentUserId, 
-        //        utcNow, asTracking, cancellationToken);
-        //    await _unitOfWork.ExecuteInTransactionAsync(async ct =>
-        //    {
-        //        if (userSessionToRevoke is not null)
-        //            await _unitOfWork.UserSessions.UpdateAsync(userSessionToRevoke, ct);
-        //        if (userSessionRefreshTokensToRevoke.Count > 0)
-        //            await _unitOfWork.UserSessionRefreshTokens.UpdateRangeAsync(userSessionRefreshTokensToRevoke, ct);
-        //        if (blacklistedRefreshTokens.Count > 0)
-        //            await _unitOfWork.BlacklistedRefreshTokens.InsertRangeAsync(blacklistedRefreshTokens, ct);
-        //    }, cancellationToken: cancellationToken);
-        //}
 
         public async Task RevokeUserSessionAndAccessTokenTemporaryAsync(UserSession userSession, string jti, DateTime accessTokenExpiration, string revokedReason, 
             int currentUserId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
@@ -272,23 +280,41 @@ namespace ESAM.GrowTracking.Application.Services
             return refreshToken;
         }
 
-        private async Task<(UserSession UserSession, UserSessionWorkProfileSelected UserSessionWorkProfileSelected, UserSessionRefreshToken UserSessionRefreshToken, 
-            RefreshTokenDTO RefreshToken, BlacklistedAccessTokenTemporary? BlacklistedAccessTokenTemporary)> PrepareSessionCreationAsync(int currentUserId, int currentUserDeviceId, 
-                string? ipAddress, string? userAgent, bool isPersistent, int currentWorkProfileId, string jti, DateTime accessTokenExpiration, DateTime utcNow, 
+        private async Task<(UserSession UserSession, UserSessionWorkProfileSelected UserSessionWorkProfileSelected, UserSessionRefreshToken UserSessionRefreshToken,
+            RefreshTokenDTO RefreshToken, BlacklistedAccessTokenTemporary? BlacklistedAccessTokenTemporary)> PrepareSessionCreationAsync(int currentUserId, int currentUserDeviceId,
+                string? ipAddress, string? userAgent, bool isPersistent, int currentWorkProfileId, string jti, DateTime accessTokenExpiration, DateTime utcNow,
                 bool asTracking = false, CancellationToken cancellationToken = default)
         {
             var (refreshToken, tokenSalt, tokenHash) = GenerateRefreshTokenWithHash(utcNow);
             var userSession = new UserSession(currentUserId, currentUserDeviceId, ipAddress, userAgent, utcNow.AddDays(_tokenLifetimeSettings.SessionIdleWindowDays),
                 utcNow.AddDays(_tokenLifetimeSettings.SessionAbsoluteLifetimeDays), isPersistent, currentUserId, utcNow);
-            var userSessionWorkProfileSelected = new UserSessionWorkProfileSelected(currentUserId, currentWorkProfileId);
+            var userSessionWorkProfileSelected = new UserSessionWorkProfileSelected(currentUserId, currentWorkProfileId, utcNow);
             userSession.UpdateLastActivity(utcNow, currentUserId, utcNow);
             var userSessionRefreshToken = new UserSessionRefreshToken(refreshToken.Identifier, tokenSalt, tokenHash, refreshToken.ExpiresAt, currentUserId, utcNow);
             userSessionRefreshToken.UpdateLastUsedAt(utcNow, currentUserId, utcNow);
             var doesBlacklistedAccessTokenTemporaryNotExist = await _blacklistedAccessTokenTemporaryRepository.DoesNotExistAsync(jti, asTracking, cancellationToken);
-            var blacklistedAccessTokenTemporary = doesBlacklistedAccessTokenTemporaryNotExist ? new BlacklistedAccessTokenTemporary(currentUserId, jti, accessTokenExpiration, 
+            var blacklistedAccessTokenTemporary = doesBlacklistedAccessTokenTemporaryNotExist ? new BlacklistedAccessTokenTemporary(currentUserId, jti, accessTokenExpiration,
                 utcNow, "Inicio de sesión asumido (Autenticado): Access token temporal revocado.", currentUserId, utcNow) : null;
             return (userSession, userSessionWorkProfileSelected, userSessionRefreshToken, refreshToken, blacklistedAccessTokenTemporary);
         }
+
+        //private async Task<(UserSession UserSession, UserSessionWorkProfileSelected UserSessionWorkProfileSelected, UserSessionRefreshToken UserSessionRefreshToken, 
+        //    RefreshTokenDTO RefreshToken, BlacklistedAccessTokenTemporary? BlacklistedAccessTokenTemporary)> PrepareSessionCreationAsync(int currentUserId, int currentUserDeviceId, 
+        //        string? ipAddress, string? userAgent, bool isPersistent, int currentWorkProfileId, string jti, DateTime accessTokenExpiration, DateTime utcNow, 
+        //        bool asTracking = false, CancellationToken cancellationToken = default)
+        //{
+        //    var (refreshToken, tokenSalt, tokenHash) = GenerateRefreshTokenWithHash(utcNow);
+        //    var userSession = new UserSession(currentUserId, currentUserDeviceId, ipAddress, userAgent, utcNow.AddDays(_tokenLifetimeSettings.SessionIdleWindowDays),
+        //        utcNow.AddDays(_tokenLifetimeSettings.SessionAbsoluteLifetimeDays), isPersistent, currentUserId, utcNow);
+        //    var userSessionWorkProfileSelected = new UserSessionWorkProfileSelected(currentUserId, currentWorkProfileId);
+        //    userSession.UpdateLastActivity(utcNow, currentUserId, utcNow);
+        //    var userSessionRefreshToken = new UserSessionRefreshToken(refreshToken.Identifier, tokenSalt, tokenHash, refreshToken.ExpiresAt, currentUserId, utcNow);
+        //    userSessionRefreshToken.UpdateLastUsedAt(utcNow, currentUserId, utcNow);
+        //    var doesBlacklistedAccessTokenTemporaryNotExist = await _blacklistedAccessTokenTemporaryRepository.DoesNotExistAsync(jti, asTracking, cancellationToken);
+        //    var blacklistedAccessTokenTemporary = doesBlacklistedAccessTokenTemporaryNotExist ? new BlacklistedAccessTokenTemporary(currentUserId, jti, accessTokenExpiration, 
+        //        utcNow, "Inicio de sesión asumido (Autenticado): Access token temporal revocado.", currentUserId, utcNow) : null;
+        //    return (userSession, userSessionWorkProfileSelected, userSessionRefreshToken, refreshToken, blacklistedAccessTokenTemporary);
+        //}
 
         private (RefreshTokenDTO, string, string) GenerateRefreshTokenWithHash(DateTime utcNow)
         {

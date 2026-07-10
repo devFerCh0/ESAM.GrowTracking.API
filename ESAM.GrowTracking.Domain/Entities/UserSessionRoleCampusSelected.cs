@@ -1,10 +1,14 @@
-﻿namespace ESAM.GrowTracking.Domain.Entities
+﻿using ESAM.GrowTracking.Domain.Abstractions;
+
+namespace ESAM.GrowTracking.Domain.Entities
 {
-    public sealed class UserSessionRoleCampusSelected
+    public sealed class UserSessionRoleCampusSelected : IEntity<int>
     {
         private UserSessionRoleCampusSelected() { }
 
-        public int UserSessionId { get; private set; }
+        public int Id { get; private set; }
+
+        public int UserSessionWorkProfileSelectedId { get; private set; }
 
         public int UserId { get; private set; }
 
@@ -12,20 +16,55 @@
 
         public int CampusId { get; private set; }
 
+        public bool IsActive { get; private set; }
+
+        public DateTime CreatedAt { get; private set; }
+
         public UserSessionWorkProfileSelected UserSessionWorkProfileSelected { get; private set; } = null!;
 
         public UserRoleCampus UserRoleCampus { get; private set; } = null!;
 
-        public UserSessionRoleCampusSelected(int userId, int roleId, int campusId)
+        public UserSessionRoleCampusSelected(int userId, int roleId, int campusId, DateTime? createdAt = null)
         {
             UserId = userId;
             RoleId = roleId;
             CampusId = campusId;
+            IsActive = true;
+            CreatedAt = createdAt ?? DateTime.UtcNow;
         }
 
-        public void AddUserSessionId(int userSessionId)
+        public void AddUserSessionWorkProfileSelectedId(int userSessionWorkProfileSelectedId)
         {
-            UserSessionId = userSessionId;
+            UserSessionWorkProfileSelectedId = userSessionWorkProfileSelectedId;
         }
     }
+
+    //public sealed class UserSessionRoleCampusSelected
+    //{
+    //    private UserSessionRoleCampusSelected() { }
+
+    //    public int UserSessionId { get; private set; }
+
+    //    public int UserId { get; private set; }
+
+    //    public int RoleId { get; private set; }
+
+    //    public int CampusId { get; private set; }
+
+    //    public UserSessionWorkProfileSelected UserSessionWorkProfileSelected { get; private set; } = null!;
+
+    //    public UserRoleCampus UserRoleCampus { get; private set; } = null!;
+
+    //    public UserSessionRoleCampusSelected(int userId, int roleId, int campusId)
+    //    {
+    //        UserId = userId;
+    //        RoleId = roleId;
+    //        CampusId = campusId;
+    //    }
+
+    //    public void AddUserSessionId(int userSessionId)
+    //    {
+    //        UserSessionId = userSessionId;
+    //    }
+    //}
 }

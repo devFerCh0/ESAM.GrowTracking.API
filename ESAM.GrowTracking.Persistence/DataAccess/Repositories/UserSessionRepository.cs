@@ -12,8 +12,11 @@ namespace ESAM.GrowTracking.Persistence.DataAccess.Repositories
             CancellationToken cancellationToken = default)
         {
             var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
-            return await query.AnyAsync(us => us.Id == id && us.UserId == userId && !us.IsRevoked && us.ExpiresAt > utcNow && us.AbsoluteExpiresAt > utcNow && 
-                us.UserSessionWorkProfileSelected.WorkProfileId == workProfileId, cancellationToken);
+            return await query.AnyAsync(us => us.Id == id && us.UserId == userId && !us.IsRevoked && us.ExpiresAt > utcNow && us.AbsoluteExpiresAt > utcNow &&
+                us.UserSessionWorkProfilesSelected.Any(uswps => uswps.IsActive && uswps.WorkProfileId == workProfileId), cancellationToken);
+            //var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
+            //return await query.AnyAsync(us => us.Id == id && us.UserId == userId && !us.IsRevoked && us.ExpiresAt > utcNow && us.AbsoluteExpiresAt > utcNow && 
+            //    us.UserSessionWorkProfileSelected.WorkProfileId == workProfileId, cancellationToken);
         }
 
         public async Task<bool> IsUnRevokedAndUnExpiredForRoleCampusAsync(int id, int userId, int workProfileId, int roleId, int campusId, DateTime utcNow, bool asTracking = false, 
@@ -21,8 +24,11 @@ namespace ESAM.GrowTracking.Persistence.DataAccess.Repositories
         {
             var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
             return await query.AnyAsync(us => us.Id == id && us.UserId == userId && !us.IsRevoked && us.ExpiresAt > utcNow && us.AbsoluteExpiresAt > utcNow && 
-                us.UserSessionWorkProfileSelected.WorkProfileId == workProfileId && us.UserSessionWorkProfileSelected.UserSessionRoleCampusSelected.RoleId == roleId && 
-                us.UserSessionWorkProfileSelected.UserSessionRoleCampusSelected.CampusId == campusId, cancellationToken);
+                us.UserSessionWorkProfilesSelected.Any(uswps => uswps.IsActive && uswps.WorkProfileId == workProfileId && 
+                    uswps.UserSessionRoleCampusesSelected.Any(usrcs => usrcs.IsActive && usrcs.RoleId == roleId && usrcs.CampusId == campusId)), cancellationToken);
+            //return await query.AnyAsync(us => us.Id == id && us.UserId == userId && !us.IsRevoked && us.ExpiresAt > utcNow && us.AbsoluteExpiresAt > utcNow && 
+            //    us.UserSessionWorkProfileSelected.WorkProfileId == workProfileId && us.UserSessionWorkProfileSelected.UserSessionRoleCampusSelected.RoleId == roleId && 
+            //    us.UserSessionWorkProfileSelected.UserSessionRoleCampusSelected.CampusId == campusId, cancellationToken);
         }
 
         public async Task<UserSession?> GetByIdAndUserIdAndUserDeviceIdAsync(int id, int userId, int userDeviceId, bool asTracking = false,
