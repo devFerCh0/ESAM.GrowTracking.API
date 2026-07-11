@@ -2,16 +2,4 @@ completar entidades
 como usar las tablas de auditoria
 Métodos para Auth
 
-lffp.1986	-->	GET		-->	sessions			-->	Consultar sesiones activas del usuario
-				DELETE	-->	sessions/sessionId	-->	Revocar una sesion remota especifica
-				POST	-->	logout-all			-->	Revocar todas las sesiones del usuario
-
-dev.fercho	-->	GET		-->	sessions			-->	Listado de sesiones activas del usuario
-			-->	DELETE	-->	sessions/sessionId	-->	Revocacion de una sesion especifica
-
-lffp.prog	-->	GET		-->	sessions			-->	Listado de sesiones activas del usuario
-			-->	DELETE	-->	sessions/sessionId	-->	Revocar una sesion especifica
-
-luis.flores	-->	GET		-->	sessions			-->	Listado de sesiones activos del usuario
-			-->	DELETE	-->	sessions/sessionId	-->	Revocar session especifica
-			-->	DELETE	-->	sessions			-->	Revocar todas las sesiones
+Add-Migration FirstMigration -Project ESAM.GrowTracking.Persistence -StartupProject ESAM.GrowTracking.API -OutputDir Migrations

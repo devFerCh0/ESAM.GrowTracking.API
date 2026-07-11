@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260620144231_FirstMigration")]
+    [Migration("20260711125730_FirstMigration")]
     partial class FirstMigration
     {
         /// <inheritdoc />
@@ -1237,11 +1237,22 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
 
             modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.UserSessionRoleCampusSelected", b =>
                 {
-                    b.Property<int>("UserSessionId")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("CampusId")
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
                     b.Property<int>("RoleId")
                         .HasColumnType("int");
@@ -1249,7 +1260,12 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
-                    b.HasKey("UserSessionId");
+                    b.Property<int>("UserSessionWorkProfileSelectedId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserSessionWorkProfileSelectedId", "IsActive");
 
                     b.HasIndex("UserId", "RoleId", "CampusId");
 
@@ -1258,18 +1274,34 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
 
             modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.UserSessionWorkProfileSelected", b =>
                 {
-                    b.Property<int>("UserSessionId")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
                     b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserSessionId")
                         .HasColumnType("int");
 
                     b.Property<int>("WorkProfileId")
                         .HasColumnType("int");
 
-                    b.HasKey("UserSessionId");
+                    b.HasKey("Id");
 
                     b.HasIndex("UserId", "WorkProfileId");
+
+                    b.HasIndex("UserSessionId", "IsActive");
 
                     b.ToTable("UserSessionWorkProfilesSelected", (string)null);
                 });
@@ -1695,8 +1727,8 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
             modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.UserSessionRoleCampusSelected", b =>
                 {
                     b.HasOne("ESAM.GrowTracking.Domain.Entities.UserSessionWorkProfileSelected", "UserSessionWorkProfileSelected")
-                        .WithOne("UserSessionRoleCampusSelected")
-                        .HasForeignKey("ESAM.GrowTracking.Domain.Entities.UserSessionRoleCampusSelected", "UserSessionId")
+                        .WithMany("UserSessionRoleCampusesSelected")
+                        .HasForeignKey("UserSessionWorkProfileSelectedId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -1714,8 +1746,8 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
             modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.UserSessionWorkProfileSelected", b =>
                 {
                     b.HasOne("ESAM.GrowTracking.Domain.Entities.UserSession", "UserSession")
-                        .WithOne("UserSessionWorkProfileSelected")
-                        .HasForeignKey("ESAM.GrowTracking.Domain.Entities.UserSessionWorkProfileSelected", "UserSessionId")
+                        .WithMany("UserSessionWorkProfilesSelected")
+                        .HasForeignKey("UserSessionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -1836,7 +1868,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
 
                     b.Navigation("UserSessionRefreshTokens");
 
-                    b.Navigation("UserSessionWorkProfileSelected");
+                    b.Navigation("UserSessionWorkProfilesSelected");
                 });
 
             modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.UserSessionRefreshToken", b =>
@@ -1848,7 +1880,7 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
 
             modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.UserSessionWorkProfileSelected", b =>
                 {
-                    b.Navigation("UserSessionRoleCampusSelected");
+                    b.Navigation("UserSessionRoleCampusesSelected");
                 });
 
             modelBuilder.Entity("ESAM.GrowTracking.Domain.Entities.UserWorkProfile", b =>

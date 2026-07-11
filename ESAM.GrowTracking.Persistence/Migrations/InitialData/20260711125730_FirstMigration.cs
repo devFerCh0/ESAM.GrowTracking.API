@@ -525,13 +525,17 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                 name: "UserSessionWorkProfilesSelected",
                 columns: table => new
                 {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     UserSessionId = table.Column<int>(type: "int", nullable: false),
                     UserId = table.Column<int>(type: "int", nullable: false),
-                    WorkProfileId = table.Column<int>(type: "int", nullable: false)
+                    WorkProfileId = table.Column<int>(type: "int", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_UserSessionWorkProfilesSelected", x => x.UserSessionId);
+                    table.PrimaryKey("PK_UserSessionWorkProfilesSelected", x => x.Id);
                     table.ForeignKey(
                         name: "FK_UserSessionWorkProfilesSelected_UserSessions_UserSessionId",
                         column: x => x.UserSessionId,
@@ -576,14 +580,18 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                 name: "UserSessionRoleCampusesSelected",
                 columns: table => new
                 {
-                    UserSessionId = table.Column<int>(type: "int", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserSessionWorkProfileSelectedId = table.Column<int>(type: "int", nullable: false),
                     UserId = table.Column<int>(type: "int", nullable: false),
                     RoleId = table.Column<int>(type: "int", nullable: false),
-                    CampusId = table.Column<int>(type: "int", nullable: false)
+                    CampusId = table.Column<int>(type: "int", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_UserSessionRoleCampusesSelected", x => x.UserSessionId);
+                    table.PrimaryKey("PK_UserSessionRoleCampusesSelected", x => x.Id);
                     table.ForeignKey(
                         name: "FK_UserSessionRoleCampusesSelected_UserRoleCampuses_UserId_RoleId_CampusId",
                         columns: x => new { x.UserId, x.RoleId, x.CampusId },
@@ -591,10 +599,10 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                         principalColumns: ["UserId", "RoleId", "CampusId"],
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_UserSessionRoleCampusesSelected_UserSessionWorkProfilesSelected_UserSessionId",
-                        column: x => x.UserSessionId,
+                        name: "FK_UserSessionRoleCampusesSelected_UserSessionWorkProfilesSelected_UserSessionWorkProfileSelectedId",
+                        column: x => x.UserSessionWorkProfileSelectedId,
                         principalTable: "UserSessionWorkProfilesSelected",
-                        principalColumn: "UserSessionId",
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
 
@@ -984,6 +992,11 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                 columns: ["UserId", "RoleId", "CampusId"]);
 
             migrationBuilder.CreateIndex(
+                name: "IX_UserSessionRoleCampusesSelected_UserSessionWorkProfileSelectedId_IsActive",
+                table: "UserSessionRoleCampusesSelected",
+                columns: ["UserSessionWorkProfileSelectedId", "IsActive"]);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UserSessions_AbsoluteExpiresAt",
                 table: "UserSessions",
                 column: "AbsoluteExpiresAt");
@@ -1022,6 +1035,11 @@ namespace ESAM.GrowTracking.Persistence.Migrations.InitialData
                 name: "IX_UserSessionWorkProfilesSelected_UserId_WorkProfileId",
                 table: "UserSessionWorkProfilesSelected",
                 columns: ["UserId", "WorkProfileId"]);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserSessionWorkProfilesSelected_UserSessionId_IsActive",
+                table: "UserSessionWorkProfilesSelected",
+                columns: ["UserSessionId", "IsActive"]);
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserWorkProfiles_WorkProfileId",
