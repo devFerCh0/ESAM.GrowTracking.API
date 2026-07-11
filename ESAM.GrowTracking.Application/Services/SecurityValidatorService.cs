@@ -66,7 +66,7 @@ namespace ESAM.GrowTracking.Application.Services
         }
 
         public async Task<Result> ValidateAccessTokenSessionAsync(string currentJti, int currentUserId, string currentSecurityStamp, int currentTokenVersion,
-            int currentUserDeviceId, int currentUserSessionId, int currentUserSessionWorkProfileSelectedId, int currentWorkProfileId, WorkProfileType workProfileType, 
+            int currentUserDeviceId, int currentUserSessionId, int currentWorkProfileSelectedId, int currentWorkProfileId, WorkProfileType workProfileType, 
             CancellationToken cancellationToken = default)
         {
             var asTracking = false;
@@ -84,7 +84,7 @@ namespace ESAM.GrowTracking.Application.Services
                 return Result.Fail(Error.Unauthorized("El perfil de trabajo no tiene permisos activos asignados."));
             }
             var isUserSessionUnRevokedAndUnExpiredForWorkProfile = await _userSessionRepository.IsUnRevokedAndUnExpiredForWorkProfileAsync(currentUserSessionId, currentUserId,
-                currentUserSessionWorkProfileSelectedId, currentWorkProfileId, utcNow, asTracking, cancellationToken);
+                currentWorkProfileSelectedId, currentWorkProfileId, utcNow, asTracking, cancellationToken);
             if (!isUserSessionUnRevokedAndUnExpiredForWorkProfile)
             {
                 _logger.LogWarning("ValidateCurrentSessionAsync: sesión de usuario inválida, caducada o perfil de trabajo no coincidente. " +
@@ -95,8 +95,8 @@ namespace ESAM.GrowTracking.Application.Services
         }
 
         public async Task<Result> ValidateAccessTokenSessionAsync(string currentJti, int currentUserId, string currentSecurityStamp, int currentTokenVersion,
-            int currentUserDeviceId, int currentUserSessionId, int currentUserSessionWorkProfileSelectedId, int currentWorkProfileId, WorkProfileType currentWorkProfileType, 
-            int currentUserSessionRoleCampusSelectedId, int currentRoleId, int currentCampusId, CancellationToken cancellationToken = default)
+            int currentUserDeviceId, int currentUserSessionId, int currentWorkProfileSelectedId, int currentWorkProfileId, WorkProfileType currentWorkProfileType, 
+            int currentRoleCampusSelectedId, int currentRoleId, int currentCampusId, CancellationToken cancellationToken = default)
         {
             var asTracking = false;
             var utcNow = _dateTimeService.UtcNow;
@@ -119,7 +119,7 @@ namespace ESAM.GrowTracking.Application.Services
                 return Result.Fail(Error.Unauthorized("El rol no tiene permisos activos asignados."));
             }
             var isUserSessionUnRevokedAndUnExpiredForRoleCampus = await _userSessionRepository.IsUnRevokedAndUnExpiredForRoleCampusAsync(currentUserSessionId, currentUserId,
-                currentUserSessionWorkProfileSelectedId, currentWorkProfileId, currentUserSessionRoleCampusSelectedId, currentRoleId, currentCampusId, utcNow, asTracking, 
+                currentWorkProfileSelectedId, currentWorkProfileId, currentRoleCampusSelectedId, currentRoleId, currentCampusId, utcNow, asTracking, 
                 cancellationToken);
             if (!isUserSessionUnRevokedAndUnExpiredForRoleCampus)
             {

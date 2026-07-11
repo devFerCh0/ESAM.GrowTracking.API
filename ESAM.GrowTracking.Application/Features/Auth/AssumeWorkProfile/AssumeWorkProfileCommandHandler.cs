@@ -89,7 +89,7 @@ namespace ESAM.GrowTracking.Application.Features.Auth.AssumeWorkProfile
             var currentJti = _accessTokenClaimsValidatorService.CurrentJti;
             var currentAccessTokenExpiration = _accessTokenClaimsValidatorService.CurrentAccessTokenExpiration;
             var utcNow = _dateTimeService.UtcNow;
-            var (refreshToken, userSession, userSessionWorkProfileSelectedId) = await _userSessionService.CreateUserSessionAsync(currentUserId, currentUserDeviceId, ipAddress,
+            var (refreshToken, userSession, workProfileSelectedId) = await _userSessionService.CreateUserSessionAsync(currentUserId, currentUserDeviceId, ipAddress,
                 userAgent, currentIsPersistent, request.WorkProfileId, currentJti, currentAccessTokenExpiration, utcNow, asTracking, cancellationToken);
             //var (refreshToken, userSession) = await _userSessionService.CreateUserSessionAsync(currentUserId, currentUserDeviceId, ipAddress, userAgent, currentIsPersistent,
             //    request.WorkProfileId, currentJti, currentAccessTokenExpiration, utcNow, asTracking, cancellationToken);
@@ -120,7 +120,7 @@ namespace ESAM.GrowTracking.Application.Features.Auth.AssumeWorkProfile
             var currentSecurityStamp = _accessTokenClaimsValidatorService.CurrentSecurityStamp;
             var currentTokenVersion = _accessTokenClaimsValidatorService.CurrentTokenVersion;
             var accessToken = _tokenService.GenerateSessionAccessToken(currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId, userSession.Id, utcNow,
-                _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, userSessionWorkProfileSelectedId, request.WorkProfileId, WorkProfileType.OnlyWorkProfile);
+                _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, workProfileSelectedId, request.WorkProfileId, WorkProfileType.OnlyWorkProfile);
             //var accessToken = _tokenService.GenerateSessionAccessToken(currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId, userSession.Id, utcNow,
             //    _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, request.WorkProfileId, WorkProfileType.OnlyWorkProfile);
             return Result<AssumeWorkProfileResponse>.Ok(new AssumeWorkProfileResponse(accessToken.Token, accessToken.ExpiresIn, accessToken.ExpiresAt, refreshToken.Identifier,

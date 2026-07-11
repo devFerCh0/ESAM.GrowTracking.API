@@ -5,11 +5,11 @@ namespace ESAM.GrowTracking.Application.Abstractions.Services
 {
     public interface IUserSessionService
     {
-        Task<(RefreshTokenDTO RefreshToken, UserSession UserSession, int UserSessionWorkProfileSelectedId, int UserSessionRoleCampusSelectedId)> CreateUserSessionAsync(
+        Task<(RefreshTokenDTO RefreshToken, UserSession UserSession, int WorkProfileSelectedId, int RoleCampusSelectedId)> CreateUserSessionAsync(
             int currentUserId, int currentUserDeviceId, string? ipAddress, string? userAgent, bool isPersistent, int currentWorkProfileId, int currentRoleId, int currentCampusId, 
             string jti, DateTime accessTokenExpiration, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default);
 
-        Task<(RefreshTokenDTO RefreshToken, UserSession UserSession, int UserSessionWorkProfileSelectedId)> CreateUserSessionAsync(int currentUserId, int currentUserDeviceId, 
+        Task<(RefreshTokenDTO RefreshToken, UserSession UserSession, int WorkProfileSelectedId)> CreateUserSessionAsync(int currentUserId, int currentUserDeviceId, 
             string? ipAddress, string? userAgent, bool isPersistent, int currentWorkProfileId, string jti, DateTime accessTokenExpiration, DateTime utcNow, bool asTracking = false, 
             CancellationToken cancellationToken = default);
 
@@ -37,8 +37,8 @@ namespace ESAM.GrowTracking.Application.Abstractions.Services
         Task<RefreshTokenDTO> RotateUserSessionAsync(UserSession userSession, UserSessionRefreshToken userSessionRefreshToken, string jti, DateTime accessTokenExpiration,
             string revokedReason, int currentUserId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default);
 
-        Task<int> ChangeRoleCampusAsync(UserSession userSession, int currentUserSessionWorkProfileSelectedId, int currentUserSessionRoleCampusSelectedId, int roleId, int campusId,
-            string currentJti, DateTime currentAccessTokenExpiration, string revokedReason, int currentUserId, DateTime utcNow, bool asTracking = false,
+        Task<int> ChangeRoleCampusAsync(UserSession userSession, int currentWorkProfileSelectedId, int currentRoleCampusSelectedId, int roleId, int campusId, string currentJti, 
+            DateTime currentAccessTokenExpiration, string revokedReason, int currentUserId, DateTime utcNow, bool asTracking = false, 
             CancellationToken cancellationToken = default);
     }
 

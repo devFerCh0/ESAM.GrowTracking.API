@@ -1,20 +1,16 @@
 ﻿using ESAM.GrowTracking.Application.Abstractions.DataAccess.Queries;
 using ESAM.GrowTracking.Application.Abstractions.Services;
-using ESAM.GrowTracking.Application.Enums;
 using ESAM.GrowTracking.Application.Extensions;
-using ESAM.GrowTracking.Application.Features.Auth.AssumeRoleCampus;
-using ESAM.GrowTracking.Application.Features.Auth.AssumeRoleCampus.Responses;
 using ESAM.GrowTracking.Application.Features.Auth.ChangeRoleCampus.Responses;
 using ESAM.GrowTracking.Application.Results;
-using ESAM.GrowTracking.Application.Services;
 using ESAM.GrowTracking.Application.Settings;
 using ESAM.GrowTracking.Application.ValueObjects;
 using ESAM.GrowTracking.Domain.Abstractions.DataAccess.Repositories;
-using ESAM.GrowTracking.Domain.Entities;
 using ESAM.GrowTracking.Domain.Enums;
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace ESAM.GrowTracking.Application.Features.Auth.ChangeRoleCampus
 {
@@ -28,11 +24,14 @@ namespace ESAM.GrowTracking.Application.Features.Auth.ChangeRoleCampus
         private readonly IUserSessionRepository _userSessionRepository;
         private readonly IUserSessionService _userSessionService;
         private readonly IDateTimeService _dateTimeService;
+        private readonly IUserQuery _userQuery;
+        private readonly ITokenService _tokenService;
+        private readonly TokenLifetimeSettings _tokenLifetimeSettings;
 
         public ChangeRoleCampusCommandHandler(ILogger<ChangeRoleCampusCommandHandler> logger, IValidator<ChangeRoleCampusCommand> validator,
             IAccessTokenClaimsValidatorService accessTokenClaimsValidatorService, IUserRoleCampusRepository userRoleCampusRepository, 
             IRolePermissionRepository rolePermissionRepository, IUserSessionService userSessionService, IUserSessionRepository userSessionRepository, 
-            IDateTimeService dateTimeService)
+            IDateTimeService dateTimeService, IUserQuery userQuery, ITokenService tokenService, IOptions<TokenLifetimeSettings> tokenLifetimeSettingsOptions)
         {
             ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(validator);
@@ -42,6 +41,9 @@ namespace ESAM.GrowTracking.Application.Features.Auth.ChangeRoleCampus
             ArgumentNullException.ThrowIfNull(userSessionService);
             ArgumentNullException.ThrowIfNull(userSessionRepository);
             ArgumentNullException.ThrowIfNull(dateTimeService);
+            ArgumentNullException.ThrowIfNull(userQuery);
+            ArgumentNullException.ThrowIfNull(tokenService);
+            ArgumentNullException.ThrowIfNull(tokenLifetimeSettingsOptions);
             _logger = logger;
             _validator = validator;
             _accessTokenClaimsValidatorService = accessTokenClaimsValidatorService;
@@ -50,6 +52,9 @@ namespace ESAM.GrowTracking.Application.Features.Auth.ChangeRoleCampus
             _userSessionService = userSessionService;
             _userSessionRepository = userSessionRepository;
             _dateTimeService = dateTimeService;
+            _userQuery = userQuery;
+            _tokenService = tokenService;
+            _tokenLifetimeSettings = tokenLifetimeSettingsOptions.Value ?? throw new ArgumentNullException(nameof(tokenLifetimeSettingsOptions));
         }
 
         public async Task<Result<ChangeRoleCampusResponse>> Handle(ChangeRoleCampusCommand request, CancellationToken cancellationToken)
@@ -83,9 +88,7 @@ namespace ESAM.GrowTracking.Application.Features.Auth.ChangeRoleCampus
                 return Result<ChangeRoleCampusResponse>.Fail(Error.Unauthorized("El rol no tiene permisos activos asignados."));
             }
             var currentUserSessionId = _accessTokenClaimsValidatorService.CurrentUserSessionId;
-            var currentUserDeviceId = _accessTokenClaimsValidatorService.CurrentUserDeviceId;
-            var userSession = await _userSessionRepository.GetByIdAndUserIdAndUserDeviceIdAsync(currentUserSessionId, currentUserId, currentUserDeviceId, asTracking,
-                cancellationToken);
+            var userSession = await _userSessionRepository.GetByIdAsync(currentUserSessionId, asTracking, cancellationToken);
             var currentWorkProfileSelectedId = _accessTokenClaimsValidatorService.CurrentWorkProfileSelectedId;
             var currentRoleCampusSelectedId = _accessTokenClaimsValidatorService.CurrentRoleCampusSelectedId;
             var currentJti = _accessTokenClaimsValidatorService.CurrentJti;
@@ -94,99 +97,51 @@ namespace ESAM.GrowTracking.Application.Features.Auth.ChangeRoleCampus
             var roleCampusSelectedId = await _userSessionService.ChangeRoleCampusAsync(userSession!, currentWorkProfileSelectedId, currentRoleCampusSelectedId, request.RoleId, 
                 request.CampusId, currentJti, currentAccessTokenExpiration, "Cambio de rol de sede: Access token de sesión anterior revocado.", currentUserId, utcNow, asTracking, 
                 cancellationToken);
-
-
-
-            //var changeRoleCampusUser = await _userQuery.GetAssumeRoleCampusUserByUserIdAndUserSessionIdAsync(currentUserId, currentUserSessionId, asTracking, cancellationToken);
-            //if (changeRoleCampusUser is null)
-            //{
-            //    _logger.LogError("ChangeRoleCampusCommand: información del usuario no encontrada tras el cambio de rol. UserId={UserId}, UserSessionId={UserSessionId}",
-            //        currentUserId, currentUserSessionId);
-            //    return Result<ChangeRoleCampusResponse>.Fail(Error.ServerError("Usuario no encontrado."));
-            //}
-            //if (changeRoleCampusUser.AssumeRoleCampusUserSession?.AssumeRoleCampusSessionWorkProfileSelected?.AssumeRoleCampusSessionRoleCampusSelected is null)
-            //{
-            //    _logger.LogError("ChangeRoleCampusCommand: rol y sede ausente en los datos retornados. UserId={UserId}, UserSessionId={UserSessionId}", currentUserId,
-            //        currentUserSessionId);
-            //    return Result<ChangeRoleCampusResponse>.Fail(Error.ServerError("No se encontró rol y sede de usuario seleccionado."));
-            //}
+            var changeRoleCampusUser = await _userQuery.GetChangeRoleCampusUserByUserIdAndUserSessionIdAsync(currentUserId, currentUserSessionId, asTracking, cancellationToken);
+            if (changeRoleCampusUser is null)
+            {
+                _logger.LogError("ChangeRoleCampusCommand: información del usuario no encontrada tras cambio de rol de sede. UserId={UserId}, UserSessionId={UserSessionId}", 
+                    currentUserId, currentUserSessionId);
+                return Result<ChangeRoleCampusResponse>.Fail(Error.ServerError("Usuario no encontrado."));
+            }
+            if (changeRoleCampusUser.ChangeRoleCampusUserWorkProfiles is null || changeRoleCampusUser.ChangeRoleCampusUserWorkProfiles.Count == 0)
+            {
+                _logger.LogError("ChangeRoleCampusCommand: el usuario no tiene perfiles de trabajo asignados. UserId={UserId}, UserSessionId={UserSessionId}", currentUserId,
+                    currentUserSessionId);
+                return Result<ChangeRoleCampusResponse>.Fail(Error.ServerError("El usuario no tiene perfiles de trabajo asignados."));
+            }
+            if (changeRoleCampusUser.ChangeRoleCampusUserRoleCampuses is null || changeRoleCampusUser.ChangeRoleCampusUserRoleCampuses.Count == 0)
+            {
+                _logger.LogError("ChangeRoleCampusCommand: el usuario no tiene roles de sede asignados. UserId={UserId}, UserSessionId={UserSessionId}", currentUserId,
+                    currentUserSessionId);
+                return Result<ChangeRoleCampusResponse>.Fail(Error.ServerError("El usuario no tiene roles de sede asignados."));
+            }
+            if (changeRoleCampusUser.ChangeRoleCampusUserSession is null)
+            {
+                _logger.LogError("ChangeRoleCampusCommand: sesión ausente en los datos retornados. UserId={UserId}, UserSessionId={UserSessionId}", currentUserId, 
+                    currentUserSessionId);
+                return Result<ChangeRoleCampusResponse>.Fail(Error.ServerError("No se encontró la sesión del usuario."));
+            }
+            if (changeRoleCampusUser.ChangeRoleCampusUserSession.ChangeRoleCampusSessionWorkProfileSelected is null)
+            {
+                _logger.LogError("ChangeRoleCampusCommand: perfil de trabajo ausente en los datos retornados. UserId={UserId}, UserSessionId={UserSessionId}", currentUserId,
+                    currentUserSessionId);
+                return Result<ChangeRoleCampusResponse>.Fail(Error.ServerError("No se encontró perfil de trabajo de usuario seleccionado."));
+            }
+            if (changeRoleCampusUser.ChangeRoleCampusUserSession.ChangeRoleCampusSessionWorkProfileSelected.ChangeRoleCampusSessionRoleCampusSelected is null)
+            {
+                _logger.LogError("ChangeRoleCampusCommand: rol y sede ausente en los datos retornados. UserId={UserId}, UserSessionId={UserSessionId}", currentUserId,
+                    currentUserSessionId);
+                return Result<ChangeRoleCampusResponse>.Fail(Error.ServerError("No se encontró rol y sede de usuario seleccionado."));
+            }
             var currentSecurityStamp = _accessTokenClaimsValidatorService.CurrentSecurityStamp;
             var currentTokenVersion = _accessTokenClaimsValidatorService.CurrentTokenVersion;
             var currentUserDeviceId = _accessTokenClaimsValidatorService.CurrentUserDeviceId;
+            var currentWorkProfileId = _accessTokenClaimsValidatorService.CurrentWorkProfileId;
             var accessToken = _tokenService.GenerateSessionAccessToken(currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId, currentUserSessionId, utcNow,
-                _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, currentUserSessionWorkProfileSelectedId, currentWorkProfileId, WorkProfileType.WithRoles,
-                newUserSessionRoleCampusSelectedId, request.RoleId, request.CampusId);
+                _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, currentWorkProfileSelectedId, currentWorkProfileId, WorkProfileType.WithRoles, roleCampusSelectedId,
+                request.RoleId, request.CampusId);
             return Result<ChangeRoleCampusResponse>.Ok(new ChangeRoleCampusResponse(accessToken.Token, accessToken.ExpiresIn, accessToken.ExpiresAt, changeRoleCampusUser));
-
-
-
-            //var changeRoleCampusUser = await _userQuery.GetCurrentUserRoleCampusByUserIdAndUserSessionIdAsync(currentUserId, currentUserSessionId, asTracking,
-            //    cancellationToken);
-            //if (changeRoleCampusUser is null)
-            //{
-            //    _logger.LogError("ChangeRoleCampusCommand: información del usuario no encontrada tras cambio de rol de sede. UserId={UserId}, UserSessionId={UserSessionId}",
-            //        currentUserId, currentUserSessionId);
-            //    return Result<ChangeRoleCampusResponse>.Fail(Error.ServerError("Usuario no encontrado."));
-            //}
-            var currentSecurityStamp = _accessTokenClaimsValidatorService.CurrentSecurityStamp;
-            var currentTokenVersion = _accessTokenClaimsValidatorService.CurrentTokenVersion;
-            var accessToken = _tokenService.GenerateSessionAccessToken(currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId, currentUserSessionId,
-                utcNow, _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, currentWorkProfileSelectedId, currentWorkProfileId, WorkProfileType.WithRoles,
-                newRoleCampusSelectedId, request.RoleId, request.CampusId);
-            _logger.LogInformation("ChangeRoleCampusCommand: cambio de rol de sede exitoso. UserId={UserId}, UserSessionId={UserSessionId}, RoleId={RoleId}, " +
-                "CampusId={CampusId}", currentUserId, currentUserSessionId, request.RoleId, request.CampusId);
-            return Result<ChangeRoleCampusResponse>.Ok(new ChangeRoleCampusResponse(accessToken.Token, accessToken.ExpiresIn, accessToken.ExpiresAt, changeRoleCampusUser));
-
-
-
-            //var currentUser = await _userQuery.GetCurrentUserRoleCampusByUserIdAndUserSessionIdAsync(currentUserId, currentUserSessionId, asTracking, cancellationToken);
-            //if (currentUser is null)
-            //{
-            //    _logger.LogError("ChangeRoleCampusCommand: información del usuario no encontrada tras el cambio de rol. UserId={UserId}, UserSessionId={UserSessionId}",
-            //        currentUserId, currentUserSessionId);
-            //    return Result<ChangeRoleCampusResponse>.Fail(Error.ServerError("Usuario no encontrado."));
-            //}
-            var accessToken = _tokenService.GenerateSessionAccessToken(currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId, currentUserSessionId,
-                utcNow, _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, currentUserSessionWorkProfileSelectedId, currentWorkProfileId, currentWorkProfileType,
-                newUserSessionRoleCampusSelectedId, request.RoleId, request.CampusId);
-            return Result<ChangeRoleCampusResponse>.Ok(new ChangeRoleCampusResponse(accessToken.Token, accessToken.ExpiresIn, accessToken.ExpiresAt, currentUser));
-
-
-
-            //var assumeRoleCampusUser = await _userQuery.GetAssumeRoleCampusUserByUserIdAndUserSessionIdAsync(currentUserId, newUserSession.Id, asTracking, cancellationToken);
-            //if (assumeRoleCampusUser is null)
-            //{
-            //    _logger.LogError("ChangeRoleCampusCommand: información del usuario no encontrada tras creación de sesión. UserId={UserId}, UserSessionId={UserSessionId}",
-            //        currentUserId, newUserSession.Id);
-            //    return Result<AssumeRoleCampusResponse>.Fail(Error.ServerError("Usuario no encontrado."));
-            //}
-            //if (assumeRoleCampusUser.AssumeRoleCampusUserWorkProfiles is null || assumeRoleCampusUser.AssumeRoleCampusUserWorkProfiles.Count == 0)
-            //{
-            //    _logger.LogError("ChangeRoleCampusCommand: el usuario no tiene perfiles de trabajo asignados. UserId={UserId}, UserSessionId={UserSessionId}", currentUserId,
-            //        newUserSession.Id);
-            //    return Result<AssumeRoleCampusResponse>.Fail(Error.ServerError("El usuario no tiene perfiles de trabajo asignados."));
-            //}
-            //if (assumeRoleCampusUser.AssumeRoleCampusUserRoleCampuses is null || assumeRoleCampusUser.AssumeRoleCampusUserRoleCampuses.Count == 0)
-            //{
-            //    _logger.LogError("ChangeRoleCampusCommand: el usuario no tiene roles de sede asignados. UserId={UserId}, UserSessionId={UserSessionId}", currentUserId,
-            //        newUserSession.Id);
-            //    return Result<AssumeRoleCampusResponse>.Fail(Error.ServerError("El usuario no tiene roles de sede asignados."));
-            //}
-            //if (assumeRoleCampusUser.AssumeRoleCampusUserSession is null ||
-            //    assumeRoleCampusUser.AssumeRoleCampusUserSession.AssumeRoleCampusSessionWorkProfileSelected is null ||
-            //    assumeRoleCampusUser.AssumeRoleCampusUserSession.AssumeRoleCampusSessionWorkProfileSelected.AssumeRoleCampusSessionRoleCampusSelected is null)
-            //{
-            //    _logger.LogError("ChangeRoleCampusCommand: datos de sesión incompletos en los datos retornados. UserId={UserId}, UserSessionId={UserSessionId}", currentUserId,
-            //        newUserSession.Id);
-            //    return Result<AssumeRoleCampusResponse>.Fail(Error.ServerError("No se encontró la sesión, perfil o rol y sede de usuario seleccionado."));
-            //}
-            var currentSecurityStamp = _accessTokenClaimsValidatorService.CurrentSecurityStamp;
-            var currentTokenVersion = _accessTokenClaimsValidatorService.CurrentTokenVersion;
-            var accessToken = _tokenService.GenerateSessionAccessToken(currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId, newUserSession.Id, utcNow,
-                _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, userSessionWorkProfileSelectedId, currentWorkProfileId, WorkProfileType.WithRoles,
-                userSessionRoleCampusSelectedId, request.RoleId, request.CampusId);
-            return Result<AssumeRoleCampusResponse>.Ok(new AssumeRoleCampusResponse(accessToken.Token, accessToken.ExpiresIn, accessToken.ExpiresAt, refreshToken.Identifier,
-                refreshToken.Token, refreshToken.ExpiresIn, refreshToken.ExpiresAt, assumeRoleCampusUser));
         }
     }
 }

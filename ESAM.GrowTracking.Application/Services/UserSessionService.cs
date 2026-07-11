@@ -45,7 +45,7 @@ namespace ESAM.GrowTracking.Application.Services
             _userSessionRoleCampusSelectedRepository = userSessionRoleCampusSelectedRepository;
         }
 
-        public async Task<(RefreshTokenDTO RefreshToken, UserSession UserSession, int UserSessionWorkProfileSelectedId, int UserSessionRoleCampusSelectedId)>
+        public async Task<(RefreshTokenDTO RefreshToken, UserSession UserSession, int WorkProfileSelectedId, int RoleCampusSelectedId)>
             CreateUserSessionAsync(int currentUserId, int currentUserDeviceId, string? ipAddress, string? userAgent, bool isPersistent, int currentWorkProfileId,
                 int currentRoleId, int currentCampusId, string jti, DateTime accessTokenExpiration, DateTime utcNow, bool asTracking = false,
                 CancellationToken cancellationToken = default)
@@ -70,7 +70,7 @@ namespace ESAM.GrowTracking.Application.Services
             return (refreshToken, userSession, userSessionWorkProfileSelected.Id, userSessionRoleCampusSelected.Id);
         }
 
-        public async Task<(RefreshTokenDTO RefreshToken, UserSession UserSession, int UserSessionWorkProfileSelectedId)> CreateUserSessionAsync(int currentUserId,
+        public async Task<(RefreshTokenDTO RefreshToken, UserSession UserSession, int WorkProfileSelectedId)> CreateUserSessionAsync(int currentUserId,
             int currentUserDeviceId, string? ipAddress, string? userAgent, bool isPersistent, int currentWorkProfileId, string jti, DateTime accessTokenExpiration,
             DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
         {
@@ -262,14 +262,13 @@ namespace ESAM.GrowTracking.Application.Services
             return refreshToken;
         }
 
-        public async Task<int> ChangeRoleCampusAsync(UserSession userSession, int currentUserSessionWorkProfileSelectedId, int currentUserSessionRoleCampusSelectedId, int roleId, 
+        public async Task<int> ChangeRoleCampusAsync(UserSession userSession, int currentWorkProfileSelectedId, int currentRoleCampusSelectedId, int roleId, 
             int campusId, string currentJti, DateTime currentAccessTokenExpiration, string revokedReason, int currentUserId, DateTime utcNow, bool asTracking = false, 
             CancellationToken cancellationToken = default)
         {
-            var userSessionRoleCampusSelected = await _userSessionRoleCampusSelectedRepository.GetByIdAsync(currentUserSessionRoleCampusSelectedId, asTracking, cancellationToken);
-            if (userSessionRoleCampusSelected is not null)
-                userSessionRoleCampusSelected.Deactivate();
-            var newUserSessionRoleCampusSelected = new UserSessionRoleCampusSelected(currentUserSessionWorkProfileSelectedId, currentUserId, roleId, campusId, utcNow);
+            var userSessionRoleCampusSelected = await _userSessionRoleCampusSelectedRepository.GetByIdAsync(currentRoleCampusSelectedId, asTracking, cancellationToken);
+            userSessionRoleCampusSelected?.Deactivate();
+            var newUserSessionRoleCampusSelected = new UserSessionRoleCampusSelected(currentWorkProfileSelectedId, currentUserId, roleId, campusId, utcNow);
             userSession.UpdateLastActivity(utcNow, currentUserId, utcNow);
             var doesBlacklistedAccessTokenSessionNotExist = await _blacklistedAccessTokenSessionRepository.DoesNotExistAsync(currentJti, asTracking, cancellationToken);
             var blacklistedAccessTokenSession = doesBlacklistedAccessTokenSessionNotExist ? new BlacklistedAccessTokenSession(userSession.Id, currentJti, 

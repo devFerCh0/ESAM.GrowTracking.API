@@ -8,22 +8,22 @@ namespace ESAM.GrowTracking.Persistence.DataAccess.Repositories
 {
     public class UserSessionRepository(ILogger<UserSessionRepository> logger, AppDbContext context) : Repository<UserSession, int>(logger, context), IUserSessionRepository
     {
-        public async Task<bool> IsUnRevokedAndUnExpiredForWorkProfileAsync(int id, int userId, int userSessionWorkProfileSelectedId, int workProfileId, DateTime utcNow, 
+        public async Task<bool> IsUnRevokedAndUnExpiredForWorkProfileAsync(int id, int userId, int workProfileSelectedId, int workProfileId, DateTime utcNow, 
             bool asTracking = false, CancellationToken cancellationToken = default)
         {
             var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
             return await query.AnyAsync(us => us.Id == id && us.UserId == userId && !us.IsRevoked && us.ExpiresAt > utcNow && us.AbsoluteExpiresAt > utcNow &&
-                us.UserSessionWorkProfilesSelected.Any(uswps => uswps.Id == userSessionWorkProfileSelectedId && uswps.IsActive &&
+                us.UserSessionWorkProfilesSelected.Any(uswps => uswps.Id == workProfileSelectedId && uswps.IsActive &&
                     uswps.WorkProfileId == workProfileId), cancellationToken);
         }
 
-        public async Task<bool> IsUnRevokedAndUnExpiredForRoleCampusAsync(int id, int userId, int userSessionWorkProfileSelectedId, int workProfileId, 
-            int userSessionRoleCampusSelectedId, int roleId, int campusId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
+        public async Task<bool> IsUnRevokedAndUnExpiredForRoleCampusAsync(int id, int userId, int workProfileSelectedId, int workProfileId, 
+            int roleCampusSelectedId, int roleId, int campusId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
         {
             var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
             return await query.AnyAsync(us => us.Id == id && us.UserId == userId && !us.IsRevoked && us.ExpiresAt > utcNow && us.AbsoluteExpiresAt > utcNow &&
-                us.UserSessionWorkProfilesSelected.Any(uswps => uswps.Id == userSessionWorkProfileSelectedId && uswps.IsActive && uswps.UserId == userId &&
-                    uswps.WorkProfileId == workProfileId && uswps.UserSessionRoleCampusesSelected.Any(usrcs => usrcs.Id == userSessionRoleCampusSelectedId && usrcs.IsActive &&
+                us.UserSessionWorkProfilesSelected.Any(uswps => uswps.Id == workProfileSelectedId && uswps.IsActive && uswps.UserId == userId &&
+                    uswps.WorkProfileId == workProfileId && uswps.UserSessionRoleCampusesSelected.Any(usrcs => usrcs.Id == roleCampusSelectedId && usrcs.IsActive &&
                         usrcs.UserId == userId && usrcs.RoleId == roleId && usrcs.CampusId == campusId)), cancellationToken);
         }
 

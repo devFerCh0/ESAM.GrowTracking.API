@@ -9,12 +9,12 @@ namespace ESAM.GrowTracking.Application.Abstractions.Services
             CancellationToken cancellationToken = default);
 
         Task<Result> ValidateAccessTokenSessionAsync(string currentJti, int currentUserId, string currentSecurityStamp, int currentTokenVersion, int currentUserDeviceId,
-            int currentUserSessionId, int currentUserSessionWorkProfileSelectedId, int currentWorkProfileId, WorkProfileType workProfileType, 
+            int currentUserSessionId, int currentWorkProfileSelectedId, int currentWorkProfileId, WorkProfileType workProfileType, 
             CancellationToken cancellationToken = default);
 
         Task<Result> ValidateAccessTokenSessionAsync(string currentJti, int currentUserId, string currentSecurityStamp, int currentTokenVersion, int currentUserDeviceId,
-            int currentUserSessionId, int currentUserSessionWorkProfileSelectedId, int currentWorkProfileId, WorkProfileType workProfileType, 
-            int currentUserSessionRoleCampusSelectedId, int currentRoleId, int currentCampusId, CancellationToken cancellationToken = default);
+            int currentUserSessionId, int currentWorkProfileSelectedId, int currentWorkProfileId, WorkProfileType workProfileType, int currentRoleCampusSelectedId, 
+            int currentRoleId, int currentCampusId, CancellationToken cancellationToken = default);
     }
 
     //public interface ISecurityValidatorService

@@ -99,7 +99,7 @@ namespace ESAM.GrowTracking.Application.Features.Auth.AssumeRoleCampus
             var currentJti = _accessTokenClaimsValidatorService.CurrentJti;
             var currentAccessTokenExpiration = _accessTokenClaimsValidatorService.CurrentAccessTokenExpiration;
             var utcNow = _dateTimeService.UtcNow;
-            var (refreshToken, userSession, userSessionWorkProfileSelectedId, userSessionRoleCampusSelectedId) = await _userSessionService.CreateUserSessionAsync(currentUserId,
+            var (refreshToken, userSession, workProfileSelectedId, roleCampusSelectedId) = await _userSessionService.CreateUserSessionAsync(currentUserId,
                 currentUserDeviceId, ipAddress, userAgent, currentIsPersistent, request.WorkProfileId, request.RoleId, request.CampusId, currentJti, currentAccessTokenExpiration, 
                 utcNow, asTracking, cancellationToken);
             //var (refreshToken, userSession) = await _userSessionService.CreateUserSessionAsync(currentUserId, currentUserDeviceId, ipAddress, userAgent, currentIsPersistent, 
@@ -130,21 +130,21 @@ namespace ESAM.GrowTracking.Application.Features.Auth.AssumeRoleCampus
             }
             if (assumeRoleCampusUser.AssumeRoleCampusUserSession.AssumeRoleCampusSessionWorkProfileSelected is null)
             {
-                _logger.LogError("AssumeRoleCampusCommand: perfil de trabajo ausente en los datos retornados. UserId={UserId}, UserSessionId={UserSessionId}",
-                    currentUserId, userSession.Id);
+                _logger.LogError("AssumeRoleCampusCommand: perfil de trabajo ausente en los datos retornados. UserId={UserId}, UserSessionId={UserSessionId}", currentUserId, 
+                    userSession.Id);
                 return Result<AssumeRoleCampusResponse>.Fail(Error.ServerError("No se encontró perfil de trabajo de usuario seleccionado."));
             }
             if (assumeRoleCampusUser.AssumeRoleCampusUserSession.AssumeRoleCampusSessionWorkProfileSelected.AssumeRoleCampusSessionRoleCampusSelected is null)
             {
-                _logger.LogError("AssumeRoleCampusCommand: rol y sede ausente en los datos retornados. UserId={UserId}, UserSessionId={UserSessionId}",
-                    currentUserId, userSession.Id);
+                _logger.LogError("AssumeRoleCampusCommand: rol y sede ausente en los datos retornados. UserId={UserId}, UserSessionId={UserSessionId}", currentUserId, 
+                    userSession.Id);
                 return Result<AssumeRoleCampusResponse>.Fail(Error.ServerError("No se encontró rol y sede de usuario seleccionado."));
             }
             var currentSecurityStamp = _accessTokenClaimsValidatorService.CurrentSecurityStamp;
             var currentTokenVersion = _accessTokenClaimsValidatorService.CurrentTokenVersion;
             var accessToken = _tokenService.GenerateSessionAccessToken(currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId, userSession.Id, utcNow,
-                _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, userSessionWorkProfileSelectedId, request.WorkProfileId, WorkProfileType.WithRoles, 
-                userSessionRoleCampusSelectedId, request.RoleId, request.CampusId);
+                _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, workProfileSelectedId, request.WorkProfileId, WorkProfileType.WithRoles, roleCampusSelectedId, 
+                request.RoleId, request.CampusId);
             //var accessToken = _tokenService.GenerateSessionAccessToken(currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId, userSession.Id, utcNow,
             //    _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, request.WorkProfileId, WorkProfileType.WithRoles, request.RoleId, request.CampusId);
             return Result<AssumeRoleCampusResponse>.Ok(new AssumeRoleCampusResponse(accessToken.Token, accessToken.ExpiresIn, accessToken.ExpiresAt, refreshToken.Identifier,

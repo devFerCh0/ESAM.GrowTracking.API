@@ -86,19 +86,19 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Refresh
         {
             var currentSecurityStamp = _accessTokenClaimsValidatorService.CurrentSecurityStamp;
             var currentTokenVersion = _accessTokenClaimsValidatorService.CurrentTokenVersion;
-            var currentUserSessionWorkProfileSelectedId = _accessTokenClaimsValidatorService.CurrentWorkProfileSelectedId;
+            var currentWorkProfileSelectedId = _accessTokenClaimsValidatorService.CurrentWorkProfileSelectedId;
             var currentWorkProfileId = _accessTokenClaimsValidatorService.CurrentWorkProfileId;
             var currentWorkProfileType = _accessTokenClaimsValidatorService.CurrentWorkProfileType;
-            var currentUserSessionRoleCampusSelectedId = _accessTokenClaimsValidatorService.CurrentRoleCampusSelectedId;
+            var currentRoleCampusSelectedId = _accessTokenClaimsValidatorService.CurrentRoleCampusSelectedId;
             var currentRoleId = _accessTokenClaimsValidatorService.CurrentRoleId;
             var currentCampusId = _accessTokenClaimsValidatorService.CurrentCampusId;
             var isOnlyWorkProfile = currentWorkProfileType == WorkProfileType.OnlyWorkProfile;
             var securityValidationResult = isOnlyWorkProfile
                 ? await _securityValidatorService.ValidateAccessTokenSessionAsync(currentJti, currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId,
-                    currentUserSessionId, currentUserSessionWorkProfileSelectedId, currentWorkProfileId, currentWorkProfileType, cancellationToken)
+                    currentUserSessionId, currentWorkProfileSelectedId, currentWorkProfileId, currentWorkProfileType, cancellationToken)
                 : await _securityValidatorService.ValidateAccessTokenSessionAsync(currentJti, currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId,
-                    currentUserSessionId, currentUserSessionWorkProfileSelectedId, currentWorkProfileId, currentWorkProfileType, currentUserSessionRoleCampusSelectedId, 
-                    currentRoleId, currentCampusId, cancellationToken);
+                    currentUserSessionId, currentWorkProfileSelectedId, currentWorkProfileId, currentWorkProfileType, currentRoleCampusSelectedId, currentRoleId, currentCampusId, 
+                    cancellationToken);
             if (securityValidationResult.IsFailure)
             {
                 var reason = isOnlyWorkProfile
@@ -117,10 +117,10 @@ namespace ESAM.GrowTracking.Application.Features.Auth.Refresh
                 "Refresh: Token reemplazado exitosamente por rotación normal.", currentUserId, utcNow, asTracking, cancellationToken);
             var accessToken = isOnlyWorkProfile
                 ? _tokenService.GenerateSessionAccessToken(currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId, currentUserSessionId, utcNow,
-                    _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, currentUserSessionWorkProfileSelectedId, currentWorkProfileId, currentWorkProfileType)
+                    _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, currentWorkProfileSelectedId, currentWorkProfileId, currentWorkProfileType)
                 : _tokenService.GenerateSessionAccessToken(currentUserId, currentSecurityStamp, currentTokenVersion, currentUserDeviceId, currentUserSessionId, utcNow,
-                    _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, currentUserSessionWorkProfileSelectedId, currentWorkProfileId, currentWorkProfileType, 
-                    currentUserSessionRoleCampusSelectedId, currentRoleId, currentCampusId);
+                    _tokenLifetimeSettings.SessionAccessTokenLifetimeMinutes, currentWorkProfileSelectedId, currentWorkProfileId, currentWorkProfileType, 
+                    currentRoleCampusSelectedId, currentRoleId, currentCampusId);
             return Result<RefreshResponse>.Ok(new RefreshResponse(accessToken.Token, accessToken.ExpiresIn, accessToken.ExpiresAt, refreshToken.Identifier, refreshToken.Token,
                 refreshToken.ExpiresIn, refreshToken.ExpiresAt));
         }

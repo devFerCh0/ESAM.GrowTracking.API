@@ -1,5 +1,6 @@
 ﻿using ESAM.GrowTracking.Application.Features.Auth.AssumeRoleCampus.Responses;
 using ESAM.GrowTracking.Application.Features.Auth.AssumeWorkProfile.Responses;
+using ESAM.GrowTracking.Application.Features.Auth.ChangeRoleCampus.Responses;
 using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserRoleCampus.Responses;
 using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserWorkProfile.Responses;
 using ESAM.GrowTracking.Application.Features.Auth.Login.Responses;
@@ -21,6 +22,9 @@ namespace ESAM.GrowTracking.Application.Abstractions.DataAccess.Queries
             CancellationToken cancellationToken = default);
 
         Task<GetCurrentUserWorkProfileResponse?> GetCurrentUserWorkProfileByUserIdAndUserSessionIdAsync(int userId, int userSessionId, bool asTracking = false,
+            CancellationToken cancellationToken = default);
+
+        Task<ChangeRoleCampusUserResponse?> GetChangeRoleCampusUserByUserIdAndUserSessionIdAsync(int userId, int userSessionId, bool asTracking = false,
             CancellationToken cancellationToken = default);
     }
 }
