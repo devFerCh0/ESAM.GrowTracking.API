@@ -40,6 +40,10 @@ namespace ESAM.GrowTracking.Application.Abstractions.Services
         Task<int> ChangeRoleCampusAsync(UserSession userSession, int currentWorkProfileSelectedId, int currentRoleCampusSelectedId, int roleId, int campusId, string currentJti, 
             DateTime currentAccessTokenExpiration, string revokedReason, int currentUserId, DateTime utcNow, bool asTracking = false, 
             CancellationToken cancellationToken = default);
+        
+        Task<int> ChangeWorkProfileAsync(UserSession userSession, int workProfileId, int currentWorkProfileSelectedId, int? currentRoleCampusSelectedId, string currentJti, 
+            DateTime currentAccessTokenExpiration, int currentUserId, string revokedReason, DateTime utcNow, bool asTracking = false, 
+            CancellationToken cancellationToken = default);
     }
 
     //public interface IUserSessionService

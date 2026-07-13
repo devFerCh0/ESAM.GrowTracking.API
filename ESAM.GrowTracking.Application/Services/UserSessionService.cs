@@ -19,11 +19,12 @@ namespace ESAM.GrowTracking.Application.Services
         private readonly IBlacklistedAccessTokenTemporaryRepository _blacklistedAccessTokenTemporaryRepository;
         private readonly IBlacklistedAccessTokenSessionRepository _blacklistedAccessTokenSessionRepository;
         private readonly IUserSessionRoleCampusSelectedRepository _userSessionRoleCampusSelectedRepository;
+        private readonly IUserSessionWorkProfileSelectedRepository _userSessionWorkProfileSelectedRepository;
 
         public UserSessionService(ITokenService tokenService, IOptions<TokenLifetimeSettings> tokenLifetimeSettingsOptions, IHashService hashService, IUnitOfWork unitOfWork, 
             IUserSessionRefreshTokenRepository userSessionRefreshTokenRepository, IBlacklistedRefreshTokenRepository blacklistedRefreshTokenRepository, 
             IBlacklistedAccessTokenTemporaryRepository blacklistedAccessTokenTemporaryRepository, IBlacklistedAccessTokenSessionRepository blacklistedAccessTokenSessionRepository,
-            IUserSessionRoleCampusSelectedRepository userSessionRoleCampusSelectedRepository)
+            IUserSessionRoleCampusSelectedRepository userSessionRoleCampusSelectedRepository, IUserSessionWorkProfileSelectedRepository userSessionWorkProfileSelectedRepository)
         {
             ArgumentNullException.ThrowIfNull(tokenService);
             ArgumentNullException.ThrowIfNull(tokenLifetimeSettingsOptions);
@@ -34,6 +35,7 @@ namespace ESAM.GrowTracking.Application.Services
             ArgumentNullException.ThrowIfNull(blacklistedAccessTokenTemporaryRepository);
             ArgumentNullException.ThrowIfNull(blacklistedAccessTokenSessionRepository);
             ArgumentNullException.ThrowIfNull(userSessionRoleCampusSelectedRepository);
+            ArgumentNullException.ThrowIfNull(userSessionWorkProfileSelectedRepository);
             _tokenService = tokenService;
             _tokenLifetimeSettings = tokenLifetimeSettingsOptions.Value ?? throw new ArgumentNullException(nameof(tokenLifetimeSettingsOptions));
             _hashService = hashService;
@@ -43,6 +45,7 @@ namespace ESAM.GrowTracking.Application.Services
             _blacklistedAccessTokenTemporaryRepository = blacklistedAccessTokenTemporaryRepository;
             _blacklistedAccessTokenSessionRepository = blacklistedAccessTokenSessionRepository;
             _userSessionRoleCampusSelectedRepository = userSessionRoleCampusSelectedRepository;
+            _userSessionWorkProfileSelectedRepository = userSessionWorkProfileSelectedRepository;
         }
 
         public async Task<(RefreshTokenDTO RefreshToken, UserSession UserSession, int WorkProfileSelectedId, int RoleCampusSelectedId)>
@@ -283,6 +286,34 @@ namespace ESAM.GrowTracking.Application.Services
                     await _unitOfWork.BlacklistedAccessTokensSession.InsertAsync(blacklistedAccessTokenSession, ct);
             }, cancellationToken: cancellationToken);
             return newUserSessionRoleCampusSelected.Id;
+        }
+
+        public async Task<int> ChangeWorkProfileAsync(UserSession userSession, int workProfileId, int currentWorkProfileSelectedId, int? currentRoleCampusSelectedId, 
+            string currentJti, DateTime currentAccessTokenExpiration, int currentUserId, string revokedReason, DateTime utcNow, bool asTracking = false,
+            CancellationToken cancellationToken = default)
+        {
+            var userSessionWorkProfileSelected = await _userSessionWorkProfileSelectedRepository.GetByIdAsync(currentWorkProfileSelectedId, asTracking, cancellationToken);
+            userSessionWorkProfileSelected?.Deactivate();
+            var userSessionRoleCampusSelected = currentRoleCampusSelectedId.HasValue ?
+                await _userSessionRoleCampusSelectedRepository.GetByIdAsync(currentRoleCampusSelectedId.Value, asTracking, cancellationToken) : null;
+            userSessionRoleCampusSelected?.Deactivate();
+            var newUserSessionWorkProfileSelected = new UserSessionWorkProfileSelected(userSession.Id, currentUserId, workProfileId, utcNow);
+            userSession.UpdateLastActivity(utcNow, currentUserId, utcNow);
+            var doesBlacklistedAccessTokenSessionNotExist = await _blacklistedAccessTokenSessionRepository.DoesNotExistAsync(currentJti, asTracking, cancellationToken);
+            var blacklistedAccessTokenSession = doesBlacklistedAccessTokenSessionNotExist ? new BlacklistedAccessTokenSession(userSession.Id, currentJti,
+                currentAccessTokenExpiration, utcNow, revokedReason, currentUserId, utcNow) : null;
+            await _unitOfWork.ExecuteInTransactionAsync(async ct =>
+            {
+                if (userSessionWorkProfileSelected is not null)
+                    await _unitOfWork.UserSessionWorkProfilesSelected.UpdateAsync(userSessionWorkProfileSelected, ct);
+                if (userSessionRoleCampusSelected is not null)
+                    await _unitOfWork.UserSessionRoleCampusesSelected.UpdateAsync(userSessionRoleCampusSelected, ct);
+                await _unitOfWork.UserSessions.UpdateAsync(userSession, ct);
+                await _unitOfWork.UserSessionWorkProfilesSelected.InsertAsync(newUserSessionWorkProfileSelected, ct);
+                if (blacklistedAccessTokenSession is not null)
+                    await _unitOfWork.BlacklistedAccessTokensSession.InsertAsync(blacklistedAccessTokenSession, ct);
+            }, cancellationToken: cancellationToken);
+            return newUserSessionWorkProfileSelected.Id;
         }
 
         private async Task<(UserSession UserSession, UserSessionWorkProfileSelected UserSessionWorkProfileSelected, UserSessionRefreshToken UserSessionRefreshToken,

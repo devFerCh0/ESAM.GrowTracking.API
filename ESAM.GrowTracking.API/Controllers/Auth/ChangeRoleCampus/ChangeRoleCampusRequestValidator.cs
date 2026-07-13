@@ -7,9 +7,9 @@ namespace ESAM.GrowTracking.API.Controllers.Auth.ChangeRoleCampus
     {
         public ChangeRoleCampusRequestValidator()
         {
-            RuleFor(arcc => arcc.RoleId).Cascade(CascadeMode.Stop)
+            RuleFor(crcr => crcr.RoleId).Cascade(CascadeMode.Stop)
                 .NotNull().WithMessage(RequestValidationMessages.RoleIdRequired);
-            RuleFor(arcc => arcc.CampusId).Cascade(CascadeMode.Stop)
+            RuleFor(crcr => crcr.CampusId).Cascade(CascadeMode.Stop)
                 .NotNull().WithMessage(RequestValidationMessages.CampusIdRequired);
         }
     }

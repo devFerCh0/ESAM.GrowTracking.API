@@ -7,7 +7,7 @@ namespace ESAM.GrowTracking.Application.Features.Auth.ChangeWorkProfile
     {
         public ChangeWorkProfileCommandValidator()
         {
-            RuleFor(awpc => awpc.WorkProfileId).Cascade(CascadeMode.Stop)
+            RuleFor(cwpc => cwpc.WorkProfileId).Cascade(CascadeMode.Stop)
                 .NotEmpty().WithMessage(CommandValidationMessages.WorkProfileIdRequired)
                 .GreaterThan(0).WithMessage(CommandValidationMessages.WorkProfileIdInvalid);
         }
