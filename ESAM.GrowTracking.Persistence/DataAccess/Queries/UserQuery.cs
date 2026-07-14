@@ -3,6 +3,7 @@ using ESAM.GrowTracking.Application.Features.Auth.AssumeRoleCampus.Responses;
 using ESAM.GrowTracking.Application.Features.Auth.AssumeWorkProfile.Responses;
 using ESAM.GrowTracking.Application.Features.Auth.ChangeRoleCampus.Responses;
 using ESAM.GrowTracking.Application.Features.Auth.ChangeWorkProfile.Responses;
+using ESAM.GrowTracking.Application.Features.Auth.ChangeWorkProfileRoleCampus.Responses;
 using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserRoleCampus.Responses;
 using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserWorkProfile.Responses;
 using ESAM.GrowTracking.Application.Features.Auth.Login.Responses;
@@ -140,6 +141,26 @@ namespace ESAM.GrowTracking.Persistence.DataAccess.Queries
                         us.UserSessionWorkProfilesSelected.Where(uswps => uswps.IsActive).OrderByDescending(uswps => uswps.CreatedAt)
                             .Select(uswps => new ChangeWorkProfileSessionWorkProfileSelectedResponse(uswps.WorkProfileId)).FirstOrDefault())).FirstOrDefault()))
                 .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        public async Task<ChangeWorkProfileRoleCampusUserResponse?> GetChangeWorkProfileRoleCampusUserByUserIdAndUserSessionIdAsync(int userId, int userSessionId,
+            bool asTracking = false, CancellationToken cancellationToken = default)
+        {
+            var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
+            return await query.Where(u => u.Id == userId && !u.IsDeleted)
+                .Select(u => new ChangeWorkProfileRoleCampusUserResponse(u.Id, u.Username, u.Email,
+                    u.Person.FirstName + " " + u.Person.LastName + (string.IsNullOrWhiteSpace(u.Person.SecondLastName) ? "" : " " + u.Person.SecondLastName),
+                    u.UserPhotos.Where(up => !up.IsDeleted && up.IsDefault).Select(up => up.Photo).FirstOrDefault(),
+                    u.UserWorkProfiles.Where(uwp => !uwp.IsDeleted).Select(uwp => new ChangeWorkProfileRoleCampusUserWorkProfileResponse(uwp.WorkProfileId, uwp.WorkProfile.Name,
+                        uwp.WorkProfile.WorkProfileType)).ToList(),
+                    u.UserRoleCampuses.Where(urc => !urc.IsDeleted).Select(urc => new ChangeWorkProfileRoleCampusUserRoleCampusResponse(urc.RoleId, urc.Role.Name, urc.CampusId,
+                        urc.Campus.Name)).ToList(),
+                    u.UserSessions.Where(us => us.Id == userSessionId).Select(us => new ChangeWorkProfileRoleCampusUserSessionResponse(us.Id, us.IpAddress, us.UserAgent,
+                        us.UserSessionWorkProfilesSelected.Where(uswps => uswps.IsActive).OrderByDescending(uswps => uswps.CreatedAt)
+                            .Select(uswps => new ChangeWorkProfileRoleCampusSessionWorkProfileSelectedResponse(uswps.WorkProfileId,
+                                uswps.UserSessionRoleCampusesSelected.Where(usrcs => usrcs.IsActive).OrderByDescending(usrcs => usrcs.CreatedAt)
+                                    .Select(usrcs => new ChangeWorkProfileRoleCampusSessionRoleCampusSelectedResponse(usrcs.RoleId, usrcs.CampusId)).FirstOrDefault()))
+                            .FirstOrDefault())).FirstOrDefault())).FirstOrDefaultAsync(cancellationToken);
         }
     }
 

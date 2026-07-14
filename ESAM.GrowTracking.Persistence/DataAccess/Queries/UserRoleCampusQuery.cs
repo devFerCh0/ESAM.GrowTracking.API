@@ -1,4 +1,5 @@
 ﻿using ESAM.GrowTracking.Application.Abstractions.DataAccess.Queries;
+using ESAM.GrowTracking.Application.Features.Auth.GetChangeUserRoleCampuses;
 using ESAM.GrowTracking.Application.Features.Auth.GetUserRoleCampuses;
 using ESAM.GrowTracking.Domain.Entities;
 using ESAM.GrowTracking.Persistence.Contexts;
@@ -14,6 +15,13 @@ namespace ESAM.GrowTracking.Persistence.DataAccess.Queries
             var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
             return await query.Where(urc => urc.UserId == userId && !urc.IsDeleted)
                 .Select(urc => new GetUserRoleCampusResponse(urc.RoleId, urc.Role.Name, urc.CampusId, urc.Campus.Name)).ToListAsync(cancellationToken);
+        }
+
+        public async Task<List<GetChangeUserRoleCampusResponse>> GetChangeUserRoleCampusesByUserIdAsync(int userId, bool asTracking = false, CancellationToken cancellationToken = default)
+        {
+            var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
+            return await query.Where(urc => urc.UserId == userId && !urc.IsDeleted)
+                .Select(urc => new GetChangeUserRoleCampusResponse(urc.RoleId, urc.Role.Name, urc.CampusId, urc.Campus.Name)).ToListAsync(cancellationToken);
         }
     }
 }

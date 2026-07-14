@@ -6,8 +6,10 @@ using ESAM.GrowTracking.API.Controllers.Auth.AssumeRoleCampus;
 using ESAM.GrowTracking.API.Controllers.Auth.AssumeWorkProfile;
 using ESAM.GrowTracking.API.Controllers.Auth.ChangeRoleCampus;
 using ESAM.GrowTracking.API.Controllers.Auth.ChangeWorkProfile;
+using ESAM.GrowTracking.API.Controllers.Auth.ChangeWorkProfileRoleCampus;
 using ESAM.GrowTracking.API.Controllers.Auth.GetActiveCurrentUserSessions;
 using ESAM.GrowTracking.API.Controllers.Auth.GetActiveUserSessions;
+using ESAM.GrowTracking.API.Controllers.Auth.GetChangeUserRoleCampuses;
 using ESAM.GrowTracking.API.Controllers.Auth.GetCurrentUserRoleCampus;
 using ESAM.GrowTracking.API.Controllers.Auth.GetCurrentUserWorkProfile;
 using ESAM.GrowTracking.API.Controllers.Auth.GetUserRoleCampuses;
@@ -266,6 +268,8 @@ namespace ESAM.GrowTracking.API
                 mce.AddMaps(typeof(LogoutAllCurrentMappingProfile).Assembly);
                 mce.AddMaps(typeof(ChangeRoleCampusMappingProfile).Assembly);
                 mce.AddMaps(typeof(ChangeWorkProfileMappingProfile).Assembly);
+                mce.AddMaps(typeof(ChangeWorkProfileRoleCampusMappingProfile).Assembly);
+                mce.AddMaps(typeof(GetChangeUserRoleCampusMappingProfile).Assembly);
             });
             return services;
         }
@@ -282,6 +286,7 @@ namespace ESAM.GrowTracking.API
             services.AddValidatorsFromAssemblyContaining<LogoutAllRequestValidator>();
             services.AddValidatorsFromAssemblyContaining<ChangeRoleCampusRequestValidator>();
             services.AddValidatorsFromAssemblyContaining<ChangeWorkProfileRequestValidator>();
+            services.AddValidatorsFromAssemblyContaining<ChangeWorkProfileRoleCampusRequestValidator>();
             return services;
         }
     }

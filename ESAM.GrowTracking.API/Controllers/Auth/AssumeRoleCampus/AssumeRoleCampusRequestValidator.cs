@@ -7,11 +7,11 @@ namespace ESAM.GrowTracking.API.Controllers.Auth.AssumeRoleCampus
     {
         public AssumeRoleCampusRequestValidator()
         {
-            RuleFor(arcc => arcc.WorkProfileId).Cascade(CascadeMode.Stop)
+            RuleFor(arcr => arcr.WorkProfileId).Cascade(CascadeMode.Stop)
                 .NotNull().WithMessage(RequestValidationMessages.WorkProfileIdRequired);
-            RuleFor(arcc => arcc.RoleId).Cascade(CascadeMode.Stop)
+            RuleFor(arcr => arcr.RoleId).Cascade(CascadeMode.Stop)
                 .NotNull().WithMessage(RequestValidationMessages.RoleIdRequired);
-            RuleFor(arcc => arcc.CampusId).Cascade(CascadeMode.Stop)
+            RuleFor(arcr => arcr.CampusId).Cascade(CascadeMode.Stop)
                 .NotNull().WithMessage(RequestValidationMessages.CampusIdRequired);
         }
     }

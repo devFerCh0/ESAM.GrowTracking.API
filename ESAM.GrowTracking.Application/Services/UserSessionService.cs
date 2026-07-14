@@ -280,8 +280,8 @@ namespace ESAM.GrowTracking.Application.Services
             {
                 if (userSessionRoleCampusSelected is not null)
                     await _unitOfWork.UserSessionRoleCampusesSelected.UpdateAsync(userSessionRoleCampusSelected, ct);
-                await _unitOfWork.UserSessions.UpdateAsync(userSession, ct);
                 await _unitOfWork.UserSessionRoleCampusesSelected.InsertAsync(newUserSessionRoleCampusSelected, ct);
+                await _unitOfWork.UserSessions.UpdateAsync(userSession, ct);
                 if (blacklistedAccessTokenSession is not null)
                     await _unitOfWork.BlacklistedAccessTokensSession.InsertAsync(blacklistedAccessTokenSession, ct);
             }, cancellationToken: cancellationToken);
@@ -308,12 +308,44 @@ namespace ESAM.GrowTracking.Application.Services
                     await _unitOfWork.UserSessionWorkProfilesSelected.UpdateAsync(userSessionWorkProfileSelected, ct);
                 if (userSessionRoleCampusSelected is not null)
                     await _unitOfWork.UserSessionRoleCampusesSelected.UpdateAsync(userSessionRoleCampusSelected, ct);
-                await _unitOfWork.UserSessions.UpdateAsync(userSession, ct);
                 await _unitOfWork.UserSessionWorkProfilesSelected.InsertAsync(newUserSessionWorkProfileSelected, ct);
+                await _unitOfWork.UserSessions.UpdateAsync(userSession, ct);
                 if (blacklistedAccessTokenSession is not null)
                     await _unitOfWork.BlacklistedAccessTokensSession.InsertAsync(blacklistedAccessTokenSession, ct);
             }, cancellationToken: cancellationToken);
             return newUserSessionWorkProfileSelected.Id;
+        }
+
+        public async Task<(int WorkProfileSelectedId, int RoleCampusSelectedId)> ChangeWorkProfileRoleCampusAsync(UserSession userSession, int workProfileId, int roleId, 
+            int campusId, int currentWorkProfileSelectedId, int? currentRoleCampusSelectedId, string currentJti, DateTime currentAccessTokenExpiration, int currentUserId, 
+            string revokedReason, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
+        {
+            var userSessionWorkProfileSelected = await _userSessionWorkProfileSelectedRepository.GetByIdAsync(currentWorkProfileSelectedId, asTracking, cancellationToken);
+            userSessionWorkProfileSelected?.Deactivate();
+            var userSessionRoleCampusSelected = currentRoleCampusSelectedId.HasValue ?
+                await _userSessionRoleCampusSelectedRepository.GetByIdAsync(currentRoleCampusSelectedId.Value, asTracking, cancellationToken) : null;
+            userSessionRoleCampusSelected?.Deactivate();
+            var newUserSessionWorkProfileSelected = new UserSessionWorkProfileSelected(userSession.Id, currentUserId, workProfileId, utcNow);
+            var newUserSessionRoleCampusSelected = new UserSessionRoleCampusSelected(currentUserId, roleId, campusId, utcNow);
+            userSession.UpdateLastActivity(utcNow, currentUserId, utcNow);
+            var doesBlacklistedAccessTokenSessionNotExist = await _blacklistedAccessTokenSessionRepository.DoesNotExistAsync(currentJti, asTracking, cancellationToken);
+            var blacklistedAccessTokenSession = doesBlacklistedAccessTokenSessionNotExist ? new BlacklistedAccessTokenSession(userSession.Id, currentJti,
+                currentAccessTokenExpiration, utcNow, revokedReason, currentUserId, utcNow) : null;
+            await _unitOfWork.ExecuteInTransactionAsync(async ct =>
+            {
+                if (userSessionWorkProfileSelected is not null)
+                    await _unitOfWork.UserSessionWorkProfilesSelected.UpdateAsync(userSessionWorkProfileSelected, ct);
+                if (userSessionRoleCampusSelected is not null)
+                    await _unitOfWork.UserSessionRoleCampusesSelected.UpdateAsync(userSessionRoleCampusSelected, ct);
+                await _unitOfWork.UserSessionWorkProfilesSelected.InsertAsync(newUserSessionWorkProfileSelected, ct);
+                await _unitOfWork.SaveChangesAsync(ct);
+                newUserSessionRoleCampusSelected.AddUserSessionWorkProfileSelectedId(newUserSessionWorkProfileSelected.Id);
+                await _unitOfWork.UserSessionRoleCampusesSelected.InsertAsync(newUserSessionRoleCampusSelected, ct);
+                await _unitOfWork.UserSessions.UpdateAsync(userSession, ct);
+                if (blacklistedAccessTokenSession is not null)
+                    await _unitOfWork.BlacklistedAccessTokensSession.InsertAsync(blacklistedAccessTokenSession, ct);
+            }, cancellationToken: cancellationToken);
+            return (newUserSessionWorkProfileSelected.Id, newUserSessionRoleCampusSelected.Id);
         }
 
         private async Task<(UserSession UserSession, UserSessionWorkProfileSelected UserSessionWorkProfileSelected, UserSessionRefreshToken UserSessionRefreshToken,
