@@ -78,5 +78,12 @@ namespace ESAM.GrowTracking.Domain.Entities
             TokenVersion = tokenVersion;
             SetUpdatedAudit(updatedBy, updatedAt);
         }
+
+        public void ChangePassword(string salt, string passwordHash, int updatedBy, DateTime? updatedAt = null)
+        {
+            Salt = salt;
+            PasswordHash = passwordHash;
+            SetUpdatedAudit(updatedBy, updatedAt);
+        }
     }
 }

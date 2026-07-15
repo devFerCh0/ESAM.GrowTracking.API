@@ -212,7 +212,7 @@ namespace ESAM.GrowTracking.Application.Services
             return sessionsToRevoke.Count;
         }
 
-        public async Task<int> RevokeUserSessionsAsync(IReadOnlyCollection<UserSession> userSessions, int userId, string revokedReason, int currentUserId, DateTime utcNow, 
+        public async Task<int> RevokeUserSessionsAsync(IReadOnlyCollection<UserSession> userSessions, User user, string revokedReason, int currentUserId, DateTime utcNow, 
             bool asTracking = false, CancellationToken cancellationToken = default)
         {
             var sessionsToRevoke = new List<UserSession>();
@@ -227,8 +227,6 @@ namespace ESAM.GrowTracking.Application.Services
                 refreshTokensToRevoke.AddRange(refreshTokens);
                 blacklistedRefreshTokens.AddRange(blacklisted);
             }
-            var user = await _userRepository.GetByIdAsync(userId, asTracking, cancellationToken);
-            user?.UpdateSecurityCredentials(Guid.NewGuid().ToString(), user.TokenVersion + 1, currentUserId, utcNow);
             await _unitOfWork.ExecuteInTransactionAsync(async ct =>
             {
                 if (sessionsToRevoke.Count > 0)
@@ -237,8 +235,7 @@ namespace ESAM.GrowTracking.Application.Services
                     await _unitOfWork.UserSessionRefreshTokens.UpdateRangeAsync(refreshTokensToRevoke, ct);
                 if (blacklistedRefreshTokens.Count > 0)
                     await _unitOfWork.BlacklistedRefreshTokens.InsertRangeAsync(blacklistedRefreshTokens, ct);
-                if (user is not null)
-                    await _unitOfWork.Users.InsertAsync(user, ct);
+                await _unitOfWork.Users.InsertAsync(user, ct);
             }, cancellationToken: cancellationToken);
             return sessionsToRevoke.Count;
         }

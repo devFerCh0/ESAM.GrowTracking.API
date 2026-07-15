@@ -38,5 +38,14 @@
         public const string UserIdInvalid = "El usuario no es válido.";
         public const string UserSessionIdRequired = "La sesión de usuario es obligatoria.";
         public const string UserSessionIdInvalid = "La sesión de usuario no es válida.";
+        public const string CurrentPasswordRequired = "La contraseña actual es obligatoria.";
+        public const string CurrentPasswordMinLength = "La contraseña actual debe tener al menos 5 caracteres.";
+        public const string CurrentPasswordMaxLength = "La contraseña actual no puede exceder los 100 caracteres.";
+        public const string NewPasswordRequired = "La nueva contraseña es obligatoria.";
+        public const string NewPasswordMinLength = "La nueva contraseña debe tener al menos 5 caracteres.";
+        public const string NewPasswordMaxLength = "La nueva contraseña no puede exceder los 100 caracteres.";
+        public const string NewPasswordSameAsCurrent = "La nueva contraseña no puede ser igual a la contraseña actual.";
+        public const string ConfirmNewPasswordRequired = "La confirmación de la nueva contraseña es obligatoria.";
+        public const string ConfirmNewPasswordMismatch = "La confirmación no coincide con la nueva contraseña.";
     }
 }

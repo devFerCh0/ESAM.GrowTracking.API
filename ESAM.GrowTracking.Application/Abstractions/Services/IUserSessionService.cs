@@ -28,11 +28,15 @@ namespace ESAM.GrowTracking.Application.Abstractions.Services
         Task<int> RevokeUserSessionsAsync(IReadOnlyCollection<UserSession> userSessions, string revokedReason, int currentUserId, DateTime utcNow,
             bool asTracking = false, CancellationToken cancellationToken = default);
 
-        Task<int> RevokeUserSessionsAsync(IReadOnlyCollection<UserSession> userSessions, int userId, string revokedReason, int currentUserId, DateTime utcNow, 
+        Task<int> RevokeUserSessionsAsync(IReadOnlyCollection<UserSession> userSessions, User user, string revokedReason, int currentUserId, DateTime utcNow, 
             bool asTracking = false, CancellationToken cancellationToken = default);
 
-        Task RevokeAccessTokenTemporaryAsync(int currentUserId, string currentJti, DateTime currentAccessTokenExpiration, string reason, DateTime utcNow, bool asTracking = false,
+        Task<int> RevokeUserSessionsAndAccessTokenSessionAsync(IReadOnlyCollection<UserSession> userSessions, User user, string revokedReason, string currentjti, 
+            DateTime currentaccessTokenExpiration, int currentUserId, int currentUserSessionId, DateTime utcNow, bool asTracking = false, 
             CancellationToken cancellationToken = default);
+
+        //Task RevokeAccessTokenTemporaryAsync(int currentUserId, string currentJti, DateTime currentAccessTokenExpiration, string reason, DateTime utcNow, bool asTracking = false,
+        //    CancellationToken cancellationToken = default);
 
         Task RevokeAccessTokenSessionAsync(int currentUserSessionId, string currentJti, DateTime currentAccessTokenExpiration, int currentUserId, string reason, DateTime utcNow,
             bool asTracking = false, CancellationToken cancellationToken = default);
