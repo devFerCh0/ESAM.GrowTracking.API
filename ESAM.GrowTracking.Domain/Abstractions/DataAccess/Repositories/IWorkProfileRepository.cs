@@ -1,6 +1,4 @@
 ﻿using ESAM.GrowTracking.Domain.Entities;
-using ESAM.GrowTracking.Domain.Enums;
-
 namespace ESAM.GrowTracking.Domain.Abstractions.DataAccess.Repositories
 {
     public interface IWorkProfileRepository : IRepository<WorkProfile, int>

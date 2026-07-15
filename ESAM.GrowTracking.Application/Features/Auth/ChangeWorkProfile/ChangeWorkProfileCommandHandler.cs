@@ -3,7 +3,6 @@ using ESAM.GrowTracking.Application.Abstractions.Services;
 using ESAM.GrowTracking.Application.Extensions;
 using ESAM.GrowTracking.Application.Features.Auth.ChangeWorkProfile.Responses;
 using ESAM.GrowTracking.Application.Results;
-using ESAM.GrowTracking.Application.Services;
 using ESAM.GrowTracking.Application.Settings;
 using ESAM.GrowTracking.Application.ValueObjects;
 using ESAM.GrowTracking.Domain.Abstractions.DataAccess.Repositories;
