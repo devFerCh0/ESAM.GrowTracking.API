@@ -71,5 +71,12 @@ namespace ESAM.GrowTracking.Domain.Entities
         }
 
         public bool IsLocked(DateTime utcNow) => LockoutEndAt.HasValue && LockoutEndAt.Value > utcNow;
+
+        public void UpdateSecurityCredentials(string securityStamp, int tokenVersion, int updatedBy, DateTime? updatedAt = null)
+        {
+            SecurityStamp = securityStamp;
+            TokenVersion = tokenVersion;
+            SetUpdatedAudit(updatedBy, updatedAt);
+        }
     }
 }

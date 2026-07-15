@@ -20,11 +20,13 @@ namespace ESAM.GrowTracking.Application.Services
         private readonly IBlacklistedAccessTokenSessionRepository _blacklistedAccessTokenSessionRepository;
         private readonly IUserSessionRoleCampusSelectedRepository _userSessionRoleCampusSelectedRepository;
         private readonly IUserSessionWorkProfileSelectedRepository _userSessionWorkProfileSelectedRepository;
+        private readonly IUserRepository _userRepository;
 
         public UserSessionService(ITokenService tokenService, IOptions<TokenLifetimeSettings> tokenLifetimeSettingsOptions, IHashService hashService, IUnitOfWork unitOfWork, 
             IUserSessionRefreshTokenRepository userSessionRefreshTokenRepository, IBlacklistedRefreshTokenRepository blacklistedRefreshTokenRepository, 
             IBlacklistedAccessTokenTemporaryRepository blacklistedAccessTokenTemporaryRepository, IBlacklistedAccessTokenSessionRepository blacklistedAccessTokenSessionRepository,
-            IUserSessionRoleCampusSelectedRepository userSessionRoleCampusSelectedRepository, IUserSessionWorkProfileSelectedRepository userSessionWorkProfileSelectedRepository)
+            IUserSessionRoleCampusSelectedRepository userSessionRoleCampusSelectedRepository, IUserSessionWorkProfileSelectedRepository userSessionWorkProfileSelectedRepository,
+            IUserRepository userRepository)
         {
             ArgumentNullException.ThrowIfNull(tokenService);
             ArgumentNullException.ThrowIfNull(tokenLifetimeSettingsOptions);
@@ -36,6 +38,8 @@ namespace ESAM.GrowTracking.Application.Services
             ArgumentNullException.ThrowIfNull(blacklistedAccessTokenSessionRepository);
             ArgumentNullException.ThrowIfNull(userSessionRoleCampusSelectedRepository);
             ArgumentNullException.ThrowIfNull(userSessionWorkProfileSelectedRepository);
+            ArgumentNullException.ThrowIfNull(userSessionWorkProfileSelectedRepository);
+            ArgumentNullException.ThrowIfNull(userRepository);
             _tokenService = tokenService;
             _tokenLifetimeSettings = tokenLifetimeSettingsOptions.Value ?? throw new ArgumentNullException(nameof(tokenLifetimeSettingsOptions));
             _hashService = hashService;
@@ -46,6 +50,7 @@ namespace ESAM.GrowTracking.Application.Services
             _blacklistedAccessTokenSessionRepository = blacklistedAccessTokenSessionRepository;
             _userSessionRoleCampusSelectedRepository = userSessionRoleCampusSelectedRepository;
             _userSessionWorkProfileSelectedRepository = userSessionWorkProfileSelectedRepository;
+            _userRepository = userRepository;
         }
 
         public async Task<(RefreshTokenDTO RefreshToken, UserSession UserSession, int WorkProfileSelectedId, int RoleCampusSelectedId)>
@@ -180,7 +185,7 @@ namespace ESAM.GrowTracking.Application.Services
             }, cancellationToken: cancellationToken);
         }
 
-        public async Task<int> RevokeUserSessionsAsync(IReadOnlyCollection<UserSession> userSessions, string revokedReason, int currentUserId, DateTime utcNow, 
+        public async Task<int> RevokeUserSessionsAsync(IReadOnlyCollection<UserSession> userSessions, string revokedReason, int currentUserId, DateTime utcNow,
             bool asTracking = false, CancellationToken cancellationToken = default)
         {
             var sessionsToRevoke = new List<UserSession>();
@@ -203,6 +208,37 @@ namespace ESAM.GrowTracking.Application.Services
                     await _unitOfWork.UserSessionRefreshTokens.UpdateRangeAsync(refreshTokensToRevoke, ct);
                 if (blacklistedRefreshTokens.Count > 0)
                     await _unitOfWork.BlacklistedRefreshTokens.InsertRangeAsync(blacklistedRefreshTokens, ct);
+            }, cancellationToken: cancellationToken);
+            return sessionsToRevoke.Count;
+        }
+
+        public async Task<int> RevokeUserSessionsAsync(IReadOnlyCollection<UserSession> userSessions, int userId, string revokedReason, int currentUserId, DateTime utcNow, 
+            bool asTracking = false, CancellationToken cancellationToken = default)
+        {
+            var sessionsToRevoke = new List<UserSession>();
+            var refreshTokensToRevoke = new List<UserSessionRefreshToken>();
+            var blacklistedRefreshTokens = new List<BlacklistedRefreshToken>();
+            foreach (var userSession in userSessions)
+            {
+                var (sessionToRevoke, refreshTokens, blacklisted) = await PrepareSessionRevocationAsync(userSession, revokedReason, currentUserId, utcNow, asTracking,
+                    cancellationToken);
+                if (sessionToRevoke is not null)
+                    sessionsToRevoke.Add(sessionToRevoke);
+                refreshTokensToRevoke.AddRange(refreshTokens);
+                blacklistedRefreshTokens.AddRange(blacklisted);
+            }
+            var user = await _userRepository.GetByIdAsync(userId, asTracking, cancellationToken);
+            user?.UpdateSecurityCredentials(Guid.NewGuid().ToString(), user.TokenVersion + 1, currentUserId, utcNow);
+            await _unitOfWork.ExecuteInTransactionAsync(async ct =>
+            {
+                if (sessionsToRevoke.Count > 0)
+                    await _unitOfWork.UserSessions.UpdateRangeAsync(sessionsToRevoke, ct);
+                if (refreshTokensToRevoke.Count > 0)
+                    await _unitOfWork.UserSessionRefreshTokens.UpdateRangeAsync(refreshTokensToRevoke, ct);
+                if (blacklistedRefreshTokens.Count > 0)
+                    await _unitOfWork.BlacklistedRefreshTokens.InsertRangeAsync(blacklistedRefreshTokens, ct);
+                if (user is not null)
+                    await _unitOfWork.Users.InsertAsync(user, ct);
             }, cancellationToken: cancellationToken);
             return sessionsToRevoke.Count;
         }
