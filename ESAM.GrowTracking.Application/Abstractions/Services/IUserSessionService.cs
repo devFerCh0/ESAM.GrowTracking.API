@@ -25,18 +25,21 @@ namespace ESAM.GrowTracking.Application.Abstractions.Services
         Task RevokeUserSessionAsync(UserSession userSession, string revokedReason, int currentUserId, DateTime utcNow, bool asTracking = false,
             CancellationToken cancellationToken = default);
 
-        Task<int> RevokeUserSessionsAsync(IReadOnlyCollection<UserSession> userSessions, string revokedReason, int currentUserId, DateTime utcNow,
-            bool asTracking = false, CancellationToken cancellationToken = default);
-
-        Task<int> RevokeUserSessionsAsync(IReadOnlyCollection<UserSession> userSessions, User user, string revokedReason, int currentUserId, DateTime utcNow, 
-            bool asTracking = false, CancellationToken cancellationToken = default);
-
-        Task<int> RevokeUserSessionsAndAccessTokenSessionAsync(IReadOnlyCollection<UserSession> userSessions, User user, string revokedReason, string currentjti, 
-            DateTime currentaccessTokenExpiration, int currentUserId, int currentUserSessionId, DateTime utcNow, bool asTracking = false, 
+        Task<int> RevokeCurrentUserSessionsAsync(IReadOnlyCollection<UserSession> userSessions, string revokedReason, int currentUserId, DateTime utcNow, bool asTracking = false, 
             CancellationToken cancellationToken = default);
 
-        //Task RevokeAccessTokenTemporaryAsync(int currentUserId, string currentJti, DateTime currentAccessTokenExpiration, string reason, DateTime utcNow, bool asTracking = false,
-        //    CancellationToken cancellationToken = default);
+        Task<int> RevokeUserSessionsAsync(IReadOnlyCollection<UserSession> userSessions, int userId, string revokedReason, int currentUserId, DateTime utcNow, 
+            bool asTracking = false, CancellationToken cancellationToken = default);
+
+        Task<(string SecurityStamp, int TokenVersion)> ChangePassworsAndRevokeCurrentUserSessionsAndAccessTokenSessionAsync(IReadOnlyCollection<UserSession> userSessions, 
+            User user, string newPassword, string revokedReason, string currentJti, DateTime currentAccessTokenExpiration, int currentUserId, int currentUserSessionId, 
+            DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default);
+
+        Task<int> ResetPassworsAndRevokeUserSessionsAsync(IReadOnlyCollection<UserSession> userSessions, User user, string newPassword, string revokedReason, int currentUserId, 
+            DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default);
+
+        Task RevokeAccessTokenTemporaryAsync(int currentUserId, string currentJti, DateTime currentAccessTokenExpiration, string reason, DateTime utcNow, bool asTracking = false,
+            CancellationToken cancellationToken = default);
 
         Task RevokeAccessTokenSessionAsync(int currentUserSessionId, string currentJti, DateTime currentAccessTokenExpiration, int currentUserId, string reason, DateTime utcNow,
             bool asTracking = false, CancellationToken cancellationToken = default);

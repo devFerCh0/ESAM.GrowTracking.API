@@ -44,7 +44,7 @@ namespace ESAM.GrowTracking.Application.Features.Auth.LogoutAllCurrent
                 _logger.LogInformation("LogoutAllCurrentCommand: No tiene sesiones de usuario activas para revocar. CurrentUserId={CurrentUserId}", currentUserId);
                 return Result<LogoutAllCurrentResponse>.Fail(Error.NotFound("No tiene sesiones de usaurio activas para revocar."));
             }
-            var revokedCount = await _userSessionService.RevokeUserSessionsAsync(activeUserSessions,
+            var revokedCount = await _userSessionService.RevokeCurrentUserSessionsAsync(activeUserSessions,
                 $"LogoutAll: Cierre de todas las sesiones ejecutado por el usuario administrador {currentUserId}.", currentUserId, utcNow, asTracking, cancellationToken);
             _logger.LogInformation("LogoutAllCurrentCommand: {Count} sesión(es) de usaurio revocada(s) exitosamente. RevocadoPor={CurrentUserId}", revokedCount, currentUserId);
             return Result<LogoutAllCurrentResponse>.Ok(new LogoutAllCurrentResponse(revokedCount));

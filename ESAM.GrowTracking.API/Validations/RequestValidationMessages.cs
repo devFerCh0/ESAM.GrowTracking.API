@@ -16,5 +16,8 @@
         public const string AccessTokenRequired = "El access token no es válido.";
         public const string UserIdRequired = "El usuario es obligatorio.";
         public const string UserSessionIdRequired = "La sesión de usuario es obligatoria.";
+        public const string CurrentPasswordRequired = "La contraseña actual es obligatoria.";
+        public const string NewPasswordRequired = "La nueva contraseña es obligatoria.";
+        public const string ConfirmNewPasswordRequired = "La confirmación de la nueva contraseña es obligatoria.";
     }
 }

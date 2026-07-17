@@ -4,6 +4,7 @@ using ESAM.GrowTracking.Application.Settings;
 using ESAM.GrowTracking.Domain.Abstractions.DataAccess;
 using ESAM.GrowTracking.Domain.Abstractions.DataAccess.Repositories;
 using ESAM.GrowTracking.Domain.Entities;
+using MediatR;
 using Microsoft.Extensions.Options;
 
 namespace ESAM.GrowTracking.Application.Services
@@ -185,7 +186,7 @@ namespace ESAM.GrowTracking.Application.Services
             }, cancellationToken: cancellationToken);
         }
 
-        public async Task<int> RevokeUserSessionsAsync(IReadOnlyCollection<UserSession> userSessions, string revokedReason, int currentUserId, DateTime utcNow,
+        public async Task<int> RevokeCurrentUserSessionsAsync(IReadOnlyCollection<UserSession> userSessions, string revokedReason, int currentUserId, DateTime utcNow,
             bool asTracking = false, CancellationToken cancellationToken = default)
         {
             var sessionsToRevoke = new List<UserSession>();
@@ -212,7 +213,7 @@ namespace ESAM.GrowTracking.Application.Services
             return sessionsToRevoke.Count;
         }
 
-        public async Task<int> RevokeUserSessionsAsync(IReadOnlyCollection<UserSession> userSessions, User user, string revokedReason, int currentUserId, DateTime utcNow, 
+        public async Task<int> RevokeUserSessionsAsync(IReadOnlyCollection<UserSession> userSessions, int userId, string revokedReason, int currentUserId, DateTime utcNow, 
             bool asTracking = false, CancellationToken cancellationToken = default)
         {
             var sessionsToRevoke = new List<UserSession>();
@@ -227,6 +228,8 @@ namespace ESAM.GrowTracking.Application.Services
                 refreshTokensToRevoke.AddRange(refreshTokens);
                 blacklistedRefreshTokens.AddRange(blacklisted);
             }
+            var user = await _userRepository.GetByIdAsync(userId, asTracking, cancellationToken);
+            user?.UpdateSecurityCredentials(Guid.NewGuid().ToString(), user.TokenVersion + 1, currentUserId, utcNow);
             await _unitOfWork.ExecuteInTransactionAsync(async ct =>
             {
                 if (sessionsToRevoke.Count > 0)
@@ -235,7 +238,77 @@ namespace ESAM.GrowTracking.Application.Services
                     await _unitOfWork.UserSessionRefreshTokens.UpdateRangeAsync(refreshTokensToRevoke, ct);
                 if (blacklistedRefreshTokens.Count > 0)
                     await _unitOfWork.BlacklistedRefreshTokens.InsertRangeAsync(blacklistedRefreshTokens, ct);
-                await _unitOfWork.Users.InsertAsync(user, ct);
+                await _unitOfWork.Users.UpdateAsync(user!, ct);
+            }, cancellationToken: cancellationToken);
+            return sessionsToRevoke.Count;
+        }
+
+        public async Task<(string SecurityStamp, int TokenVersion)> ChangePassworsAndRevokeCurrentUserSessionsAndAccessTokenSessionAsync(
+            IReadOnlyCollection<UserSession> userSessions, User user, string newPassword, string revokedReason, string currentJti, DateTime currentAccessTokenExpiration, 
+            int currentUserId, int currentUserSessionId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
+        {
+            var sessionsToRevoke = new List<UserSession>();
+            var refreshTokensToRevoke = new List<UserSessionRefreshToken>();
+            var blacklistedRefreshTokens = new List<BlacklistedRefreshToken>();
+            foreach (var userSession in userSessions)
+            {
+                var (sessionToRevoke, refreshTokens, blacklisted) = await PrepareSessionRevocationAsync(userSession, revokedReason, currentUserId, utcNow, asTracking,
+                    cancellationToken);
+                if (sessionToRevoke is not null)
+                    sessionsToRevoke.Add(sessionToRevoke);
+                refreshTokensToRevoke.AddRange(refreshTokens);
+                blacklistedRefreshTokens.AddRange(blacklisted);
+            }
+            var newSalt = _hashService.GenerateSalt();
+            var newPasswordHash = _hashService.ComputeHash(newPassword, newSalt);
+            user.ChangePassword(newSalt, newPasswordHash, currentUserId, utcNow);
+            user.UpdateSecurityCredentials(Guid.NewGuid().ToString(), user.TokenVersion + 1, currentUserId, utcNow);
+            var doesBlacklistedAccessTokenSessionNotExist = await _blacklistedAccessTokenSessionRepository.DoesNotExistAsync(currentJti, asTracking, cancellationToken);
+            var blacklistedAccessTokenSession = doesBlacklistedAccessTokenSessionNotExist ? new BlacklistedAccessTokenSession(currentUserSessionId, currentJti, 
+                currentAccessTokenExpiration,utcNow, revokedReason, currentUserId, utcNow) : null;
+            await _unitOfWork.ExecuteInTransactionAsync(async ct =>
+            {
+                if (sessionsToRevoke.Count > 0)
+                    await _unitOfWork.UserSessions.UpdateRangeAsync(sessionsToRevoke, ct);
+                if (refreshTokensToRevoke.Count > 0)
+                    await _unitOfWork.UserSessionRefreshTokens.UpdateRangeAsync(refreshTokensToRevoke, ct);
+                if (blacklistedRefreshTokens.Count > 0)
+                    await _unitOfWork.BlacklistedRefreshTokens.InsertRangeAsync(blacklistedRefreshTokens, ct);
+                await _unitOfWork.Users.UpdateAsync(user, ct);
+                if (blacklistedAccessTokenSession is not null)
+                    await _unitOfWork.BlacklistedAccessTokensSession.InsertAsync(blacklistedAccessTokenSession, ct);
+            }, cancellationToken: cancellationToken);
+            return (user.SecurityStamp, user.TokenVersion);
+        }
+
+        public async Task<int> ResetPassworsAndRevokeUserSessionsAsync(IReadOnlyCollection<UserSession> userSessions, User user, string newPassword, string revokedReason, 
+            int currentUserId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
+        {
+            var sessionsToRevoke = new List<UserSession>();
+            var refreshTokensToRevoke = new List<UserSessionRefreshToken>();
+            var blacklistedRefreshTokens = new List<BlacklistedRefreshToken>();
+            foreach (var userSession in userSessions)
+            {
+                var (sessionToRevoke, refreshTokens, blacklisted) = await PrepareSessionRevocationAsync(userSession, revokedReason, currentUserId, utcNow, asTracking,
+                    cancellationToken);
+                if (sessionToRevoke is not null)
+                    sessionsToRevoke.Add(sessionToRevoke);
+                refreshTokensToRevoke.AddRange(refreshTokens);
+                blacklistedRefreshTokens.AddRange(blacklisted);
+            }
+            var newSalt = _hashService.GenerateSalt();
+            var newPasswordHash = _hashService.ComputeHash(newPassword, newSalt);
+            user.ChangePassword(newSalt, newPasswordHash, currentUserId, utcNow);
+            user.UpdateSecurityCredentials(Guid.NewGuid().ToString(), user.TokenVersion + 1, currentUserId, utcNow);
+            await _unitOfWork.ExecuteInTransactionAsync(async ct =>
+            {
+                if (sessionsToRevoke.Count > 0)
+                    await _unitOfWork.UserSessions.UpdateRangeAsync(sessionsToRevoke, ct);
+                if (refreshTokensToRevoke.Count > 0)
+                    await _unitOfWork.UserSessionRefreshTokens.UpdateRangeAsync(refreshTokensToRevoke, ct);
+                if (blacklistedRefreshTokens.Count > 0)
+                    await _unitOfWork.BlacklistedRefreshTokens.InsertRangeAsync(blacklistedRefreshTokens, ct);
+                await _unitOfWork.Users.UpdateAsync(user, ct);
             }, cancellationToken: cancellationToken);
             return sessionsToRevoke.Count;
         }

@@ -4,6 +4,7 @@ using ESAM.GrowTracking.API.Controllers.Auth.AssumeRoleCampus;
 using ESAM.GrowTracking.API.Controllers.Auth.AssumeRoleCampus.HttpResponses;
 using ESAM.GrowTracking.API.Controllers.Auth.AssumeWorkProfile;
 using ESAM.GrowTracking.API.Controllers.Auth.AssumeWorkProfile.HttpResponses;
+using ESAM.GrowTracking.API.Controllers.Auth.ChangePassword;
 using ESAM.GrowTracking.API.Controllers.Auth.ChangeRoleCampus;
 using ESAM.GrowTracking.API.Controllers.Auth.ChangeRoleCampus.HttpResponses;
 using ESAM.GrowTracking.API.Controllers.Auth.ChangeWorkProfile;
@@ -22,6 +23,7 @@ using ESAM.GrowTracking.API.Controllers.Auth.Logout;
 using ESAM.GrowTracking.API.Controllers.Auth.LogoutAll;
 using ESAM.GrowTracking.API.Controllers.Auth.LogoutAllCurrent;
 using ESAM.GrowTracking.API.Controllers.Auth.Refresh;
+using ESAM.GrowTracking.API.Controllers.Auth.ResetUserPassword;
 using ESAM.GrowTracking.API.Controllers.Auth.RevokeCurrentUserSession;
 using ESAM.GrowTracking.API.Controllers.Auth.RevokeUserSession;
 using ESAM.GrowTracking.API.Extensions;
@@ -30,6 +32,7 @@ using ESAM.GrowTracking.API.Security;
 using ESAM.GrowTracking.Application.Abstractions.Services;
 using ESAM.GrowTracking.Application.Features.Auth.AssumeRoleCampus;
 using ESAM.GrowTracking.Application.Features.Auth.AssumeWorkProfile;
+using ESAM.GrowTracking.Application.Features.Auth.ChangePassword;
 using ESAM.GrowTracking.Application.Features.Auth.ChangeRoleCampus;
 using ESAM.GrowTracking.Application.Features.Auth.ChangeWorkProfile;
 using ESAM.GrowTracking.Application.Features.Auth.ChangeWorkProfileRoleCampus;
@@ -44,6 +47,7 @@ using ESAM.GrowTracking.Application.Features.Auth.Logout;
 using ESAM.GrowTracking.Application.Features.Auth.LogoutAll;
 using ESAM.GrowTracking.Application.Features.Auth.LogoutAllCurrent;
 using ESAM.GrowTracking.Application.Features.Auth.Refresh;
+using ESAM.GrowTracking.Application.Features.Auth.ResetUserPassword;
 using ESAM.GrowTracking.Application.Features.Auth.RevokeCurrentUserSession;
 using ESAM.GrowTracking.Application.Features.Auth.RevokeUserSession;
 using FluentValidation;
@@ -58,7 +62,7 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
     [Produces("application/json")]
     public sealed class AuthController : ControllerBase
     {
-        private readonly IValidator<LoginRequest> _loginRequesValidator;
+        private readonly IValidator<LoginRequest> _loginRequestValidator;
         private readonly IValidator<AssumeRoleCampusRequest> _assumeRoleCampusRequestValidator;
         private readonly IValidator<AssumeWorkProfileRequest> _assumeWorkProfileRequestValidator;
         private readonly IValidator<RefreshRequest> _refreshRequesValidator;
@@ -68,19 +72,22 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
         private readonly IValidator<ChangeRoleCampusRequest> _changeRoleCampusRequestValidator;
         private readonly IValidator<ChangeWorkProfileRequest> _changeWorkProfileRequestValidator;
         private readonly IValidator<ChangeWorkProfileRoleCampusRequest> _changeWorkProfileRoleCampusRequestValidator;
+        private readonly IValidator<ChangePasswordRequest> _changePasswordRequestValidator;
+        private readonly IValidator<ResetUserPasswordRequest> _resetUserPasswordRequestValidator;
         private readonly IMapper _mapper;
         private readonly ISender _sender;
         private readonly IErrorToHttpMapper _errorToHttpMapper;
         private readonly IAuthSessionCookieService _authSessionCookieService;
 
-        public AuthController(IValidator<LoginRequest> loginRequesValidator, IValidator<AssumeRoleCampusRequest> assumeRoleCampusRequestValidator, 
+        public AuthController(IValidator<LoginRequest> loginRequestValidator, IValidator<AssumeRoleCampusRequest> assumeRoleCampusRequestValidator, 
             IValidator<AssumeWorkProfileRequest> assumeWorkProfileRequestValidator, IValidator<RefreshRequest> refreshRequesValidator, 
             IValidator<RevokeUserSessionRequest> revokeUserSessionRequestValidator, IValidator<RevokeCurrentUserSessionRequest> revokeCurrentUserSessionRequestValidator, 
             IValidator<LogoutAllRequest> logoutAllRequestValidator, IValidator<ChangeRoleCampusRequest> changeRoleCampusRequestValidator,
-            IValidator<ChangeWorkProfileRequest> changeWorkProfileRequestValidator, IValidator<ChangeWorkProfileRoleCampusRequest> changeWorkProfileRoleCampusRequestValidator, 
-            IMapper mapper, ISender sender, IErrorToHttpMapper errorToHttpMapper, IAuthSessionCookieService authSessionCookieService)
+            IValidator<ChangeWorkProfileRequest> changeWorkProfileRequestValidator, IValidator<ChangeWorkProfileRoleCampusRequest> changeWorkProfileRoleCampusRequestValidator,
+            IValidator<ChangePasswordRequest> changePasswordRequestValidator, IValidator<ResetUserPasswordRequest> resetUserPasswordRequestValidator, IMapper mapper, 
+            ISender sender, IErrorToHttpMapper errorToHttpMapper, IAuthSessionCookieService authSessionCookieService)
         {
-            ArgumentNullException.ThrowIfNull(loginRequesValidator);
+            ArgumentNullException.ThrowIfNull(loginRequestValidator);
             ArgumentNullException.ThrowIfNull(assumeRoleCampusRequestValidator);
             ArgumentNullException.ThrowIfNull(assumeWorkProfileRequestValidator);
             ArgumentNullException.ThrowIfNull(refreshRequesValidator);
@@ -90,11 +97,13 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
             ArgumentNullException.ThrowIfNull(changeRoleCampusRequestValidator);
             ArgumentNullException.ThrowIfNull(changeWorkProfileRequestValidator);
             ArgumentNullException.ThrowIfNull(changeWorkProfileRoleCampusRequestValidator);
+            ArgumentNullException.ThrowIfNull(changePasswordRequestValidator);
+            ArgumentNullException.ThrowIfNull(resetUserPasswordRequestValidator);
             ArgumentNullException.ThrowIfNull(mapper);
             ArgumentNullException.ThrowIfNull(sender);
             ArgumentNullException.ThrowIfNull(errorToHttpMapper);
             ArgumentNullException.ThrowIfNull(authSessionCookieService);
-            _loginRequesValidator = loginRequesValidator;
+            _loginRequestValidator = loginRequestValidator;
             _assumeRoleCampusRequestValidator = assumeRoleCampusRequestValidator;
             _assumeWorkProfileRequestValidator = assumeWorkProfileRequestValidator;
             _refreshRequesValidator = refreshRequesValidator;
@@ -104,6 +113,8 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
             _changeRoleCampusRequestValidator = changeRoleCampusRequestValidator;
             _changeWorkProfileRequestValidator = changeWorkProfileRequestValidator;
             _changeWorkProfileRoleCampusRequestValidator = changeWorkProfileRoleCampusRequestValidator;
+            _changePasswordRequestValidator = changePasswordRequestValidator;
+            _resetUserPasswordRequestValidator = resetUserPasswordRequestValidator;
             _mapper = mapper;
             _sender = sender;
             _errorToHttpMapper = errorToHttpMapper;
@@ -122,7 +133,7 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<ApiSuccessResponse<LoginHttpResponse>>> LoginAsync([FromBody] LoginRequest request, CancellationToken cancellationToken)
         {
-            var validation = await _loginRequesValidator.ValidateAsync(request, cancellationToken);
+            var validation = await _loginRequestValidator.ValidateAsync(request, cancellationToken);
             if (!validation.IsValid)
                 return validation.ToRequestErrorsActionResult(HttpContext.TraceIdentifier);
             var command = _mapper.Map<LoginCommand>(request);
@@ -501,6 +512,54 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
                 return changeWorkProfileRoleCampusResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
             var changeWorkProfileRoleCampus = _mapper.Map<ChangeWorkProfileRoleCampusHttpResponse>(changeWorkProfileRoleCampusResult.Value);
             return Ok(ApiSuccessResponse<ChangeWorkProfileRoleCampusHttpResponse>.From(changeWorkProfileRoleCampus, HttpContext.TraceIdentifier));
+        }
+
+        [Authorize(Policy = AuthorizationPolicies.RequireSessionTypeAccessToken)]
+        [HttpPost("change-password")]
+        [Consumes("application/json")]
+        [ProducesResponseType(typeof(ApiSuccessResponse<ChangePasswordHttpResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status423Locked)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<ApiSuccessResponse<ChangePasswordHttpResponse>>> ChangePasswordAsync([FromBody] ChangePasswordRequest request, 
+            CancellationToken cancellationToken)
+        {
+            var validation = await _changePasswordRequestValidator.ValidateAsync(request, cancellationToken);
+            if (!validation.IsValid)
+                return validation.ToRequestErrorsActionResult(HttpContext.TraceIdentifier);
+            var command = _mapper.Map<ChangePasswordCommand>(request);
+            var changePasswordResult = await _sender.Send(command, cancellationToken);
+            if (changePasswordResult.IsFailure)
+                return changePasswordResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
+            var changePassword = _mapper.Map<ChangePasswordHttpResponse>(changePasswordResult.Value);
+            return Ok(ApiSuccessResponse<ChangePasswordHttpResponse>.From(changePassword, HttpContext.TraceIdentifier));
+        }
+
+        [Authorize(Policy = AuthorizationPolicies.RequireSessionTypeAccessToken)]
+        [HttpPost("reset-user-password")]
+        [Consumes("application/json")]
+        [ProducesResponseType(typeof(ApiSuccessResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status423Locked)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<ApiSuccessResponse>> ResetUserPasswordAsync([FromBody] ResetUserPasswordRequest request, CancellationToken cancellationToken)
+        {
+            var validation = await _resetUserPasswordRequestValidator.ValidateAsync(request, cancellationToken);
+            if (!validation.IsValid)
+                return validation.ToRequestErrorsActionResult(HttpContext.TraceIdentifier);
+            var command = _mapper.Map<ResetUserPasswordCommand>(request);
+            var resetUserPasswordResult = await _sender.Send(command, cancellationToken);
+            if (resetUserPasswordResult.IsFailure)
+                return resetUserPasswordResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
+            return Ok(ApiSuccessResponse.From(HttpContext.TraceIdentifier));
         }
 
         private void ApplySessionAndXsrfToken(string refreshTokenRaw, DateTime refreshTokenExpiresAt)
