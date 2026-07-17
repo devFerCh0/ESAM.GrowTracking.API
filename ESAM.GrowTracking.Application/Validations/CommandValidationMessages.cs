@@ -47,5 +47,9 @@
         public const string NewPasswordSameAsCurrent = "La nueva contraseña no puede ser igual a la contraseña actual.";
         public const string ConfirmNewPasswordRequired = "La confirmación de la nueva contraseña es obligatoria.";
         public const string ConfirmNewPasswordMismatch = "La confirmación no coincide con la nueva contraseña.";
+        public const string UserDeviceIdRequired = "El dispositivo de usuario es obligatorio.";
+        public const string UserDeviceIdInvalid = "El dispositivo de usuario no es válido.";
+        public const string LockoutEndAtRequired = "La fecha de bloqueo es obligatoria.";
+        public const string LockoutEndAtInvalid = "La fecha de bloqueo debe ser posterior a la fecha y hora actual.";
     }
 }

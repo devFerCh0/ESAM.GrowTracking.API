@@ -10,6 +10,7 @@ using ESAM.GrowTracking.Application.Features.Auth.GetActiveUserSessions;
 using ESAM.GrowTracking.Application.Features.Auth.GetChangeUserRoleCampuses;
 using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserRoleCampus;
 using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserWorkProfile;
+using ESAM.GrowTracking.Application.Features.Auth.GetLockedUserDevices;
 using ESAM.GrowTracking.Application.Features.Auth.GetUserRoleCampuses;
 using ESAM.GrowTracking.Application.Features.Auth.Login;
 using ESAM.GrowTracking.Application.Features.Auth.Logout;
@@ -18,6 +19,10 @@ using ESAM.GrowTracking.Application.Features.Auth.LogoutAllCurrent;
 using ESAM.GrowTracking.Application.Features.Auth.Refresh;
 using ESAM.GrowTracking.Application.Features.Auth.RevokeCurrentUserSession;
 using ESAM.GrowTracking.Application.Features.Auth.RevokeUserSession;
+using ESAM.GrowTracking.Application.Features.Auth.UnlockUserAccount;
+using ESAM.GrowTracking.Application.Features.Auth.UnlockUserDevice;
+using ESAM.GrowTracking.Application.Features.Users.LockUser;
+using ESAM.GrowTracking.Application.Features.Users.UnlockUser;
 using ESAM.GrowTracking.Application.Services;
 using ESAM.GrowTracking.Application.Settings;
 using FluentValidation;
@@ -59,6 +64,7 @@ namespace ESAM.GrowTracking.Application
             services.AddScoped<ISecurityValidatorService, SecurityValidatorService>();
             services.AddScoped<IUserSessionService, UserSessionService>();
             services.AddScoped<IAuthSessionIntegrityValidatorService, AuthSessionIntegrityValidatorService>();
+            services.AddScoped<IUserService, UserService>();
 
             //services.AddScoped<IBlacklistedTokenService, BlacklistedTokenService>();
             //services.AddScoped<ICurrentUserValidatorService, CurrentUserValidatorService>();
@@ -90,6 +96,10 @@ namespace ESAM.GrowTracking.Application
                 mrsc.RegisterServicesFromAssembly(typeof(GetChangeUserRoleCampusesQuery).Assembly);
                 mrsc.RegisterServicesFromAssembly(typeof(ChangeWorkProfileRoleCampusCommand).Assembly);
                 mrsc.RegisterServicesFromAssembly(typeof(ChangePasswordCommand).Assembly);
+                mrsc.RegisterServicesFromAssembly(typeof(GetLockedUserDeviceQuery).Assembly);
+                mrsc.RegisterServicesFromAssembly(typeof(UnlockUserDeviceCommand).Assembly);
+                mrsc.RegisterServicesFromAssembly(typeof(LockUserCommand).Assembly);
+                mrsc.RegisterServicesFromAssembly(typeof(UnlockUserCommand).Assembly);
             });
         }
 
@@ -110,6 +120,10 @@ namespace ESAM.GrowTracking.Application
             services.AddValidatorsFromAssemblyContaining<GetChangeUserRoleCampusesQueryValidator>();
             services.AddValidatorsFromAssemblyContaining<ChangeWorkProfileRoleCampusCommandValidator>();
             services.AddValidatorsFromAssemblyContaining<ChangePasswordCommandValidator>();
+            services.AddValidatorsFromAssemblyContaining<GetLockedUserDeviceQueryValidator>();
+            services.AddValidatorsFromAssemblyContaining<UnlockUserDeviceCommandValidator>();
+            services.AddValidatorsFromAssemblyContaining<LockUserCommandValidator>();
+            services.AddValidatorsFromAssemblyContaining<UnlockUserCommandValidator>();
         }
     }
 }

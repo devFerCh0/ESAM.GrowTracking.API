@@ -4,7 +4,6 @@ using ESAM.GrowTracking.Application.Settings;
 using ESAM.GrowTracking.Domain.Abstractions.DataAccess;
 using ESAM.GrowTracking.Domain.Abstractions.DataAccess.Repositories;
 using ESAM.GrowTracking.Domain.Entities;
-using MediatR;
 using Microsoft.Extensions.Options;
 
 namespace ESAM.GrowTracking.Application.Services

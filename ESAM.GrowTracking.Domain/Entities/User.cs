@@ -85,5 +85,17 @@ namespace ESAM.GrowTracking.Domain.Entities
             PasswordHash = passwordHash;
             SetUpdatedAudit(updatedBy, updatedAt);
         }
+
+        public void Lock(DateTime lockoutEndAt, int updatedBy, DateTime? updatedAt = null)
+        {
+            LockoutEndAt = lockoutEndAt;
+            SetUpdatedAudit(updatedBy, updatedAt);
+        }
+
+        public void Unlock(int updatedBy, DateTime? updatedAt = null)
+        {
+            LockoutEndAt = null;
+            SetUpdatedAudit(updatedBy, updatedAt);
+        }
     }
 }

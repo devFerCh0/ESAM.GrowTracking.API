@@ -19,5 +19,7 @@
         public const string CurrentPasswordRequired = "La contraseña actual es obligatoria.";
         public const string NewPasswordRequired = "La nueva contraseña es obligatoria.";
         public const string ConfirmNewPasswordRequired = "La confirmación de la nueva contraseña es obligatoria.";
+        public const string UserDeviceIdRequired = "El dispositivo de usuario es obligatorio.";
+        public const string LockoutEndAtRequired = "La fecha de bloqueo es obligatoria.";
     }
 }

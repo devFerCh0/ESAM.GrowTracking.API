@@ -16,6 +16,7 @@ using ESAM.GrowTracking.API.Controllers.Auth.GetActiveUserSessions.HttpResponses
 using ESAM.GrowTracking.API.Controllers.Auth.GetChangeUserRoleCampuses;
 using ESAM.GrowTracking.API.Controllers.Auth.GetCurrentUserRoleCampus.HttpResponses;
 using ESAM.GrowTracking.API.Controllers.Auth.GetCurrentUserWorkProfile.HttpResponses;
+using ESAM.GrowTracking.API.Controllers.Auth.GetLockedUserDevices;
 using ESAM.GrowTracking.API.Controllers.Auth.GetUserRoleCampuses;
 using ESAM.GrowTracking.API.Controllers.Auth.Login;
 using ESAM.GrowTracking.API.Controllers.Auth.Login.HttpResponses;
@@ -26,6 +27,7 @@ using ESAM.GrowTracking.API.Controllers.Auth.Refresh;
 using ESAM.GrowTracking.API.Controllers.Auth.ResetUserPassword;
 using ESAM.GrowTracking.API.Controllers.Auth.RevokeCurrentUserSession;
 using ESAM.GrowTracking.API.Controllers.Auth.RevokeUserSession;
+using ESAM.GrowTracking.API.Controllers.Auth.UnlockUserDevice;
 using ESAM.GrowTracking.API.Extensions;
 using ESAM.GrowTracking.API.Responses;
 using ESAM.GrowTracking.API.Security;
@@ -41,6 +43,7 @@ using ESAM.GrowTracking.Application.Features.Auth.GetActiveUserSessions;
 using ESAM.GrowTracking.Application.Features.Auth.GetChangeUserRoleCampuses;
 using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserRoleCampus;
 using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserWorkProfile;
+using ESAM.GrowTracking.Application.Features.Auth.GetLockedUserDevices;
 using ESAM.GrowTracking.Application.Features.Auth.GetUserRoleCampuses;
 using ESAM.GrowTracking.Application.Features.Auth.Login;
 using ESAM.GrowTracking.Application.Features.Auth.Logout;
@@ -50,6 +53,7 @@ using ESAM.GrowTracking.Application.Features.Auth.Refresh;
 using ESAM.GrowTracking.Application.Features.Auth.ResetUserPassword;
 using ESAM.GrowTracking.Application.Features.Auth.RevokeCurrentUserSession;
 using ESAM.GrowTracking.Application.Features.Auth.RevokeUserSession;
+using ESAM.GrowTracking.Application.Features.Auth.UnlockUserAccount;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -74,6 +78,7 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
         private readonly IValidator<ChangeWorkProfileRoleCampusRequest> _changeWorkProfileRoleCampusRequestValidator;
         private readonly IValidator<ChangePasswordRequest> _changePasswordRequestValidator;
         private readonly IValidator<ResetUserPasswordRequest> _resetUserPasswordRequestValidator;
+        private readonly IValidator<UnlockUserDeviceRequest> _unlockUserDeviceRequestValidator;
         private readonly IMapper _mapper;
         private readonly ISender _sender;
         private readonly IErrorToHttpMapper _errorToHttpMapper;
@@ -84,8 +89,9 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
             IValidator<RevokeUserSessionRequest> revokeUserSessionRequestValidator, IValidator<RevokeCurrentUserSessionRequest> revokeCurrentUserSessionRequestValidator, 
             IValidator<LogoutAllRequest> logoutAllRequestValidator, IValidator<ChangeRoleCampusRequest> changeRoleCampusRequestValidator,
             IValidator<ChangeWorkProfileRequest> changeWorkProfileRequestValidator, IValidator<ChangeWorkProfileRoleCampusRequest> changeWorkProfileRoleCampusRequestValidator,
-            IValidator<ChangePasswordRequest> changePasswordRequestValidator, IValidator<ResetUserPasswordRequest> resetUserPasswordRequestValidator, IMapper mapper, 
-            ISender sender, IErrorToHttpMapper errorToHttpMapper, IAuthSessionCookieService authSessionCookieService)
+            IValidator<ChangePasswordRequest> changePasswordRequestValidator, IValidator<ResetUserPasswordRequest> resetUserPasswordRequestValidator,
+            IValidator<UnlockUserDeviceRequest> unlockUserDeviceRequestValidator, IMapper mapper, ISender sender, IErrorToHttpMapper errorToHttpMapper, 
+            IAuthSessionCookieService authSessionCookieService)
         {
             ArgumentNullException.ThrowIfNull(loginRequestValidator);
             ArgumentNullException.ThrowIfNull(assumeRoleCampusRequestValidator);
@@ -99,6 +105,7 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
             ArgumentNullException.ThrowIfNull(changeWorkProfileRoleCampusRequestValidator);
             ArgumentNullException.ThrowIfNull(changePasswordRequestValidator);
             ArgumentNullException.ThrowIfNull(resetUserPasswordRequestValidator);
+            ArgumentNullException.ThrowIfNull(unlockUserDeviceRequestValidator);
             ArgumentNullException.ThrowIfNull(mapper);
             ArgumentNullException.ThrowIfNull(sender);
             ArgumentNullException.ThrowIfNull(errorToHttpMapper);
@@ -115,6 +122,7 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
             _changeWorkProfileRoleCampusRequestValidator = changeWorkProfileRoleCampusRequestValidator;
             _changePasswordRequestValidator = changePasswordRequestValidator;
             _resetUserPasswordRequestValidator = resetUserPasswordRequestValidator;
+            _unlockUserDeviceRequestValidator = unlockUserDeviceRequestValidator;
             _mapper = mapper;
             _sender = sender;
             _errorToHttpMapper = errorToHttpMapper;
@@ -559,6 +567,51 @@ namespace ESAM.GrowTracking.API.Controllers.Auth
             var resetUserPasswordResult = await _sender.Send(command, cancellationToken);
             if (resetUserPasswordResult.IsFailure)
                 return resetUserPasswordResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
+            return Ok(ApiSuccessResponse.From(HttpContext.TraceIdentifier));
+        }
+
+        [Authorize(Policy = AuthorizationPolicies.RequireSessionTypeAccessToken)]
+        [HttpGet("user/{userId:int}/locked-user-device")]
+        [Consumes("application/json")]
+        [ProducesResponseType(typeof(ApiSuccessResponse<List<GetLockedUserDeviceHttpResponse>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status423Locked)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<ApiSuccessResponse<List<GetLockedUserDeviceHttpResponse>>>> GetLockedUserDeviceAsync([FromRoute] int userId, 
+            CancellationToken cancellationToken)
+        {
+            var query = new GetLockedUserDeviceQuery(userId);
+            var lockedUserDeviceResult = await _sender.Send(query, cancellationToken);
+            if (lockedUserDeviceResult.IsFailure)
+                return lockedUserDeviceResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
+            var lockedUserDevice = _mapper.Map<List<GetLockedUserDeviceHttpResponse>>(lockedUserDeviceResult.Value);
+            return Ok(ApiSuccessResponse<List<GetLockedUserDeviceHttpResponse>>.From(lockedUserDevice, HttpContext.TraceIdentifier));
+        }
+
+        [Authorize(Policy = AuthorizationPolicies.RequireSessionTypeAccessToken)]
+        [HttpPost("unlock-user-device")]
+        [Consumes("application/json")]
+        [ProducesResponseType(typeof(ApiSuccessResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status423Locked)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<ApiSuccessResponse>> UnlockUserDeviceAsync([FromBody] UnlockUserDeviceRequest request, CancellationToken cancellationToken)
+        {
+            var validation = await _unlockUserDeviceRequestValidator.ValidateAsync(request, cancellationToken);
+            if (!validation.IsValid)
+                return validation.ToRequestErrorsActionResult(HttpContext.TraceIdentifier);
+            var command = _mapper.Map<UnlockUserDeviceCommand>(request);
+            var unlockUserDeviceResult = await _sender.Send(command, cancellationToken);
+            if (unlockUserDeviceResult.IsFailure)
+                return unlockUserDeviceResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
             return Ok(ApiSuccessResponse.From(HttpContext.TraceIdentifier));
         }
 

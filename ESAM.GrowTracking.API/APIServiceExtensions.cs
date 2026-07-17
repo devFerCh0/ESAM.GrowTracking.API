@@ -13,6 +13,7 @@ using ESAM.GrowTracking.API.Controllers.Auth.GetActiveUserSessions;
 using ESAM.GrowTracking.API.Controllers.Auth.GetChangeUserRoleCampuses;
 using ESAM.GrowTracking.API.Controllers.Auth.GetCurrentUserRoleCampus;
 using ESAM.GrowTracking.API.Controllers.Auth.GetCurrentUserWorkProfile;
+using ESAM.GrowTracking.API.Controllers.Auth.GetLockedUserDevices;
 using ESAM.GrowTracking.API.Controllers.Auth.GetUserRoleCampuses;
 using ESAM.GrowTracking.API.Controllers.Auth.Login;
 using ESAM.GrowTracking.API.Controllers.Auth.LogoutAll;
@@ -20,6 +21,7 @@ using ESAM.GrowTracking.API.Controllers.Auth.LogoutAllCurrent;
 using ESAM.GrowTracking.API.Controllers.Auth.Refresh;
 using ESAM.GrowTracking.API.Controllers.Auth.RevokeCurrentUserSession;
 using ESAM.GrowTracking.API.Controllers.Auth.RevokeUserSession;
+using ESAM.GrowTracking.API.Controllers.Auth.UnlockUserDevice;
 using ESAM.GrowTracking.API.Filters;
 using ESAM.GrowTracking.API.HealthChecks;
 using ESAM.GrowTracking.API.Mappers;
@@ -272,6 +274,8 @@ namespace ESAM.GrowTracking.API
                 mce.AddMaps(typeof(GetChangeUserRoleCampusMappingProfile).Assembly);
                 mce.AddMaps(typeof(ChangeWorkProfileRoleCampusMappingProfile).Assembly);
                 mce.AddMaps(typeof(ChangePasswordMappingProfile).Assembly);
+                mce.AddMaps(typeof(GetLockedUserDeviceMappingProfile).Assembly);
+                mce.AddMaps(typeof(UnlockUserDeviceMappingProfile).Assembly);
             });
             return services;
         }
@@ -290,6 +294,7 @@ namespace ESAM.GrowTracking.API
             services.AddValidatorsFromAssemblyContaining<ChangeWorkProfileRequestValidator>();
             services.AddValidatorsFromAssemblyContaining<ChangeWorkProfileRoleCampusRequestValidator>();
             services.AddValidatorsFromAssemblyContaining<ChangePasswordRequestValidator>();
+            services.AddValidatorsFromAssemblyContaining<UnlockUserDeviceRequestValidator>();
             return services;
         }
     }

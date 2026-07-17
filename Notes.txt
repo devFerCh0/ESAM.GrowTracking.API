@@ -1,5 +1,5 @@
 completar entidades
 como usar las tablas de auditoria
-Métodos para Auth
+Identificar y modificar --> POST, PUT
 
 Add-Migration FirstMigration -Project ESAM.GrowTracking.Persistence -StartupProject ESAM.GrowTracking.API -OutputDir Migrations
