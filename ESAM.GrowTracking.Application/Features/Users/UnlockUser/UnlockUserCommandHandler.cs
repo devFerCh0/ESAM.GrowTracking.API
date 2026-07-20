@@ -17,22 +17,26 @@ namespace ESAM.GrowTracking.Application.Features.Users.UnlockUser
         private readonly IAccessTokenClaimsValidatorService _accessTokenClaimsValidatorService;
         private readonly IUserRepository _userRepository;
         private readonly IDateTimeService _dateTimeService;
+        private readonly IUserService _userService;
         private readonly IUnitOfWork _unitOfWork;
 
         public UnlockUserCommandHandler(ILogger<UnlockUserCommandHandler> logger, IValidator<UnlockUserCommand> validator, 
-            IAccessTokenClaimsValidatorService accessTokenClaimsValidatorService, IUserRepository userRepository, IDateTimeService dateTimeService, IUnitOfWork unitOfWork)
+            IAccessTokenClaimsValidatorService accessTokenClaimsValidatorService, IUserRepository userRepository, IDateTimeService dateTimeService, IUserService userService, 
+            IUnitOfWork unitOfWork)
         {
             ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(validator);
             ArgumentNullException.ThrowIfNull(accessTokenClaimsValidatorService);
             ArgumentNullException.ThrowIfNull(userRepository);
             ArgumentNullException.ThrowIfNull(dateTimeService);
+            ArgumentNullException.ThrowIfNull(userService);
             ArgumentNullException.ThrowIfNull(unitOfWork);
             _logger = logger;
             _validator = validator;
             _accessTokenClaimsValidatorService = accessTokenClaimsValidatorService;
             _userRepository = userRepository;
             _dateTimeService = dateTimeService;
+            _userService = userService;
             _unitOfWork = unitOfWork;
         }
 
@@ -63,7 +67,7 @@ namespace ESAM.GrowTracking.Application.Features.Users.UnlockUser
                 _logger.LogWarning("UnlockUserCommand: el usuario objetivo no se encuentra bloqueado. TargetUserId={TargetUserId}", request.UserId);
                 return Result.Fail(Error.BusinessRule("El usuario no se encuentra bloqueado."));
             }
-            user.Unlock(currentUserId, utcNow);
+            _userService.UserUnlock(user, currentUserId, utcNow);
             await _unitOfWork.Users.InsertAsync(user, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             return Result.Ok();

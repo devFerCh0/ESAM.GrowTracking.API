@@ -2,6 +2,7 @@
 using ESAM.GrowTracking.Application.Abstractions.DataAccess.Queries.Filters;
 using ESAM.GrowTracking.Application.Abstractions.Services;
 using ESAM.GrowTracking.Application.Extensions;
+using ESAM.GrowTracking.Application.Features.Commons;
 using ESAM.GrowTracking.Application.Features.Users.GetUsers.Responses;
 using ESAM.GrowTracking.Application.Results;
 using FluentValidation;
@@ -10,7 +11,7 @@ using Microsoft.Extensions.Logging;
 
 namespace ESAM.GrowTracking.Application.Features.Users.GetUsers
 {
-    public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, Result<PagedResult<GetUsersResponse>>>
+    public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, Result<PagedResponse<GetUsersResponse>>>
     {
         private readonly ILogger<GetUsersQueryHandler> _logger;
         private readonly IValidator<GetUsersQuery> _validator;
@@ -33,14 +34,14 @@ namespace ESAM.GrowTracking.Application.Features.Users.GetUsers
             _userQuery = userQuery;
         }
 
-        public async Task<Result<PagedResult<GetUsersResponse>>> Handle(GetUsersQuery request, CancellationToken cancellationToken)
+        public async Task<Result<PagedResponse<GetUsersResponse>>> Handle(GetUsersQuery request, CancellationToken cancellationToken)
         {
             var asTracking = false;
             var validation = await _validator.ValidateAsync(request, cancellationToken);
             if (!validation.IsValid)
             {
                 _logger.LogWarning("GetUsersQuery: validación fallida. Errores: {Errors}", string.Join(" | ", validation.Errors.Select(e => e.ErrorMessage)));
-                return Result<PagedResult<GetUsersResponse>>.Fail(validation.ToCommandErrors());
+                return Result<PagedResponse<GetUsersResponse>>.Fail(validation.ToCommandErrors());
             }
             var currentUserId = _accessTokenClaimsValidatorService.CurrentUserId;
             var utcNow = _dateTimeService.UtcNow;
@@ -48,9 +49,13 @@ namespace ESAM.GrowTracking.Application.Features.Users.GetUsers
             var filter = new GetUsersFilter(normalizedSearchTerm, request.IsDeleted, request.IsLocked, request.WorkProfileId, request.SortBy, request.SortDirection, 
                 request.PageNumber, request.PageSize, utcNow);
             var pagedUsers = await _userQuery.GetUsersAsync(filter, asTracking, cancellationToken);
-            _logger.LogInformation("GetUsersQuery: listado obtenido exitosamente. AdminUserId={AdminUserId}, Página={PageNumber}, TamañoPágina={PageSize}, " +
-                "TotalRegistros={TotalCount}.", currentUserId, pagedUsers.PageNumber, pagedUsers.PageSize, pagedUsers.TotalCount);
-            return Result<PagedResult<GetUsersResponse>>.Ok(pagedUsers);
+            if (pagedUsers.Items.Count == 0)
+                _logger.LogInformation("GetUsersQuery: no se encontraron usuarios para los criterios especificados. AdminUserId={AdminUserId}, Página={PageNumber}, " +
+                    "TamañoPágina={PageSize}", currentUserId, request.PageNumber, request.PageSize);
+            else
+                _logger.LogInformation("GetUsersQuery: listado obtenido exitosamente. AdminUserId={AdminUserId}, Página={PageNumber}, TamañoPágina={PageSize}, " +
+                    "TotalRegistros={TotalCount}.", currentUserId, pagedUsers.PageNumber, pagedUsers.PageSize, pagedUsers.TotalCount);
+            return Result<PagedResponse<GetUsersResponse>>.Ok(pagedUsers);
         }
     }
 }

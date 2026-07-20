@@ -22,6 +22,7 @@ using ESAM.GrowTracking.API.Controllers.Auth.Refresh;
 using ESAM.GrowTracking.API.Controllers.Auth.RevokeCurrentUserSession;
 using ESAM.GrowTracking.API.Controllers.Auth.RevokeUserSession;
 using ESAM.GrowTracking.API.Controllers.Auth.UnlockUserDevice;
+using ESAM.GrowTracking.API.Controllers.Users.GetUsers;
 using ESAM.GrowTracking.API.Filters;
 using ESAM.GrowTracking.API.HealthChecks;
 using ESAM.GrowTracking.API.Mappers;
@@ -256,6 +257,7 @@ namespace ESAM.GrowTracking.API
             ArgumentNullException.ThrowIfNull(services);
             services.AddAutoMapper(mce =>
             {
+                mce.AddMaps(typeof(GetUsersMappingProfile).Assembly);
                 mce.AddMaps(typeof(LoginMappingProfile).Assembly);
                 mce.AddMaps(typeof(GetUserRoleCampusMappingProfile).Assembly);
                 mce.AddMaps(typeof(AssumeRoleCampusMappingProfile).Assembly);
@@ -283,6 +285,7 @@ namespace ESAM.GrowTracking.API
         public static IServiceCollection AddAPIValidators(this IServiceCollection services)
         {
             ArgumentNullException.ThrowIfNull(services);
+            services.AddValidatorsFromAssemblyContaining<GetUsersRequestValidator>();
             services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
             services.AddValidatorsFromAssemblyContaining<AssumeRoleCampusRequestValidator>();
             services.AddValidatorsFromAssemblyContaining<AssumeWorkProfileRequestValidator>();

@@ -51,5 +51,12 @@
         public const string UserDeviceIdInvalid = "El dispositivo de usuario no es válido.";
         public const string LockoutEndAtRequired = "La fecha de bloqueo es obligatoria.";
         public const string LockoutEndAtInvalid = "La fecha de bloqueo debe ser posterior a la fecha y hora actual.";
+        public const string SearchTermMinLength = "El término de búsqueda debe tener al menos 2 caracteres.";
+        public const string SearchTermMaxLength = "El término de búsqueda no puede exceder los 100 caracteres.";
+        public const string SearchTermInvalid = "El término de búsqueda contiene caracteres no permitidos.";
+        public const string SortByInvalid = "El campo de ordenamiento especificado no es válido.";
+        public const string SortDirectionInvalid = "La dirección de ordenamiento especificada no es válida.";
+        public const string PageNumberInvalid = "El número de página debe ser mayor a cero.";
+        public const string PageSizeInvalid = "El tamaño de página debe estar entre 1 y 100.";
     }
 }

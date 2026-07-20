@@ -2,6 +2,7 @@
 using ESAM.GrowTracking.Application.Extensions;
 using ESAM.GrowTracking.Application.Results;
 using ESAM.GrowTracking.Application.ValueObjects;
+using ESAM.GrowTracking.Domain.Abstractions.DataAccess;
 using ESAM.GrowTracking.Domain.Abstractions.DataAccess.Repositories;
 using FluentValidation;
 using MediatR;
@@ -17,9 +18,12 @@ namespace ESAM.GrowTracking.Application.Features.Users.LockUser
         private readonly IUserRepository _userRepository;
         private readonly IDateTimeService _dateTimeService;
         private readonly IUserService _userService;
+        private readonly IUserSessionRevocationService _userSessionRevocationService;
+        private readonly IUnitOfWork _unitOfWork;
 
         public LockUserCommandHandler(ILogger<LockUserCommandHandler> logger, IValidator<LockUserCommand> validator, 
-            IAccessTokenClaimsValidatorService accessTokenClaimsValidatorService, IUserRepository userRepository, IDateTimeService dateTimeService, IUserService userService)
+            IAccessTokenClaimsValidatorService accessTokenClaimsValidatorService, IUserRepository userRepository, IDateTimeService dateTimeService, IUserService userService,
+            IUserSessionRevocationService userSessionRevocationService, IUnitOfWork unitOfWork)
         {
             ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(validator);
@@ -27,12 +31,16 @@ namespace ESAM.GrowTracking.Application.Features.Users.LockUser
             ArgumentNullException.ThrowIfNull(userRepository);
             ArgumentNullException.ThrowIfNull(dateTimeService);
             ArgumentNullException.ThrowIfNull(userService);
+            ArgumentNullException.ThrowIfNull(userSessionRevocationService);
+            ArgumentNullException.ThrowIfNull(unitOfWork);
             _logger = logger;
             _validator = validator;
             _accessTokenClaimsValidatorService = accessTokenClaimsValidatorService;
             _userRepository = userRepository;
             _dateTimeService = dateTimeService;
             _userService = userService;
+            _userSessionRevocationService = userSessionRevocationService;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<Result> Handle(LockUserCommand request, CancellationToken cancellationToken)
@@ -63,9 +71,19 @@ namespace ESAM.GrowTracking.Application.Features.Users.LockUser
                     user.LockoutEndAt);
                 return Result.Fail(Error.BusinessRule("El usuario ya se encuentra bloqueado."));
             }
-            user.Lock(request.LockoutEndAt, currentUserId, utcNow);
-            user.UpdateSecurityCredentials(Guid.NewGuid().ToString(), user.TokenVersion + 1, currentUserId, utcNow);
-            await _userService.LockUserAsync(user, "LockUser: Sesión finalizada por bloqueo administrativo de la cuenta.", currentUserId, utcNow, asTracking, cancellationToken);
+            _userService.UserLock(user, request.LockoutEndAt, currentUserId, utcNow);
+            var (userSessionsToRevoke, userSessionRefreshTokensToRevoke, blacklistedRefreshTokens) = await _userSessionRevocationService.RevokeUserSessionsAsync(request.UserId, 
+                "LockUser: Sesión finalizada por bloqueo administrativo de la cuenta.", currentUserId, utcNow, asTracking, cancellationToken);
+            await _unitOfWork.ExecuteInTransactionAsync(async ct =>
+            {
+                await _unitOfWork.Users.UpdateAsync(user, ct);
+                if (userSessionsToRevoke.Count > 0)
+                    await _unitOfWork.UserSessions.UpdateRangeAsync(userSessionsToRevoke, ct);
+                if (userSessionRefreshTokensToRevoke.Count > 0)
+                    await _unitOfWork.UserSessionRefreshTokens.UpdateRangeAsync(userSessionRefreshTokensToRevoke, ct);
+                if (blacklistedRefreshTokens.Count > 0)
+                    await _unitOfWork.BlacklistedRefreshTokens.InsertRangeAsync(blacklistedRefreshTokens, ct);
+            }, cancellationToken: cancellationToken);
             return Result.Ok();
         }
     }

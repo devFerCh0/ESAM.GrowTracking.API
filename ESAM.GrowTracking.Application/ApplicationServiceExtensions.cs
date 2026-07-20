@@ -17,6 +17,7 @@ using ESAM.GrowTracking.Application.Features.Auth.LogoutAllCurrent;
 using ESAM.GrowTracking.Application.Features.Auth.Refresh;
 using ESAM.GrowTracking.Application.Features.Auth.RevokeCurrentUserSession;
 using ESAM.GrowTracking.Application.Features.Users.GetActiveUserSessions;
+using ESAM.GrowTracking.Application.Features.Users.GetUsers;
 using ESAM.GrowTracking.Application.Features.Users.LockUser;
 using ESAM.GrowTracking.Application.Features.Users.LogoutAll;
 using ESAM.GrowTracking.Application.Features.Users.RevokeUserSession;
@@ -76,6 +77,7 @@ namespace ESAM.GrowTracking.Application
         {
             services.AddMediatR(mrsc =>
             {
+                mrsc.RegisterServicesFromAssembly(typeof(GetUsersQuery).Assembly);
                 mrsc.RegisterServicesFromAssembly(typeof(LoginCommand).Assembly);
                 mrsc.RegisterServicesFromAssembly(typeof(GetUserRoleCampusesQuery).Assembly);
                 mrsc.RegisterServicesFromAssembly(typeof(AssumeRoleCampusCommand).Assembly);
@@ -104,6 +106,7 @@ namespace ESAM.GrowTracking.Application
 
         private static void RegisterValidators(IServiceCollection services)
         {
+            services.AddValidatorsFromAssemblyContaining<GetUsersQueryValidator>();
             services.AddValidatorsFromAssemblyContaining<LoginCommandValidator>();
             services.AddValidatorsFromAssemblyContaining<GetUserRoleCampusesQueryValidator>();
             services.AddValidatorsFromAssemblyContaining<AssumeRoleCampusCommandValidator>();

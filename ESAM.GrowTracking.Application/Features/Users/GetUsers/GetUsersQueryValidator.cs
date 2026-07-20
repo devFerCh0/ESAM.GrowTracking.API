@@ -3,7 +3,7 @@ using FluentValidation;
 
 namespace ESAM.GrowTracking.Application.Features.Users.GetUsers
 {
-    public class GetUsersQueryValidator : AbstractValidator<GetUsersQuery> //x2
+    public class GetUsersQueryValidator : AbstractValidator<GetUsersQuery>
     {
         public GetUsersQueryValidator()
         {

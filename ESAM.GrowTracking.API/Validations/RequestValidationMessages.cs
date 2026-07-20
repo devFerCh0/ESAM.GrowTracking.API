@@ -21,5 +21,7 @@
         public const string ConfirmNewPasswordRequired = "La confirmación de la nueva contraseña es obligatoria.";
         public const string UserDeviceIdRequired = "El dispositivo de usuario es obligatorio.";
         public const string LockoutEndAtRequired = "La fecha de bloqueo es obligatoria.";
+        public const string SortByInvalid = "El campo de ordenamiento especificado no es válido.";
+        public const string SortDirectionInvalid = "La dirección de ordenamiento especificada no es válida.";
     }
 }

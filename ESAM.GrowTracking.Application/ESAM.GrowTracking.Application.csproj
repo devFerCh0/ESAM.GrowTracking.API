@@ -9,12 +9,24 @@
   <ItemGroup>
     <Compile Remove="Features\Auth\Logout\**" />
     <Compile Remove="Features\Auth\Refresh\**" />
+    <Compile Remove="Features\Users\GetActiveUserSessions\**" />
+    <Compile Remove="Features\Users\LogoutAll\**" />
+    <Compile Remove="Features\Users\RevokeUserSession\**" />
+    <Compile Remove="Features\Users\UnlockUserDevice\**" />
     <Compile Remove="ValueObjects\**" />
     <EmbeddedResource Remove="Features\Auth\Logout\**" />
     <EmbeddedResource Remove="Features\Auth\Refresh\**" />
+    <EmbeddedResource Remove="Features\Users\GetActiveUserSessions\**" />
+    <EmbeddedResource Remove="Features\Users\LogoutAll\**" />
+    <EmbeddedResource Remove="Features\Users\RevokeUserSession\**" />
+    <EmbeddedResource Remove="Features\Users\UnlockUserDevice\**" />
     <EmbeddedResource Remove="ValueObjects\**" />
     <None Remove="Features\Auth\Logout\**" />
     <None Remove="Features\Auth\Refresh\**" />
+    <None Remove="Features\Users\GetActiveUserSessions\**" />
+    <None Remove="Features\Users\LogoutAll\**" />
+    <None Remove="Features\Users\RevokeUserSession\**" />
+    <None Remove="Features\Users\UnlockUserDevice\**" />
     <None Remove="ValueObjects\**" />
   </ItemGroup>
 

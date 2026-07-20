@@ -1,6 +1,6 @@
-﻿namespace ESAM.GrowTracking.Application.Features.Users.GetUsers.Responses
+﻿namespace ESAM.GrowTracking.API.Controllers.Users.GetUsers.HttpResponses
 {
-    public record GetUsersResponse
+    public record GetUsersHttpResponse
     {
         public int UserId { get; init; }
 
@@ -22,10 +22,10 @@
 
         public DateTime? UpdatedAt { get; init; }
 
-        public IReadOnlyCollection<GetUsersUserWorkProfileResponse> UserWorkProfiles { get; init; }
+        public IReadOnlyCollection<GetUsersUserWorkProfileHttpResponse> UserWorkProfiles { get; init; }
 
-        public GetUsersResponse(int userId, string username, string email, string fullname, bool isLocked, DateTime? lockoutEndAt, bool isDeleted, bool hasActiveSessions, 
-            DateTime createdAt, DateTime? updatedAt, IReadOnlyCollection<GetUsersUserWorkProfileResponse> userWorkProfiles)
+        public GetUsersHttpResponse(int userId, string username, string email, string fullname, bool isLocked, DateTime? lockoutEndAt, bool isDeleted, bool hasActiveSessions, 
+            DateTime createdAt, DateTime? updatedAt, IReadOnlyCollection<GetUsersUserWorkProfileHttpResponse> userWorkProfiles)
         {
             UserId = userId;
             Username = username;

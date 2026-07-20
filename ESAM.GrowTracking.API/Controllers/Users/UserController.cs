@@ -1,10 +1,13 @@
 ﻿using AutoMapper;
 using ESAM.GrowTracking.API.Abstractions.Mappers;
+using ESAM.GrowTracking.API.Controllers.Users.GetUsers;
+using ESAM.GrowTracking.API.Controllers.Users.GetUsers.HttpResponses;
 using ESAM.GrowTracking.API.Controllers.Users.LockUser;
 using ESAM.GrowTracking.API.Controllers.Users.UnlockUser;
 using ESAM.GrowTracking.API.Extensions;
 using ESAM.GrowTracking.API.Responses;
 using ESAM.GrowTracking.API.Security;
+using ESAM.GrowTracking.Application.Features.Users.GetUsers;
 using ESAM.GrowTracking.Application.Features.Users.LockUser;
 using ESAM.GrowTracking.Application.Features.Users.UnlockUser;
 using FluentValidation;
@@ -21,23 +24,48 @@ namespace ESAM.GrowTracking.API.Controllers.Users
     {
         private readonly IValidator<LockUserRequest> _lockUserRequestValidator;
         private readonly IValidator<UnlockUserRequest> _unlockUserRequestValidator;
+        private readonly IValidator<GetUsersRequest> _getUsersRequestValidator;
         private readonly IMapper _mapper;
         private readonly ISender _sender;
         private readonly IErrorToHttpMapper _errorToHttpMapper;
 
-        public UserController(IValidator<LockUserRequest> lockUserRequestValidator, IValidator<UnlockUserRequest> unlockUserRequestValidator, IMapper mapper, ISender sender, 
-            IErrorToHttpMapper errorToHttpMapper)
+        public UserController(IValidator<LockUserRequest> lockUserRequestValidator, IValidator<UnlockUserRequest> unlockUserRequestValidator, 
+            IValidator<GetUsersRequest> getUsersRequestValidator, IMapper mapper, ISender sender, IErrorToHttpMapper errorToHttpMapper)
         {
             ArgumentNullException.ThrowIfNull(lockUserRequestValidator);
             ArgumentNullException.ThrowIfNull(unlockUserRequestValidator);
+            ArgumentNullException.ThrowIfNull(getUsersRequestValidator);
             ArgumentNullException.ThrowIfNull(mapper);
             ArgumentNullException.ThrowIfNull(sender);
             ArgumentNullException.ThrowIfNull(errorToHttpMapper);
             _lockUserRequestValidator = lockUserRequestValidator;
             _unlockUserRequestValidator = unlockUserRequestValidator;
+            _getUsersRequestValidator = getUsersRequestValidator;
             _mapper = mapper;
             _sender = sender;
             _errorToHttpMapper = errorToHttpMapper;
+        }
+
+        [Authorize(Policy = AuthorizationPolicies.RequireSessionTypeAccessToken)]
+        [HttpGet("users")]
+        [Consumes("application/json")]
+        [ProducesResponseType(typeof(ApiSuccessResponse<PagedHttpResponse<GetUsersHttpResponse>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status429TooManyRequests)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<ApiSuccessResponse<PagedHttpResponse<GetUsersHttpResponse>>>> GetUsersAsync([FromQuery] GetUsersRequest request,
+            CancellationToken cancellationToken)
+        {
+            var validation = await _getUsersRequestValidator.ValidateAsync(request, cancellationToken);
+            if (!validation.IsValid)
+                return validation.ToRequestErrorsActionResult(HttpContext.TraceIdentifier);
+            var query = _mapper.Map<GetUsersQuery>(request);
+            var usersResult = await _sender.Send(query, cancellationToken);
+            if (usersResult.IsFailure)
+                return usersResult.ToErrorActionResult(_errorToHttpMapper, HttpContext.TraceIdentifier);
+            var users = _mapper.Map<PagedHttpResponse<GetUsersHttpResponse>>(usersResult.Value);
+            return Ok(ApiSuccessResponse<PagedHttpResponse<GetUsersHttpResponse>>.From(users, HttpContext.TraceIdentifier));
         }
 
         [Authorize(Policy = AuthorizationPolicies.RequireSessionTypeAccessToken)]

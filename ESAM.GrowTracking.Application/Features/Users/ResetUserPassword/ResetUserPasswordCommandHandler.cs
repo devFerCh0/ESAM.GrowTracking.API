@@ -70,6 +70,9 @@ namespace ESAM.GrowTracking.Application.Features.Users.ResetUserPassword
                 return Result.Fail(Error.BusinessRule("La nueva contraseña debe ser diferente a la contraseña actual del usuario."));
             }
             var utcNow = _dateTimeService.UtcNow;
+
+
+
             var activeUserSessions = await _userSessionRepository.GetActiveByUserIdAsync(request.UserId, utcNow, asTracking, cancellationToken);
             var activeSessionsCount = await _userSessionService.ResetPassworsAndRevokeUserSessionsAsync(activeUserSessions, user, request.NewPassword, 
                 "Restablecimiento administrativo de contraseña: todas las sesiones activas del usuario fueron revocadas.", currentUserId, utcNow, asTracking, cancellationToken);

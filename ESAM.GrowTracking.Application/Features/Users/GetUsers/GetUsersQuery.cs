@@ -1,11 +1,12 @@
 ﻿using ESAM.GrowTracking.Application.Enums;
+using ESAM.GrowTracking.Application.Features.Commons;
 using ESAM.GrowTracking.Application.Features.Users.GetUsers.Responses;
 using ESAM.GrowTracking.Application.Results;
 using MediatR;
 
 namespace ESAM.GrowTracking.Application.Features.Users.GetUsers
 {
-    public record GetUsersQuery : IRequest<Result<PagedResult<GetUsersResponse>>>
+    public record GetUsersQuery : IRequest<Result<PagedResponse<GetUsersResponse>>>
     {
         public string? SearchTerm { get; init; }
 
