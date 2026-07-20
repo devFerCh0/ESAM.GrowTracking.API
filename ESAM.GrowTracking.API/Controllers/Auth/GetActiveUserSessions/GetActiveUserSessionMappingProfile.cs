@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using ESAM.GrowTracking.API.Controllers.Auth.GetActiveUserSessions.HttpResponses;
-using ESAM.GrowTracking.Application.Features.Auth.GetActiveUserSessions.Responses;
+using ESAM.GrowTracking.Application.Features.Users.GetActiveUserSessions.Responses;
 
 namespace ESAM.GrowTracking.API.Controllers.Auth.GetActiveUserSessions
 {

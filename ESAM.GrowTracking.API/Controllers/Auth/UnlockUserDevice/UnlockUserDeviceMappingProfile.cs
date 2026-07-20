@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using ESAM.GrowTracking.Application.Features.Auth.UnlockUserAccount;
+using ESAM.GrowTracking.Application.Features.Users.UnlockUserDevice;
 
 namespace ESAM.GrowTracking.API.Controllers.Auth.UnlockUserDevice
 {

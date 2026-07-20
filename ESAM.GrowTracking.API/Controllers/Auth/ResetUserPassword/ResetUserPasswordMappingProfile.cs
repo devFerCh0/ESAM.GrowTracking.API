@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using ESAM.GrowTracking.Application.Features.Auth.ResetUserPassword;
+using ESAM.GrowTracking.Application.Features.Users.ResetUserPassword;
 
 namespace ESAM.GrowTracking.API.Controllers.Auth.ResetUserPassword
 {

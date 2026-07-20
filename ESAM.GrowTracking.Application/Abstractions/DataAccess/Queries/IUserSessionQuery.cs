@@ -1,5 +1,5 @@
 ﻿using ESAM.GrowTracking.Application.Features.Auth.GetActiveCurrentUserSessions.Responses;
-using ESAM.GrowTracking.Application.Features.Auth.GetActiveUserSessions.Responses;
+using ESAM.GrowTracking.Application.Features.Users.GetActiveUserSessions.Responses;
 using ESAM.GrowTracking.Domain.Entities;
 
 namespace ESAM.GrowTracking.Application.Abstractions.DataAccess.Queries

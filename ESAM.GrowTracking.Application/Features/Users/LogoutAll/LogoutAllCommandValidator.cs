@@ -1,7 +1,7 @@
 ﻿using ESAM.GrowTracking.Application.Validations;
 using FluentValidation;
 
-namespace ESAM.GrowTracking.Application.Features.Auth.LogoutAll
+namespace ESAM.GrowTracking.Application.Features.Users.LogoutAll
 {
     public class LogoutAllCommandValidator : AbstractValidator<LogoutAllCommand>
     {

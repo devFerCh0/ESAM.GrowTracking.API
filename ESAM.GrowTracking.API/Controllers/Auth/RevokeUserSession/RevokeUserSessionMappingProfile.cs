@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using ESAM.GrowTracking.Application.Features.Auth.RevokeUserSession;
+using ESAM.GrowTracking.Application.Features.Users.RevokeUserSession;
 
 namespace ESAM.GrowTracking.API.Controllers.Auth.RevokeUserSession
 {

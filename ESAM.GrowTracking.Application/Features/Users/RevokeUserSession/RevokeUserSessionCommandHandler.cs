@@ -7,7 +7,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace ESAM.GrowTracking.Application.Features.Auth.RevokeUserSession
+namespace ESAM.GrowTracking.Application.Features.Users.RevokeUserSession
 {
     public class RevokeUserSessionCommandHandler : IRequestHandler<RevokeUserSessionCommand, Result>
     {

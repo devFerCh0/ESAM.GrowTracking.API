@@ -1,4 +1,4 @@
-﻿namespace ESAM.GrowTracking.Application.Features.Auth.GetActiveUserSessions.Responses
+﻿namespace ESAM.GrowTracking.Application.Features.Users.GetActiveUserSessions.Responses
 {
     public record GetActiveUserSessionRoleCampusResponse
     {

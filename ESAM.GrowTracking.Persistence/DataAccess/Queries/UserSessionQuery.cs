@@ -1,6 +1,6 @@
 ﻿using ESAM.GrowTracking.Application.Abstractions.DataAccess.Queries;
 using ESAM.GrowTracking.Application.Features.Auth.GetActiveCurrentUserSessions.Responses;
-using ESAM.GrowTracking.Application.Features.Auth.GetActiveUserSessions.Responses;
+using ESAM.GrowTracking.Application.Features.Users.GetActiveUserSessions.Responses;
 using ESAM.GrowTracking.Domain.Entities;
 using ESAM.GrowTracking.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;

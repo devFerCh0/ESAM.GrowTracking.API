@@ -1,6 +1,5 @@
 ﻿using ESAM.GrowTracking.Application.Abstractions.Services;
 using ESAM.GrowTracking.Application.Extensions;
-using ESAM.GrowTracking.Application.Features.Auth.UnlockUserAccount;
 using ESAM.GrowTracking.Application.Results;
 using ESAM.GrowTracking.Application.ValueObjects;
 using ESAM.GrowTracking.Domain.Abstractions.DataAccess;
@@ -9,7 +8,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace ESAM.GrowTracking.Application.Features.Auth.UnlockUserDevice
+namespace ESAM.GrowTracking.Application.Features.Users.UnlockUserDevice
 {
     public class UnlockUserDeviceCommandHandler : IRequestHandler<UnlockUserDeviceCommand, Result>
     {

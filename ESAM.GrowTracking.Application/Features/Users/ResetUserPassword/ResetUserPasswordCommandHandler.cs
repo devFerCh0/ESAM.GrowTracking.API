@@ -7,7 +7,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace ESAM.GrowTracking.Application.Features.Auth.ResetUserPassword
+namespace ESAM.GrowTracking.Application.Features.Users.ResetUserPassword
 {
     public class ResetUserPasswordCommandHandler : IRequestHandler<ResetUserPasswordCommand, Result>
     {

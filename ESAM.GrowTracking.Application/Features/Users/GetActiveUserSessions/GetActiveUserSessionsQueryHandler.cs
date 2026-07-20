@@ -1,7 +1,7 @@
 ﻿using ESAM.GrowTracking.Application.Abstractions.DataAccess.Queries;
 using ESAM.GrowTracking.Application.Abstractions.Services;
 using ESAM.GrowTracking.Application.Extensions;
-using ESAM.GrowTracking.Application.Features.Auth.GetActiveUserSessions.Responses;
+using ESAM.GrowTracking.Application.Features.Users.GetActiveUserSessions.Responses;
 using ESAM.GrowTracking.Application.Results;
 using ESAM.GrowTracking.Application.ValueObjects;
 using ESAM.GrowTracking.Domain.Abstractions.DataAccess.Repositories;
@@ -9,7 +9,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace ESAM.GrowTracking.Application.Features.Auth.GetActiveUserSessions
+namespace ESAM.GrowTracking.Application.Features.Users.GetActiveUserSessions
 {
     public class GetActiveUserSessionsQueryHandler : IRequestHandler<GetActiveUserSessionsQuery, Result<List<GetActiveUserSessionsResponse>>>
     {

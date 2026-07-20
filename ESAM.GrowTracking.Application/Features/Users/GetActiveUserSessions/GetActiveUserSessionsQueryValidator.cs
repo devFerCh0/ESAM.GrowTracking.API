@@ -1,7 +1,7 @@
 ﻿using ESAM.GrowTracking.Application.Validations;
 using FluentValidation;
 
-namespace ESAM.GrowTracking.Application.Features.Auth.GetActiveUserSessions
+namespace ESAM.GrowTracking.Application.Features.Users.GetActiveUserSessions
 {
     public class GetActiveUserSessionsQueryValidator : AbstractValidator<GetActiveUserSessionsQuery>
     {

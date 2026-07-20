@@ -1,8 +1,7 @@
-﻿using ESAM.GrowTracking.Application.Features.Auth.UnlockUserAccount;
-using ESAM.GrowTracking.Application.Validations;
+﻿using ESAM.GrowTracking.Application.Validations;
 using FluentValidation;
 
-namespace ESAM.GrowTracking.Application.Features.Auth.UnlockUserDevice
+namespace ESAM.GrowTracking.Application.Features.Users.UnlockUserDevice
 {
     public class UnlockUserDeviceCommandValidator : AbstractValidator<UnlockUserDeviceCommand>
     {

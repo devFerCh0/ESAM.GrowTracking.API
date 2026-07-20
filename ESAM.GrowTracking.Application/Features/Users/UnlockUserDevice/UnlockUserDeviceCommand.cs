@@ -1,7 +1,7 @@
 ﻿using ESAM.GrowTracking.Application.Results;
 using MediatR;
 
-namespace ESAM.GrowTracking.Application.Features.Auth.UnlockUserAccount
+namespace ESAM.GrowTracking.Application.Features.Users.UnlockUserDevice
 {
     public record UnlockUserDeviceCommand : IRequest<Result>
     {

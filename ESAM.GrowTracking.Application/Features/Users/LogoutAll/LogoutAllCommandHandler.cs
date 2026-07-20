@@ -7,7 +7,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace ESAM.GrowTracking.Application.Features.Auth.LogoutAll
+namespace ESAM.GrowTracking.Application.Features.Users.LogoutAll
 {
     public class LogoutAllCommandHandler : IRequestHandler<LogoutAllCommand, Result<LogoutAllResponse>>
     {

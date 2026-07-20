@@ -1,7 +1,7 @@
 ﻿using ESAM.GrowTracking.Application.Results;
 using MediatR;
 
-namespace ESAM.GrowTracking.Application.Features.Auth.RevokeUserSession
+namespace ESAM.GrowTracking.Application.Features.Users.RevokeUserSession
 {
     public record RevokeUserSessionCommand : IRequest<Result>
     {

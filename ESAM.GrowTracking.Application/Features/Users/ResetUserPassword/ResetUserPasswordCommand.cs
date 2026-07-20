@@ -1,7 +1,7 @@
 ﻿using ESAM.GrowTracking.Application.Results;
 using MediatR;
 
-namespace ESAM.GrowTracking.Application.Features.Auth.ResetUserPassword
+namespace ESAM.GrowTracking.Application.Features.Users.ResetUserPassword
 {
     public record ResetUserPasswordCommand : IRequest<Result>
     {

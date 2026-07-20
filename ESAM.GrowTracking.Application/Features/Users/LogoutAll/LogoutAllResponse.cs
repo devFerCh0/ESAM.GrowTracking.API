@@ -1,4 +1,4 @@
-﻿namespace ESAM.GrowTracking.Application.Features.Auth.LogoutAll
+﻿namespace ESAM.GrowTracking.Application.Features.Users.LogoutAll
 {
     public record LogoutAllResponse
     {

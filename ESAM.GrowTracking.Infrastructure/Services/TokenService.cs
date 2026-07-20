@@ -44,8 +44,8 @@ namespace ESAM.GrowTracking.Infrastructure.Services
         }
 
         public AccessTokenDTO GenerateSessionAccessToken(int userId, string securityStamp, int tokenVersion, int userDeviceId, int userSessionId, DateTime utcNow,
-            int lifetimeMinutes, int workProfileSelectedId, int workProfileId, WorkProfileType workProfileType, int? roleId = null, int? campusId = null, 
-            int? roleCampusSelectedId = null)
+            int lifetimeMinutes, int workProfileSelectedId, int workProfileId, WorkProfileType workProfileType, int? roleCampusSelectedId = null, int? roleId = null, 
+            int? campusId = null)
         {
             ValidateCommonParams(userId, securityStamp, tokenVersion, userDeviceId, lifetimeMinutes);
             if (userSessionId <= 0)

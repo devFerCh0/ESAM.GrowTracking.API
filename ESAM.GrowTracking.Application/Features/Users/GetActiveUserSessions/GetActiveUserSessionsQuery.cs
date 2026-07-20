@@ -1,8 +1,8 @@
-﻿using ESAM.GrowTracking.Application.Features.Auth.GetActiveUserSessions.Responses;
+﻿using ESAM.GrowTracking.Application.Features.Users.GetActiveUserSessions.Responses;
 using ESAM.GrowTracking.Application.Results;
 using MediatR;
 
-namespace ESAM.GrowTracking.Application.Features.Auth.GetActiveUserSessions
+namespace ESAM.GrowTracking.Application.Features.Users.GetActiveUserSessions
 {
     public record GetActiveUserSessionsQuery : IRequest<Result<List<GetActiveUserSessionsResponse>>>
     {

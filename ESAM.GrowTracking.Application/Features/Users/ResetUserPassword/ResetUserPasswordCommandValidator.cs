@@ -1,7 +1,7 @@
 ﻿using ESAM.GrowTracking.Application.Validations;
 using FluentValidation;
 
-namespace ESAM.GrowTracking.Application.Features.Auth.ResetUserPassword
+namespace ESAM.GrowTracking.Application.Features.Users.ResetUserPassword
 {
     public class ResetUserPasswordCommandValidator : AbstractValidator<ResetUserPasswordCommand>
     {

@@ -1,7 +1,7 @@
 ﻿using ESAM.GrowTracking.Application.Results;
 using MediatR;
 
-namespace ESAM.GrowTracking.Application.Features.Auth.LogoutAll
+namespace ESAM.GrowTracking.Application.Features.Users.LogoutAll
 {
     public record LogoutAllCommand : IRequest<Result<LogoutAllResponse>>
     {

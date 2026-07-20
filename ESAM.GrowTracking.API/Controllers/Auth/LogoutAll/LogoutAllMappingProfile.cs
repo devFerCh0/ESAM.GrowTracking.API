@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using ESAM.GrowTracking.Application.Features.Auth.LogoutAll;
+using ESAM.GrowTracking.Application.Features.Users.LogoutAll;
 
 namespace ESAM.GrowTracking.API.Controllers.Auth.LogoutAll
 {
