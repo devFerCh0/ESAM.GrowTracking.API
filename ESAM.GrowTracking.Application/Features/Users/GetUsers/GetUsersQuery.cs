@@ -1,5 +1,4 @@
-﻿using ESAM.GrowTracking.Application.Enums;
-using ESAM.GrowTracking.Application.Features.Commons;
+﻿using ESAM.GrowTracking.Application.Features.Commons;
 using ESAM.GrowTracking.Application.Features.Users.GetUsers.Responses;
 using ESAM.GrowTracking.Application.Results;
 using MediatR;

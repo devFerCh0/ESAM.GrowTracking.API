@@ -6,7 +6,7 @@ namespace ESAM.GrowTracking.Application.Abstractions.Services
     {
         //Task LockUserAsync(User user, string revokedReason, int currentUserId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default);
         void UserLock(User user, DateTime lockoutEndAt, int currentUserId, DateTime utcNow);
-
+        void UserPasswordChange(User user, string newSalt, string newPasswordHash, int currentUserId, DateTime utcNow);
         void UserUnlock(User user, int currentUserId, DateTime utcNow);
     }
 }

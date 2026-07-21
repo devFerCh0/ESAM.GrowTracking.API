@@ -1,6 +1,6 @@
-﻿using ESAM.GrowTracking.Application.Enums;
+﻿using ESAM.GrowTracking.Application.Features.Commons;
 
-namespace ESAM.GrowTracking.Application.Abstractions.DataAccess.Queries.Filters
+namespace ESAM.GrowTracking.Application.Features.Users.GetUsers
 {
     public record GetUsersFilter
     {

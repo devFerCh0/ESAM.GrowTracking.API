@@ -35,8 +35,8 @@ namespace ESAM.GrowTracking.Application.Abstractions.Services
             User user, string newPassword, string revokedReason, string currentJti, DateTime currentAccessTokenExpiration, int currentUserId, int currentUserSessionId, 
             DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default);
 
-        Task<int> ResetPassworsAndRevokeUserSessionsAsync(IReadOnlyCollection<UserSession> userSessions, User user, string newPassword, string revokedReason, int currentUserId, 
-            DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default);
+        //Task<int> ResetPassworsAndRevokeUserSessionsAsync(IReadOnlyCollection<UserSession> userSessions, User user, string newPassword, string revokedReason, int currentUserId, 
+        //    DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default);
 
         Task RevokeAccessTokenTemporaryAsync(int currentUserId, string currentJti, DateTime currentAccessTokenExpiration, string reason, DateTime utcNow, bool asTracking = false,
             CancellationToken cancellationToken = default);

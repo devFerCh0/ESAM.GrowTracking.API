@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using ESAM.GrowTracking.API.Controllers.Users.GetUsers.HttpResponses;
-using ESAM.GrowTracking.Application.Enums;
 using ESAM.GrowTracking.Application.Features.Commons;
 using ESAM.GrowTracking.Application.Features.Users.GetUsers;
 using ESAM.GrowTracking.Application.Features.Users.GetUsers.Responses;

@@ -1,6 +1,4 @@
 ﻿using ESAM.GrowTracking.Application.Abstractions.DataAccess.Queries;
-using ESAM.GrowTracking.Application.Abstractions.DataAccess.Queries.Filters;
-using ESAM.GrowTracking.Application.Enums;
 using ESAM.GrowTracking.Application.Features.Auth.AssumeRoleCampus.Responses;
 using ESAM.GrowTracking.Application.Features.Auth.AssumeWorkProfile.Responses;
 using ESAM.GrowTracking.Application.Features.Auth.ChangeRoleCampus.Responses;
@@ -10,6 +8,7 @@ using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserRoleCampus.Respo
 using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserWorkProfile.Responses;
 using ESAM.GrowTracking.Application.Features.Auth.Login.Responses;
 using ESAM.GrowTracking.Application.Features.Commons;
+using ESAM.GrowTracking.Application.Features.Users.GetUsers;
 using ESAM.GrowTracking.Application.Features.Users.GetUsers.Responses;
 using ESAM.GrowTracking.Domain.Entities;
 using ESAM.GrowTracking.Persistence.Contexts;

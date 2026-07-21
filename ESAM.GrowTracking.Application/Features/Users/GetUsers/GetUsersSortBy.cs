@@ -1,4 +1,4 @@
-﻿namespace ESAM.GrowTracking.Application.Enums
+﻿namespace ESAM.GrowTracking.Application.Features.Users.GetUsers
 {
     public enum GetUsersSortBy : byte
     {

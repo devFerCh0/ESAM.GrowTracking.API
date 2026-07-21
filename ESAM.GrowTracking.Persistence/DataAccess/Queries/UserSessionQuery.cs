@@ -1,6 +1,8 @@
 ﻿using ESAM.GrowTracking.Application.Abstractions.DataAccess.Queries;
 using ESAM.GrowTracking.Application.Features.Auth.GetActiveCurrentUserSessions.Responses;
-using ESAM.GrowTracking.Application.Features.Users.GetActiveUserSessions.Responses;
+using ESAM.GrowTracking.Application.Features.Commons;
+using ESAM.GrowTracking.Application.Features.UserSessions.GetUserSessions;
+using ESAM.GrowTracking.Application.Features.UserSessions.GetUserSessions.Responses;
 using ESAM.GrowTracking.Domain.Entities;
 using ESAM.GrowTracking.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
@@ -10,31 +12,31 @@ namespace ESAM.GrowTracking.Persistence.DataAccess.Queries
 {
     public class UserSessionQuery(ILogger<UserSessionQuery> logger, AppDbContext context) : Query<UserSession, int>(logger, context), IUserSessionQuery
     {
-        public async Task<List<GetActiveUserSessionsResponse>> GetActiveUserSessionsByUserIdAsync(int userId, DateTime utcNow, bool asTracking = false,
-            CancellationToken cancellationToken = default)
-        {
-            var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
-            return await query.Where(us => us.UserId == userId && !us.IsRevoked && us.ExpiresAt > utcNow && us.AbsoluteExpiresAt > utcNow)
-                .OrderByDescending(us => us.LastActivityAt ?? us.CreatedAt).Select(us => new GetActiveUserSessionsResponse(us.Id, us.UserId, us.UserDeviceId, 
-                    us.UserDevice.DeviceName, us.UserDevice.ApiClientType, us.IpAddress, us.UserAgent, us.IsPersistent, us.CreatedAt, us.LastActivityAt, us.ExpiresAt, 
-                    us.AbsoluteExpiresAt, us.UserSessionWorkProfilesSelected.Where(uswps => uswps.IsActive).OrderByDescending(uswps => uswps.CreatedAt)
-                        .Select(uswps => new GetActiveUserSessionWorkProfileResponse(uswps.WorkProfileId, uswps.UserWorkProfile.WorkProfile.Name, 
-                            uswps.UserWorkProfile.WorkProfile.WorkProfileType, uswps.UserSessionRoleCampusesSelected.Where(usrcs => usrcs.IsActive)
-                                .OrderByDescending(usrcs => usrcs.CreatedAt).Select(usrcs => new GetActiveUserSessionRoleCampusResponse(usrcs.RoleId, 
-                                    usrcs.UserRoleCampus.Role.Name, usrcs.CampusId, usrcs.UserRoleCampus.Campus.Name)).FirstOrDefault())).FirstOrDefault()))
-                .ToListAsync(cancellationToken);
-            //return await query.Where(us => us.UserId == userId && !us.IsRevoked && us.ExpiresAt > utcNow && us.AbsoluteExpiresAt > utcNow)
-            //    .OrderByDescending(us => us.LastActivityAt ?? us.CreatedAt)
-            //    .Select(us => new GetActiveUserSessionsResponse(us.Id, us.UserId, us.UserDeviceId, us.UserDevice.DeviceName, us.UserDevice.ApiClientType, us.IpAddress, 
-            //        us.UserAgent, us.IsPersistent, us.CreatedAt, us.LastActivityAt, us.ExpiresAt, us.AbsoluteExpiresAt, 
-            //        us.UserSessionWorkProfileSelected != null ? new GetActiveUserSessionWorkProfileResponse(us.UserSessionWorkProfileSelected.WorkProfileId,
-            //            us.UserSessionWorkProfileSelected.UserWorkProfile.WorkProfile.Name, us.UserSessionWorkProfileSelected.UserWorkProfile.WorkProfile.WorkProfileType, 
-            //            us.UserSessionWorkProfileSelected.UserSessionRoleCampusSelected != null
-            //                ? new GetActiveUserSessionRoleCampusResponse(us.UserSessionWorkProfileSelected.UserSessionRoleCampusSelected.RoleId,
-            //                    us.UserSessionWorkProfileSelected.UserSessionRoleCampusSelected.UserRoleCampus.Role.Name,
-            //                    us.UserSessionWorkProfileSelected.UserSessionRoleCampusSelected.CampusId,
-            //                    us.UserSessionWorkProfileSelected.UserSessionRoleCampusSelected.UserRoleCampus.Campus.Name) : null) : null)).ToListAsync(cancellationToken);
-        }
+        //public async Task<List<GetActiveUserSessionsResponse>> GetActiveUserSessionsByUserIdAsync(int userId, DateTime utcNow, bool asTracking = false,
+        //    CancellationToken cancellationToken = default)
+        //{
+        //    var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
+        //    return await query.Where(us => us.UserId == userId && !us.IsRevoked && us.ExpiresAt > utcNow && us.AbsoluteExpiresAt > utcNow)
+        //        .OrderByDescending(us => us.LastActivityAt ?? us.CreatedAt).Select(us => new GetActiveUserSessionsResponse(us.Id, us.UserId, us.UserDeviceId, 
+        //            us.UserDevice.DeviceName, us.UserDevice.ApiClientType, us.IpAddress, us.UserAgent, us.IsPersistent, us.CreatedAt, us.LastActivityAt, us.ExpiresAt, 
+        //            us.AbsoluteExpiresAt, us.UserSessionWorkProfilesSelected.Where(uswps => uswps.IsActive).OrderByDescending(uswps => uswps.CreatedAt)
+        //                .Select(uswps => new GetActiveUserSessionWorkProfileResponse(uswps.WorkProfileId, uswps.UserWorkProfile.WorkProfile.Name, 
+        //                    uswps.UserWorkProfile.WorkProfile.WorkProfileType, uswps.UserSessionRoleCampusesSelected.Where(usrcs => usrcs.IsActive)
+        //                        .OrderByDescending(usrcs => usrcs.CreatedAt).Select(usrcs => new GetActiveUserSessionRoleCampusResponse(usrcs.RoleId, 
+        //                            usrcs.UserRoleCampus.Role.Name, usrcs.CampusId, usrcs.UserRoleCampus.Campus.Name)).FirstOrDefault())).FirstOrDefault()))
+        //        .ToListAsync(cancellationToken);
+        //    //return await query.Where(us => us.UserId == userId && !us.IsRevoked && us.ExpiresAt > utcNow && us.AbsoluteExpiresAt > utcNow)
+        //    //    .OrderByDescending(us => us.LastActivityAt ?? us.CreatedAt)
+        //    //    .Select(us => new GetActiveUserSessionsResponse(us.Id, us.UserId, us.UserDeviceId, us.UserDevice.DeviceName, us.UserDevice.ApiClientType, us.IpAddress, 
+        //    //        us.UserAgent, us.IsPersistent, us.CreatedAt, us.LastActivityAt, us.ExpiresAt, us.AbsoluteExpiresAt, 
+        //    //        us.UserSessionWorkProfileSelected != null ? new GetActiveUserSessionWorkProfileResponse(us.UserSessionWorkProfileSelected.WorkProfileId,
+        //    //            us.UserSessionWorkProfileSelected.UserWorkProfile.WorkProfile.Name, us.UserSessionWorkProfileSelected.UserWorkProfile.WorkProfile.WorkProfileType, 
+        //    //            us.UserSessionWorkProfileSelected.UserSessionRoleCampusSelected != null
+        //    //                ? new GetActiveUserSessionRoleCampusResponse(us.UserSessionWorkProfileSelected.UserSessionRoleCampusSelected.RoleId,
+        //    //                    us.UserSessionWorkProfileSelected.UserSessionRoleCampusSelected.UserRoleCampus.Role.Name,
+        //    //                    us.UserSessionWorkProfileSelected.UserSessionRoleCampusSelected.CampusId,
+        //    //                    us.UserSessionWorkProfileSelected.UserSessionRoleCampusSelected.UserRoleCampus.Campus.Name) : null) : null)).ToListAsync(cancellationToken);
+        //}
 
         public async Task<List<GetActiveCurrentUserSessionsResponse>> GetActiveCurrentUserSessionsByUserIdAsync(int userId, int? userSessionId, DateTime utcNow, 
             bool asTracking = false, CancellationToken cancellationToken = default)
@@ -59,6 +61,49 @@ namespace ESAM.GrowTracking.Persistence.DataAccess.Queries
             //                    us.UserSessionWorkProfileSelected.UserSessionRoleCampusSelected.UserRoleCampus.Role.Name,
             //                    us.UserSessionWorkProfileSelected.UserSessionRoleCampusSelected.CampusId,
             //                    us.UserSessionWorkProfileSelected.UserSessionRoleCampusSelected.UserRoleCampus.Campus.Name) : null) : null)).ToListAsync(cancellationToken);
+        }
+
+
+        public async Task<PagedResponse<GetUserSessionResponse>> GetUserSessionsAsync(GetUserSessionFilter filter, bool asTracking = false,
+            CancellationToken cancellationToken = default)
+        {
+            var query = (asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking()).Where(us => us.UserId == filter.UserId);
+            if (filter.IsActive.HasValue)
+                query = filter.IsActive.Value
+                    ? query.Where(us => !us.IsRevoked && us.ExpiresAt > filter.UtcNow && us.AbsoluteExpiresAt > filter.UtcNow)
+                    : query.Where(us => us.IsRevoked || us.ExpiresAt <= filter.UtcNow || us.AbsoluteExpiresAt <= filter.UtcNow);
+            if (filter.ApiClientType.HasValue)
+                query = query.Where(us => us.UserDevice.ApiClientType == filter.ApiClientType.Value);
+            if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
+                query = query.Where(us => us.UserDevice.DeviceName.Contains(filter.SearchTerm) || us.UserDevice.DeviceIdentifier.Contains(filter.SearchTerm) ||
+                    (us.IpAddress != null && us.IpAddress.Contains(filter.SearchTerm)));
+            var totalCount = await query.CountAsync(cancellationToken);
+            if (totalCount == 0)
+                return new PagedResponse<GetUserSessionResponse>([], totalCount, filter.PageNumber, filter.PageSize);
+            var items = await ApplySorting(query, filter.GetUserSessionSortBy, filter.SortDirection).Skip((filter.PageNumber - 1) * filter.PageSize).Take(filter.PageSize)
+                .Select(us => new GetUserSessionResponse(us.Id, us.UserDeviceId, us.UserDevice.DeviceName, us.UserDevice.DeviceIdentifier, us.UserDevice.ApiClientType,
+                    us.IpAddress, us.UserAgent, !us.IsRevoked && us.ExpiresAt > filter.UtcNow && us.AbsoluteExpiresAt > filter.UtcNow, us.IsRevoked, us.RevokedAt, us.RevokedReason, 
+                    us.ClosedByUser != null ? us.ClosedByUser.Username : null, us.CreatedAt, us.LastActivityAt, us.ExpiresAt, us.AbsoluteExpiresAt,
+                    us.UserSessionWorkProfilesSelected.Where(uswps => uswps.IsActive).OrderByDescending(uswps => uswps.CreatedAt)
+                        .Select(uswps => new GetUserSessionWorkProfileSelectedResponse(uswps.WorkProfileId, uswps.UserWorkProfile.WorkProfile.Name,
+                            uswps.UserWorkProfile.WorkProfile.WorkProfileType,
+                            uswps.UserSessionRoleCampusesSelected.Where(usrcs => usrcs.IsActive).OrderByDescending(usrcs => usrcs.CreatedAt)
+                                .Select(usrcs => new GetUserSessionWorkProfileRoleCampusSelectedResponse(usrcs.RoleId, usrcs.UserRoleCampus.Role.Name, usrcs.CampusId,
+                                    usrcs.UserRoleCampus.Campus.Name)).FirstOrDefault())).FirstOrDefault())).ToListAsync(cancellationToken);
+            return new PagedResponse<GetUserSessionResponse>(items, totalCount, filter.PageNumber, filter.PageSize);
+        }
+
+        private static IQueryable<UserSession> ApplySorting(IQueryable<UserSession> userSessionQueryable, GetUserSessionSortBy getUserSessionSortBy, SortDirection sortDirection)
+        {
+            return (getUserSessionSortBy, sortDirection) switch
+            {
+                (GetUserSessionSortBy.LastActivityAt, SortDirection.Descending) => userSessionQueryable.OrderByDescending(us => us.LastActivityAt),
+                (GetUserSessionSortBy.LastActivityAt, SortDirection.Ascending) => userSessionQueryable.OrderBy(us => us.LastActivityAt),
+                (GetUserSessionSortBy.ExpiresAt, SortDirection.Descending) => userSessionQueryable.OrderByDescending(us => us.ExpiresAt),
+                (GetUserSessionSortBy.ExpiresAt, SortDirection.Ascending) => userSessionQueryable.OrderBy(us => us.ExpiresAt),
+                (GetUserSessionSortBy.CreatedAt, SortDirection.Descending) => userSessionQueryable.OrderByDescending(us => us.CreatedAt),
+                _ => userSessionQueryable.OrderBy(us => us.CreatedAt)
+            };
         }
     }
 }

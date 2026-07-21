@@ -2,6 +2,7 @@
 using ESAM.GrowTracking.Application.Extensions;
 using ESAM.GrowTracking.Application.Results;
 using ESAM.GrowTracking.Application.ValueObjects;
+using ESAM.GrowTracking.Domain.Abstractions.DataAccess;
 using ESAM.GrowTracking.Domain.Abstractions.DataAccess.Repositories;
 using FluentValidation;
 using MediatR;
@@ -17,12 +18,13 @@ namespace ESAM.GrowTracking.Application.Features.Users.ResetUserPassword
         private readonly IUserRepository _userRepository;
         private readonly IHashService _hashService;
         private readonly IDateTimeService _dateTimeService;
-        private readonly IUserSessionRepository _userSessionRepository;
-        private readonly IUserSessionService _userSessionService;
+        private readonly IUserService _userService;
+        private readonly IUserSessionRevocationService _userSessionRevocationService;
+        private readonly IUnitOfWork _unitOfWork;
 
         public ResetUserPasswordCommandHandler(ILogger<ResetUserPasswordCommandHandler> logger, IValidator<ResetUserPasswordCommand> validator,
             IAccessTokenClaimsValidatorService accessTokenClaimsValidatorService, IUserRepository userRepository, IHashService hashService, IDateTimeService dateTimeService, 
-            IUserSessionRepository userSessionRepository, IUserSessionService userSessionService)
+            IUserService userService, IUserSessionRevocationService userSessionRevocationService, IUnitOfWork unitOfWork)
         {
             ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(validator);
@@ -30,16 +32,18 @@ namespace ESAM.GrowTracking.Application.Features.Users.ResetUserPassword
             ArgumentNullException.ThrowIfNull(userRepository);
             ArgumentNullException.ThrowIfNull(hashService);
             ArgumentNullException.ThrowIfNull(dateTimeService);
-            ArgumentNullException.ThrowIfNull(userSessionRepository);
-            ArgumentNullException.ThrowIfNull(userSessionService);
+            ArgumentNullException.ThrowIfNull(userService);
+            ArgumentNullException.ThrowIfNull(userSessionRevocationService);
+            ArgumentNullException.ThrowIfNull(unitOfWork);
             _logger = logger;
             _validator = validator;
             _accessTokenClaimsValidatorService = accessTokenClaimsValidatorService;
             _userRepository = userRepository;
             _hashService = hashService;
             _dateTimeService = dateTimeService;
-            _userSessionRepository = userSessionRepository;
-            _userSessionService = userSessionService;
+            _userService = userService;
+            _userSessionRevocationService = userSessionRevocationService;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<Result> Handle(ResetUserPasswordCommand request, CancellationToken cancellationToken)
@@ -69,15 +73,22 @@ namespace ESAM.GrowTracking.Application.Features.Users.ResetUserPassword
                 _logger.LogWarning("ResetUserPasswordCommand: la nueva contraseña coincide con la actual del usuario. UserId={UserId}", request.UserId);
                 return Result.Fail(Error.BusinessRule("La nueva contraseña debe ser diferente a la contraseña actual del usuario."));
             }
+            var newSalt = _hashService.GenerateSalt();
+            var newPasswordHash = _hashService.ComputeHash(request.NewPassword, newSalt);
             var utcNow = _dateTimeService.UtcNow;
-
-
-
-            var activeUserSessions = await _userSessionRepository.GetActiveByUserIdAsync(request.UserId, utcNow, asTracking, cancellationToken);
-            var activeSessionsCount = await _userSessionService.ResetPassworsAndRevokeUserSessionsAsync(activeUserSessions, user, request.NewPassword, 
+            _userService.UserPasswordChange(user, newSalt, newPasswordHash, currentUserId, utcNow);
+            var (userSessionsToRevoke, userSessionRefreshTokensToRevoke, blacklistedRefreshTokens) = await _userSessionRevocationService.RevokeUserSessionsAsync(request.UserId,
                 "Restablecimiento administrativo de contraseña: todas las sesiones activas del usuario fueron revocadas.", currentUserId, utcNow, asTracking, cancellationToken);
-            _logger.LogInformation("ResetUserPasswordCommand: contraseña restablecida y sesiones revocadas exitosamente. UserId={UserId}, CurrentUserId={CurrentUserId}, " +
-                "SesionesRevocadas={SessionsCount}", request.UserId, currentUserId, activeSessionsCount);
+            await _unitOfWork.ExecuteInTransactionAsync(async ct =>
+            {
+                await _unitOfWork.Users.UpdateAsync(user, ct);
+                if (userSessionsToRevoke.Count > 0)
+                    await _unitOfWork.UserSessions.UpdateRangeAsync(userSessionsToRevoke, ct);
+                if (userSessionRefreshTokensToRevoke.Count > 0)
+                    await _unitOfWork.UserSessionRefreshTokens.UpdateRangeAsync(userSessionRefreshTokensToRevoke, ct);
+                if (blacklistedRefreshTokens.Count > 0)
+                    await _unitOfWork.BlacklistedRefreshTokens.InsertRangeAsync(blacklistedRefreshTokens, ct);
+            }, cancellationToken: cancellationToken);
             return Result.Ok();
         }
     }
