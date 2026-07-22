@@ -1,15 +1,15 @@
 ﻿using ESAM.GrowTracking.Application.Results;
 using MediatR;
 
-namespace ESAM.GrowTracking.Application.Features.Users.RevokeUserSession
+namespace ESAM.GrowTracking.Application.Features.UserSessions.CloseUserSession
 {
-    public record RevokeUserSessionCommand : IRequest<Result>
+    public record CloseUserSessionCommand : IRequest<Result>
     {
         public int UserSessionId { get; init; }
 
         public int UserId { get; init; }
 
-        public RevokeUserSessionCommand(int userSessionId, int userId)
+        public CloseUserSessionCommand(int userSessionId, int userId)
         {
             UserSessionId = userSessionId;
             UserId = userId;

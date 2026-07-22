@@ -1,6 +1,6 @@
 ﻿namespace ESAM.GrowTracking.Application.Features.UserSessions.GetUserSessions
 {
-    public enum GetUserSessionSortBy : byte
+    public enum GetUserSessionsSortBy : byte
     {
         CreatedAt = 0,
         LastActivityAt = 1,

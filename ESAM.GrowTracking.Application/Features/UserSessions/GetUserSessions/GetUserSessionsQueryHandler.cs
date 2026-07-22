@@ -2,7 +2,6 @@
 using ESAM.GrowTracking.Application.Abstractions.Services;
 using ESAM.GrowTracking.Application.Extensions;
 using ESAM.GrowTracking.Application.Features.Commons;
-using ESAM.GrowTracking.Application.Features.UserSessions.GetUserSessions.Responses;
 using ESAM.GrowTracking.Application.Results;
 using ESAM.GrowTracking.Application.ValueObjects;
 using ESAM.GrowTracking.Domain.Abstractions.DataAccess.Repositories;
@@ -12,16 +11,16 @@ using Microsoft.Extensions.Logging;
 
 namespace ESAM.GrowTracking.Application.Features.UserSessions.GetUserSessions
 {
-    public class GetUserSessionQueryHandler : IRequestHandler<GetUserSessionQuery, Result<PagedResponse<GetUserSessionResponse>>>
+    public class GetUserSessionsQueryHandler : IRequestHandler<GetUserSessionsQuery, Result<PagedResponse<GetUserSessionsResponse.UserSessionResponse>>>
     {
-        private readonly ILogger<GetUserSessionQueryHandler> _logger;
-        private readonly IValidator<GetUserSessionQuery> _validator;
+        private readonly ILogger<GetUserSessionsQueryHandler> _logger;
+        private readonly IValidator<GetUserSessionsQuery> _validator;
         private readonly IAccessTokenClaimsValidatorService _accessTokenClaimsValidatorService;
         private readonly IUserRepository _userRepository;
         private readonly IDateTimeService _dateTimeService;
         private readonly IUserSessionQuery _userSessionQuery;
 
-        public GetUserSessionQueryHandler(ILogger<GetUserSessionQueryHandler> logger, IValidator<GetUserSessionQuery> validator,
+        public GetUserSessionsQueryHandler(ILogger<GetUserSessionsQueryHandler> logger, IValidator<GetUserSessionsQuery> validator,
             IAccessTokenClaimsValidatorService accessTokenClaimsValidatorService, IUserRepository userRepository, IDateTimeService dateTimeService, 
             IUserSessionQuery userSessionQuery)
         {
@@ -39,28 +38,28 @@ namespace ESAM.GrowTracking.Application.Features.UserSessions.GetUserSessions
             _userSessionQuery = userSessionQuery;
         }
 
-        public async Task<Result<PagedResponse<GetUserSessionResponse>>> Handle(GetUserSessionQuery request, CancellationToken cancellationToken)
+        public async Task<Result<PagedResponse<GetUserSessionsResponse.UserSessionResponse>>> Handle(GetUserSessionsQuery request, CancellationToken cancellationToken)
         {
             var validation = await _validator.ValidateAsync(request, cancellationToken);
             if (!validation.IsValid)
             {
-                _logger.LogWarning("GetUserSessionQuery: validación fallida. Errores: {Errors}", string.Join(" | ", validation.Errors.Select(e => e.ErrorMessage)));
-                return Result<PagedResponse<GetUserSessionResponse>>.Fail(validation.ToCommandErrors());
+                _logger.LogWarning("GetUserSessionsQuery: validación fallida. Errores: {Errors}", string.Join(" | ", validation.Errors.Select(e => e.ErrorMessage)));
+                return Result<PagedResponse<GetUserSessionsResponse.UserSessionResponse>>.Fail(validation.ToCommandErrors());
             }
             var asTracking = false;
-            var user = await _userRepository.GetByIdAsync(request.UserId, asTracking, cancellationToken);
-            if (user is null || user.IsDeleted)
+            var isUserValid = await _userRepository.IsUserValidAsync(request.UserId, asTracking, cancellationToken);
+            if (!isUserValid)
             {
-                _logger.LogWarning("GetUserSessionQuery: usuario no encontrado o eliminado. UserId={UserId}", request.UserId);
-                return Result<PagedResponse<GetUserSessionResponse>>.Fail(Error.NotFound("No se encontró el usuario especificado."));
+                _logger.LogWarning("GetUserSessionsQuery: usuario no encontrado o eliminado. UserId={UserId}", request.UserId);
+                return Result<PagedResponse<GetUserSessionsResponse.UserSessionResponse>>.Fail(Error.NotFound("No se encontró el usuario especificado."));
             }
             var currentUserId = _accessTokenClaimsValidatorService.CurrentUserId;
             var utcNow = _dateTimeService.UtcNow;
             var normalizedSearchTerm = string.IsNullOrWhiteSpace(request.SearchTerm) ? null : request.SearchTerm.Trim();
-            var filter = new GetUserSessionFilter(request.UserId, request.IsActive, request.ApiClientType, normalizedSearchTerm, request.GetUserSessionSortBy,
+            var userSessionsFilter = new GetUserSessionsFilter(request.UserId, request.IsActive, request.ApiClientType, normalizedSearchTerm, request.UserSessionsSortBy,
                request.SortDirection, request.PageNumber, request.PageSize, utcNow);
-            var userSessionsPaged = await _userSessionQuery.GetUserSessionsAsync(filter, asTracking, cancellationToken);
-            return Result<PagedResponse<GetUserSessionResponse>>.Ok(userSessionsPaged);
+            var userSessionsPaged = await _userSessionQuery.GetUserSessionsAsync(userSessionsFilter, asTracking, cancellationToken);
+            return Result<PagedResponse<GetUserSessionsResponse.UserSessionResponse>>.Ok(userSessionsPaged);
         }
     }
 }

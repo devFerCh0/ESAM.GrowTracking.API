@@ -9,7 +9,6 @@ using ESAM.GrowTracking.Application.Features.Auth.GetCurrentUserWorkProfile.Resp
 using ESAM.GrowTracking.Application.Features.Auth.Login.Responses;
 using ESAM.GrowTracking.Application.Features.Commons;
 using ESAM.GrowTracking.Application.Features.Users.GetUsers;
-using ESAM.GrowTracking.Application.Features.Users.GetUsers.Responses;
 using ESAM.GrowTracking.Domain.Entities;
 using ESAM.GrowTracking.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
@@ -166,48 +165,51 @@ namespace ESAM.GrowTracking.Persistence.DataAccess.Queries
                             .FirstOrDefault())).FirstOrDefault())).FirstOrDefaultAsync(cancellationToken);
         }
 
-        public async Task<PagedResponse<GetUsersResponse>> GetUsersAsync(GetUsersFilter filter, bool asTracking = false, CancellationToken cancellationToken = default)
+        public async Task<PagedResponse<GetUsersResponse.UserResponse>> GetUsersAsync(GetUsersFilter usersFilter, bool asTracking = false, 
+            CancellationToken cancellationToken = default)
         {
             var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
-            if (filter.IsDeleted.HasValue)
-                query = query.Where(u => u.IsDeleted == filter.IsDeleted.Value);
-            if (filter.IsLocked.HasValue)
-                query = filter.IsLocked.Value ? query.Where(u => u.LockoutEndAt != null && u.LockoutEndAt > filter.UtcNow)
-                    : query.Where(u => u.LockoutEndAt == null || u.LockoutEndAt <= filter.UtcNow);
-            if (filter.WorkProfileId.HasValue)
-                query = query.Where(u => u.UserWorkProfiles.Any(uwp => uwp.WorkProfileId == filter.WorkProfileId.Value && !uwp.IsDeleted));
-            if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
+            if (usersFilter.IsDeleted.HasValue)
+                query = query.Where(u => u.IsDeleted == usersFilter.IsDeleted.Value);
+            if (usersFilter.IsLocked.HasValue)
+                query = usersFilter.IsLocked.Value ? query.Where(u => u.LockoutEndAt != null && u.LockoutEndAt > usersFilter.UtcNow)
+                    : query.Where(u => u.LockoutEndAt == null || u.LockoutEndAt <= usersFilter.UtcNow);
+            if (usersFilter.WorkProfileId.HasValue)
+                query = query.Where(u => u.UserWorkProfiles.Any(uwp => uwp.WorkProfileId == usersFilter.WorkProfileId.Value && !uwp.IsDeleted));
+            if (!string.IsNullOrWhiteSpace(usersFilter.SearchTerm))
             {
-                var searchTerm = filter.SearchTerm.Trim();
+                var searchTerm = usersFilter.SearchTerm.Trim();
                 var normalizedSearchTerm = searchTerm.ToUpper();
                 query = query.Where(u => u.NormalizedUserName.Contains(normalizedSearchTerm) || u.NormalizedEmail.Contains(normalizedSearchTerm) ||
                     u.Person.FirstName.Contains(searchTerm) || u.Person.LastName.Contains(searchTerm));
             }
             var totalCount = await query.CountAsync(cancellationToken);
             if (totalCount == 0)
-                return new PagedResponse<GetUsersResponse>([], totalCount, filter.PageNumber, filter.PageSize);
-            var items = await ApplySorting(query, filter.SortBy, filter.SortDirection).Skip((filter.PageNumber - 1) * filter.PageSize).Take(filter.PageSize)
-                .Select(u => new GetUsersResponse(u.Id, u.Username, u.Email,
+                return new PagedResponse<GetUsersResponse.UserResponse>([], totalCount, usersFilter.PageNumber, usersFilter.PageSize);
+            var items = await ApplySorting(query, usersFilter.SortBy, usersFilter.SortDirection).Skip((usersFilter.PageNumber - 1) * usersFilter.PageSize).Take(usersFilter.PageSize)
+                .Select(u => new GetUsersResponse.UserResponse(u.Id, u.Username, u.Email,
                     u.Person.FirstName + " " + u.Person.LastName + (string.IsNullOrWhiteSpace(u.Person.SecondLastName) ? "" : " " + u.Person.SecondLastName),
-                    u.LockoutEndAt != null && u.LockoutEndAt > filter.UtcNow, u.LockoutEndAt, u.IsDeleted, u.UserSessions.Any(us => !us.IsRevoked && us.ExpiresAt > filter.UtcNow), 
-                    u.CreatedAt, u.UpdatedAt, u.UserWorkProfiles.Where(uwp => !uwp.IsDeleted).Select(uwp => new GetUsersUserWorkProfileResponse(uwp.WorkProfileId, 
-                        uwp.WorkProfile.Name, uwp.WorkProfile.WorkProfileType)).ToList())).ToListAsync(cancellationToken);
-            return new PagedResponse<GetUsersResponse>(items, totalCount, filter.PageNumber, filter.PageSize);
+                    u.LockoutEndAt != null && u.LockoutEndAt > usersFilter.UtcNow, u.LockoutEndAt, u.IsDeleted, 
+                    u.UserSessions.Any(us => !us.IsRevoked && us.ExpiresAt > usersFilter.UtcNow), u.CreatedAt, u.UpdatedAt, 
+                    u.UserWorkProfiles.Where(uwp => !uwp.IsDeleted)
+                        .Select(uwp => new GetUsersResponse.UserResponse.UserWorkProfileResponse(uwp.WorkProfileId, uwp.WorkProfile.Name, 
+                            uwp.WorkProfile.WorkProfileType)).ToList())).ToListAsync(cancellationToken);
+            return new PagedResponse<GetUsersResponse.UserResponse>(items, totalCount, usersFilter.PageNumber, usersFilter.PageSize);
         }
 
-        private static IQueryable<User> ApplySorting(IQueryable<User> query, GetUsersSortBy sortBy, SortDirection sortDirection)
+        private static IQueryable<User> ApplySorting(IQueryable<User> userQueryable, GetUsersSortBy usersSortBy, SortDirection sortDirection)
         {
-            return (sortBy, sortDirection) switch
+            return (usersSortBy, sortDirection) switch
             {
-                (GetUsersSortBy.Username, SortDirection.Ascending) => query.OrderBy(u => u.NormalizedUserName).ThenBy(u => u.Id),
-                (GetUsersSortBy.Username, SortDirection.Descending) => query.OrderByDescending(u => u.NormalizedUserName).ThenByDescending(u => u.Id),
-                (GetUsersSortBy.Email, SortDirection.Ascending) => query.OrderBy(u => u.NormalizedEmail).ThenBy(u => u.Id),
-                (GetUsersSortBy.Email, SortDirection.Descending) => query.OrderByDescending(u => u.NormalizedEmail).ThenByDescending(u => u.Id),
-                (GetUsersSortBy.Fullname, SortDirection.Ascending) => query.OrderBy(u => u.Person.FirstName).ThenBy(u => u.Person.LastName).ThenBy(u => u.Id),
-                (GetUsersSortBy.Fullname, SortDirection.Descending) => query.OrderByDescending(u => u.Person.FirstName).ThenByDescending(u => u.Person.LastName)
+                (GetUsersSortBy.Username, SortDirection.Ascending) => userQueryable.OrderBy(u => u.NormalizedUserName).ThenBy(u => u.Id),
+                (GetUsersSortBy.Username, SortDirection.Descending) => userQueryable.OrderByDescending(u => u.NormalizedUserName).ThenByDescending(u => u.Id),
+                (GetUsersSortBy.Email, SortDirection.Ascending) => userQueryable.OrderBy(u => u.NormalizedEmail).ThenBy(u => u.Id),
+                (GetUsersSortBy.Email, SortDirection.Descending) => userQueryable.OrderByDescending(u => u.NormalizedEmail).ThenByDescending(u => u.Id),
+                (GetUsersSortBy.Fullname, SortDirection.Ascending) => userQueryable.OrderBy(u => u.Person.FirstName).ThenBy(u => u.Person.LastName).ThenBy(u => u.Id),
+                (GetUsersSortBy.Fullname, SortDirection.Descending) => userQueryable.OrderByDescending(u => u.Person.FirstName).ThenByDescending(u => u.Person.LastName)
                     .ThenByDescending(u => u.Id),
-                (GetUsersSortBy.CreatedAt, SortDirection.Ascending) => query.OrderBy(u => u.CreatedAt).ThenBy(u => u.Id),
-                _ => query.OrderByDescending(u => u.CreatedAt).ThenByDescending(u => u.Id)
+                (GetUsersSortBy.CreatedAt, SortDirection.Ascending) => userQueryable.OrderBy(u => u.CreatedAt).ThenBy(u => u.Id),
+                _ => userQueryable.OrderByDescending(u => u.CreatedAt).ThenByDescending(u => u.Id)
             };
         }
     }

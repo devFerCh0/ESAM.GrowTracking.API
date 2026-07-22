@@ -1,7 +1,6 @@
 ﻿using ESAM.GrowTracking.Application.Features.Auth.GetActiveCurrentUserSessions.Responses;
 using ESAM.GrowTracking.Application.Features.Commons;
 using ESAM.GrowTracking.Application.Features.UserSessions.GetUserSessions;
-using ESAM.GrowTracking.Application.Features.UserSessions.GetUserSessions.Responses;
 using ESAM.GrowTracking.Domain.Entities;
 
 namespace ESAM.GrowTracking.Application.Abstractions.DataAccess.Queries
@@ -14,6 +13,7 @@ namespace ESAM.GrowTracking.Application.Abstractions.DataAccess.Queries
         Task<List<GetActiveCurrentUserSessionsResponse>> GetActiveCurrentUserSessionsByUserIdAsync(int userId, int? userSessionId, DateTime utcNow, bool asTracking = false, 
             CancellationToken cancellationToken = default);
 
-        Task<PagedResponse<GetUserSessionResponse>> GetUserSessionsAsync(GetUserSessionFilter filter, bool asTracking = false, CancellationToken cancellationToken = default);
+        Task<PagedResponse<GetUserSessionsResponse.UserSessionResponse>> GetUserSessionsAsync(GetUserSessionsFilter userSessionsFilter, bool asTracking = false, 
+            CancellationToken cancellationToken = default);
     }
 }

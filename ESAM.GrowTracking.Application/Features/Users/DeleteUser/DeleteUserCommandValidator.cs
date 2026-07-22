@@ -1,13 +1,13 @@
 ﻿using ESAM.GrowTracking.Application.Validations;
 using FluentValidation;
 
-namespace ESAM.GrowTracking.Application.Features.Users.UnlockUser
+namespace ESAM.GrowTracking.Application.Features.Users.DeleteUser
 {
-    public class UnlockUserCommandValidator : AbstractValidator<UnlockUserCommand>
+    public class DeleteUserCommandValidator : AbstractValidator<DeleteUserCommand>
     {
-        public UnlockUserCommandValidator()
+        public DeleteUserCommandValidator()
         {
-            RuleFor(uuc => uuc.UserId).Cascade(CascadeMode.Stop)
+            RuleFor(duc => duc.UserId).Cascade(CascadeMode.Stop)
                 .NotEmpty().WithMessage(CommandValidationMessages.UserIdRequired)
                 .GreaterThan(0).WithMessage(CommandValidationMessages.UserIdInvalid);
         }

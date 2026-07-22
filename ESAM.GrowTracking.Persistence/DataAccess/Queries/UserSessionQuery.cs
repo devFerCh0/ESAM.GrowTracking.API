@@ -2,7 +2,6 @@
 using ESAM.GrowTracking.Application.Features.Auth.GetActiveCurrentUserSessions.Responses;
 using ESAM.GrowTracking.Application.Features.Commons;
 using ESAM.GrowTracking.Application.Features.UserSessions.GetUserSessions;
-using ESAM.GrowTracking.Application.Features.UserSessions.GetUserSessions.Responses;
 using ESAM.GrowTracking.Domain.Entities;
 using ESAM.GrowTracking.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
@@ -63,45 +62,47 @@ namespace ESAM.GrowTracking.Persistence.DataAccess.Queries
             //                    us.UserSessionWorkProfileSelected.UserSessionRoleCampusSelected.UserRoleCampus.Campus.Name) : null) : null)).ToListAsync(cancellationToken);
         }
 
-
-        public async Task<PagedResponse<GetUserSessionResponse>> GetUserSessionsAsync(GetUserSessionFilter filter, bool asTracking = false,
+        public async Task<PagedResponse<GetUserSessionsResponse.UserSessionResponse>> GetUserSessionsAsync(GetUserSessionsFilter userSessionsFilter, bool asTracking = false,
             CancellationToken cancellationToken = default)
         {
-            var query = (asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking()).Where(us => us.UserId == filter.UserId);
-            if (filter.IsActive.HasValue)
-                query = filter.IsActive.Value
-                    ? query.Where(us => !us.IsRevoked && us.ExpiresAt > filter.UtcNow && us.AbsoluteExpiresAt > filter.UtcNow)
-                    : query.Where(us => us.IsRevoked || us.ExpiresAt <= filter.UtcNow || us.AbsoluteExpiresAt <= filter.UtcNow);
-            if (filter.ApiClientType.HasValue)
-                query = query.Where(us => us.UserDevice.ApiClientType == filter.ApiClientType.Value);
-            if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
-                query = query.Where(us => us.UserDevice.DeviceName.Contains(filter.SearchTerm) || us.UserDevice.DeviceIdentifier.Contains(filter.SearchTerm) ||
-                    (us.IpAddress != null && us.IpAddress.Contains(filter.SearchTerm)));
+            var query = (asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking()).Where(us => us.UserId == userSessionsFilter.UserId);
+            if (userSessionsFilter.IsActive.HasValue)
+                query = userSessionsFilter.IsActive.Value 
+                    ? query.Where(us => !us.IsRevoked && us.ExpiresAt > userSessionsFilter.UtcNow && us.AbsoluteExpiresAt > userSessionsFilter.UtcNow)
+                    : query.Where(us => us.IsRevoked || us.ExpiresAt <= userSessionsFilter.UtcNow || us.AbsoluteExpiresAt <= userSessionsFilter.UtcNow);
+            if (userSessionsFilter.ApiClientType.HasValue)
+                query = query.Where(us => us.UserDevice.ApiClientType == userSessionsFilter.ApiClientType.Value);
+            if (!string.IsNullOrWhiteSpace(userSessionsFilter.SearchTerm))
+                query = query.Where(us => us.UserDevice.DeviceName.Contains(userSessionsFilter.SearchTerm) || 
+                    us.UserDevice.DeviceIdentifier.Contains(userSessionsFilter.SearchTerm) || (us.IpAddress != null && us.IpAddress.Contains(userSessionsFilter.SearchTerm)));
             var totalCount = await query.CountAsync(cancellationToken);
             if (totalCount == 0)
-                return new PagedResponse<GetUserSessionResponse>([], totalCount, filter.PageNumber, filter.PageSize);
-            var items = await ApplySorting(query, filter.GetUserSessionSortBy, filter.SortDirection).Skip((filter.PageNumber - 1) * filter.PageSize).Take(filter.PageSize)
-                .Select(us => new GetUserSessionResponse(us.Id, us.UserDeviceId, us.UserDevice.DeviceName, us.UserDevice.DeviceIdentifier, us.UserDevice.ApiClientType,
-                    us.IpAddress, us.UserAgent, !us.IsRevoked && us.ExpiresAt > filter.UtcNow && us.AbsoluteExpiresAt > filter.UtcNow, us.IsRevoked, us.RevokedAt, us.RevokedReason, 
+                return new PagedResponse<GetUserSessionsResponse.UserSessionResponse>([], totalCount, userSessionsFilter.PageNumber, userSessionsFilter.PageSize);
+            var items = await ApplySorting(query, userSessionsFilter.UserSessionsSortBy, userSessionsFilter.SortDirection)
+                .Skip((userSessionsFilter.PageNumber - 1) * userSessionsFilter.PageSize).Take(userSessionsFilter.PageSize)
+                .Select(us => new GetUserSessionsResponse.UserSessionResponse(us.Id, us.UserId, us.UserDeviceId, us.UserDevice.DeviceName, us.UserDevice.DeviceIdentifier, 
+                    us.UserDevice.ApiClientType, us.IpAddress, us.UserAgent, 
+                    !us.IsRevoked && us.ExpiresAt > userSessionsFilter.UtcNow && us.AbsoluteExpiresAt > userSessionsFilter.UtcNow, us.IsRevoked, us.RevokedAt, us.RevokedReason, 
                     us.ClosedByUser != null ? us.ClosedByUser.Username : null, us.CreatedAt, us.LastActivityAt, us.ExpiresAt, us.AbsoluteExpiresAt,
                     us.UserSessionWorkProfilesSelected.Where(uswps => uswps.IsActive).OrderByDescending(uswps => uswps.CreatedAt)
-                        .Select(uswps => new GetUserSessionWorkProfileSelectedResponse(uswps.WorkProfileId, uswps.UserWorkProfile.WorkProfile.Name,
-                            uswps.UserWorkProfile.WorkProfile.WorkProfileType,
+                        .Select(uswps => new GetUserSessionsResponse.UserSessionResponse.UserSessionWorkProfileSelectedResponse(
+                            uswps.WorkProfileId, uswps.UserWorkProfile.WorkProfile.Name, uswps.UserWorkProfile.WorkProfile.WorkProfileType,
                             uswps.UserSessionRoleCampusesSelected.Where(usrcs => usrcs.IsActive).OrderByDescending(usrcs => usrcs.CreatedAt)
-                                .Select(usrcs => new GetUserSessionWorkProfileRoleCampusSelectedResponse(usrcs.RoleId, usrcs.UserRoleCampus.Role.Name, usrcs.CampusId,
-                                    usrcs.UserRoleCampus.Campus.Name)).FirstOrDefault())).FirstOrDefault())).ToListAsync(cancellationToken);
-            return new PagedResponse<GetUserSessionResponse>(items, totalCount, filter.PageNumber, filter.PageSize);
+                                .Select(usrcs => new GetUserSessionsResponse.UserSessionResponse.UserSessionWorkProfileSelectedResponse.UserSessionWorkProfileRoleCampusSelectedResponse(
+                                    usrcs.RoleId, usrcs.UserRoleCampus.Role.Name, usrcs.CampusId, usrcs.UserRoleCampus.Campus.Name)).FirstOrDefault())).FirstOrDefault()))
+                .ToListAsync(cancellationToken);
+            return new PagedResponse<GetUserSessionsResponse.UserSessionResponse>(items, totalCount, userSessionsFilter.PageNumber, userSessionsFilter.PageSize);
         }
 
-        private static IQueryable<UserSession> ApplySorting(IQueryable<UserSession> userSessionQueryable, GetUserSessionSortBy getUserSessionSortBy, SortDirection sortDirection)
+        private static IQueryable<UserSession> ApplySorting(IQueryable<UserSession> userSessionQueryable, GetUserSessionsSortBy userSessionsSortBy, SortDirection sortDirection)
         {
-            return (getUserSessionSortBy, sortDirection) switch
+            return (userSessionsSortBy, sortDirection) switch
             {
-                (GetUserSessionSortBy.LastActivityAt, SortDirection.Descending) => userSessionQueryable.OrderByDescending(us => us.LastActivityAt),
-                (GetUserSessionSortBy.LastActivityAt, SortDirection.Ascending) => userSessionQueryable.OrderBy(us => us.LastActivityAt),
-                (GetUserSessionSortBy.ExpiresAt, SortDirection.Descending) => userSessionQueryable.OrderByDescending(us => us.ExpiresAt),
-                (GetUserSessionSortBy.ExpiresAt, SortDirection.Ascending) => userSessionQueryable.OrderBy(us => us.ExpiresAt),
-                (GetUserSessionSortBy.CreatedAt, SortDirection.Descending) => userSessionQueryable.OrderByDescending(us => us.CreatedAt),
+                (GetUserSessionsSortBy.LastActivityAt, SortDirection.Descending) => userSessionQueryable.OrderByDescending(us => us.LastActivityAt),
+                (GetUserSessionsSortBy.LastActivityAt, SortDirection.Ascending) => userSessionQueryable.OrderBy(us => us.LastActivityAt),
+                (GetUserSessionsSortBy.ExpiresAt, SortDirection.Descending) => userSessionQueryable.OrderByDescending(us => us.ExpiresAt),
+                (GetUserSessionsSortBy.ExpiresAt, SortDirection.Ascending) => userSessionQueryable.OrderBy(us => us.ExpiresAt),
+                (GetUserSessionsSortBy.CreatedAt, SortDirection.Descending) => userSessionQueryable.OrderByDescending(us => us.CreatedAt),
                 _ => userSessionQueryable.OrderBy(us => us.CreatedAt)
             };
         }

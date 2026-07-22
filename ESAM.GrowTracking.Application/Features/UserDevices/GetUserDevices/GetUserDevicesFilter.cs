@@ -1,19 +1,21 @@
 ﻿using ESAM.GrowTracking.Application.Features.Commons;
 using ESAM.GrowTracking.Domain.Enums;
 
-namespace ESAM.GrowTracking.Application.Features.UserSessions.GetUserSessions
+namespace ESAM.GrowTracking.Application.Features.UserDevices.GetUserDevices
 {
-    public record GetUserSessionFilter
+    public record GetUserDevicesFilter
     {
         public int UserId { get; init; }
 
-        public bool? IsActive { get; init; }
+        public bool? IsLocked { get; init; }
 
         public ApiClientType? ApiClientType { get; init; }
 
+        public bool? IsDeleted { get; init; }
+
         public string? SearchTerm { get; init; }
 
-        public GetUserSessionSortBy GetUserSessionSortBy { get; init; }
+        public GetUserDevicesSortBy UserDevicesSortBy { get; init; }
 
         public SortDirection SortDirection { get; init; }
 
@@ -23,14 +25,15 @@ namespace ESAM.GrowTracking.Application.Features.UserSessions.GetUserSessions
 
         public DateTime UtcNow { get; init; }
 
-        public GetUserSessionFilter(int userId, bool? isActive, ApiClientType? apiClientType, string? searchTerm, GetUserSessionSortBy getUserSessionSortBy, 
+        public GetUserDevicesFilter(int userId, bool? isLocked, ApiClientType? apiClientType, bool? isDeleted, string? searchTerm, GetUserDevicesSortBy userDevicesSortBy,
             SortDirection sortDirection, int pageNumber, int pageSize, DateTime utcNow)
         {
             UserId = userId;
-            IsActive = isActive;
+            IsLocked = isLocked;
             ApiClientType = apiClientType;
+            IsDeleted = isDeleted;
             SearchTerm = searchTerm;
-            GetUserSessionSortBy = getUserSessionSortBy;
+            UserDevicesSortBy = userDevicesSortBy;
             SortDirection = sortDirection;
             PageNumber = pageNumber;
             PageSize = pageSize;

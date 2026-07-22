@@ -22,8 +22,8 @@ namespace ESAM.GrowTracking.Application.Abstractions.Services
         Task RevokeUserSessionAndAccessTokenSessionAsync(UserSession? userSession1, UserSession? userSession2, string jti, DateTime accessTokenExpiration, string revokedReason,
             int currentUserId, int currentUserSessionId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default);
 
-        Task RevokeUserSessionAsync(UserSession userSession, string revokedReason, int currentUserId, DateTime utcNow, bool asTracking = false,
-            CancellationToken cancellationToken = default);
+        //Task RevokeUserSessionAsync(UserSession userSession, string revokedReason, int currentUserId, DateTime utcNow, bool asTracking = false,
+        //    CancellationToken cancellationToken = default);
 
         Task<int> RevokeCurrentUserSessionsAsync(IReadOnlyCollection<UserSession> userSessions, string revokedReason, int currentUserId, DateTime utcNow, bool asTracking = false, 
             CancellationToken cancellationToken = default);

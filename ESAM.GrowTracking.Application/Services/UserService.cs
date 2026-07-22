@@ -8,7 +8,6 @@ namespace ESAM.GrowTracking.Application.Services
 {
     public class UserService : IUserService
     {
-        private readonly IHashService _hashService;
         //private readonly IUserSessionRepository _userSessionRepository;
         //private readonly IUserSessionRefreshTokenRepository _userSessionRefreshTokenRepository;
         //private readonly IBlacklistedRefreshTokenRepository _blacklistedRefreshTokenRepository;
@@ -27,10 +26,8 @@ namespace ESAM.GrowTracking.Application.Services
         //    _unitOfWork = unitOfWork;
         //}
 
-        public UserService(IHashService hashService)
+        public UserService()
         {
-            ArgumentNullException.ThrowIfNull(hashService);
-            _hashService = hashService;
         }
 
         public void UserLock(User user, DateTime lockoutEndAt, int currentUserId, DateTime utcNow)
@@ -48,6 +45,17 @@ namespace ESAM.GrowTracking.Application.Services
         {
             user.ChangePassword(newSalt, newPasswordHash, currentUserId, utcNow);
             user.UpdateSecurityCredentials(Guid.NewGuid().ToString(), user.TokenVersion + 1, currentUserId, utcNow);
+        }
+
+        public void UserDelete(User user, int currentUserId, DateTime utcNow)
+        {
+            user.Delete(currentUserId, utcNow);
+            user.UpdateSecurityCredentials(Guid.NewGuid().ToString(), user.TokenVersion + 1, currentUserId, utcNow);
+        }
+
+        public void UserRestore(User user, int currentUserId, DateTime utcNow)
+        {
+            user.Restore(currentUserId, utcNow);
         }
 
         //public async Task LockUserAsync(User user, string revokedReason, int currentUserId, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)

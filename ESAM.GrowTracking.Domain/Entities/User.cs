@@ -97,5 +97,17 @@ namespace ESAM.GrowTracking.Domain.Entities
             LockoutEndAt = null;
             SetUpdatedAudit(updatedBy, updatedAt);
         }
+
+        public void Delete(int updatedBy, DateTime? updatedAt = null)
+        {
+            IsDeleted = true;
+            SetUpdatedAudit(updatedBy, updatedAt);
+        }
+
+        public void Restore(int updatedBy, DateTime? updatedAt = null)
+        {
+            IsDeleted = false;
+            SetUpdatedAudit(updatedBy, updatedAt);
+        }
     }
 }

@@ -169,21 +169,21 @@ namespace ESAM.GrowTracking.Application.Services
             }, cancellationToken: cancellationToken);
         }
 
-        public async Task RevokeUserSessionAsync(UserSession userSession, string revokedReason, int currentUserId, DateTime utcNow, bool asTracking = false,
-            CancellationToken cancellationToken = default)
-        {
-            var (userSessionToRevoke, userSessionRefreshTokensToRevoke, blacklistedRefreshTokens) = await PrepareSessionRevocationAsync(userSession, revokedReason, currentUserId,
-                utcNow, asTracking, cancellationToken);
-            await _unitOfWork.ExecuteInTransactionAsync(async ct =>
-            {
-                if (userSessionToRevoke is not null)
-                    await _unitOfWork.UserSessions.UpdateAsync(userSessionToRevoke, ct);
-                if (userSessionRefreshTokensToRevoke.Count > 0)
-                    await _unitOfWork.UserSessionRefreshTokens.UpdateRangeAsync(userSessionRefreshTokensToRevoke, ct);
-                if (blacklistedRefreshTokens.Count > 0)
-                    await _unitOfWork.BlacklistedRefreshTokens.InsertRangeAsync(blacklistedRefreshTokens, ct);
-            }, cancellationToken: cancellationToken);
-        }
+        //public async Task RevokeUserSessionAsync(UserSession userSession, string revokedReason, int currentUserId, DateTime utcNow, bool asTracking = false,
+        //    CancellationToken cancellationToken = default)
+        //{
+        //    var (userSessionToRevoke, userSessionRefreshTokensToRevoke, blacklistedRefreshTokens) = await PrepareSessionRevocationAsync(userSession, revokedReason, currentUserId,
+        //        utcNow, asTracking, cancellationToken);
+        //    await _unitOfWork.ExecuteInTransactionAsync(async ct =>
+        //    {
+        //        if (userSessionToRevoke is not null)
+        //            await _unitOfWork.UserSessions.UpdateAsync(userSessionToRevoke, ct);
+        //        if (userSessionRefreshTokensToRevoke.Count > 0)
+        //            await _unitOfWork.UserSessionRefreshTokens.UpdateRangeAsync(userSessionRefreshTokensToRevoke, ct);
+        //        if (blacklistedRefreshTokens.Count > 0)
+        //            await _unitOfWork.BlacklistedRefreshTokens.InsertRangeAsync(blacklistedRefreshTokens, ct);
+        //    }, cancellationToken: cancellationToken);
+        //}
 
         public async Task<int> RevokeCurrentUserSessionsAsync(IReadOnlyCollection<UserSession> userSessions, string revokedReason, int currentUserId, DateTime utcNow,
             bool asTracking = false, CancellationToken cancellationToken = default)

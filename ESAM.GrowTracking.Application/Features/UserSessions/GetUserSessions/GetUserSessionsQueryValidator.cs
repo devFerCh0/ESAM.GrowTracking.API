@@ -3,9 +3,9 @@ using FluentValidation;
 
 namespace ESAM.GrowTracking.Application.Features.UserSessions.GetUserSessions
 {
-    public class GetUserSessionQueryValidator : AbstractValidator<GetUserSessionQuery>
+    public class GetUserSessionsQueryValidator : AbstractValidator<GetUserSessionsQuery>
     {
-        public GetUserSessionQueryValidator()
+        public GetUserSessionsQueryValidator()
         {
             RuleFor(gusq => gusq.UserId).Cascade(CascadeMode.Stop)
                 .NotEmpty().WithMessage(CommandValidationMessages.UserIdRequired)
@@ -18,7 +18,7 @@ namespace ESAM.GrowTracking.Application.Features.UserSessions.GetUserSessions
                 .MaximumLength(100).WithMessage(CommandValidationMessages.SearchTermMaxLength)
                 .Must(CommandValidationRules.HasNoControlChars).WithMessage(CommandValidationMessages.SearchTermInvalid)
                 .When(gusq => !string.IsNullOrWhiteSpace(gusq.SearchTerm));
-            RuleFor(gusq => gusq.GetUserSessionSortBy).Cascade(CascadeMode.Stop)
+            RuleFor(gusq => gusq.UserSessionsSortBy).Cascade(CascadeMode.Stop)
                 .IsInEnum().WithMessage(CommandValidationMessages.SortByInvalid);
             RuleFor(gusq => gusq.SortDirection).Cascade(CascadeMode.Stop)
                 .IsInEnum().WithMessage(CommandValidationMessages.SortDirectionInvalid);

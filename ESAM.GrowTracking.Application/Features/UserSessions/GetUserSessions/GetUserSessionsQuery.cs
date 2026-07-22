@@ -1,12 +1,11 @@
 ﻿using ESAM.GrowTracking.Application.Features.Commons;
-using ESAM.GrowTracking.Application.Features.UserSessions.GetUserSessions.Responses;
 using ESAM.GrowTracking.Application.Results;
 using ESAM.GrowTracking.Domain.Enums;
 using MediatR;
 
 namespace ESAM.GrowTracking.Application.Features.UserSessions.GetUserSessions
 {
-    public record GetUserSessionQuery : IRequest<Result<PagedResponse<GetUserSessionResponse>>>
+    public record GetUserSessionsQuery : IRequest<Result<PagedResponse<GetUserSessionsResponse.UserSessionResponse>>>
     {
         public int UserId { get; init; }
 
@@ -16,7 +15,7 @@ namespace ESAM.GrowTracking.Application.Features.UserSessions.GetUserSessions
 
         public string? SearchTerm { get; init; }
 
-        public GetUserSessionSortBy GetUserSessionSortBy { get; init; }
+        public GetUserSessionsSortBy UserSessionsSortBy { get; init; }
 
         public SortDirection SortDirection { get; init; }
 
@@ -24,15 +23,15 @@ namespace ESAM.GrowTracking.Application.Features.UserSessions.GetUserSessions
 
         public int PageSize { get; init; }
 
-        public GetUserSessionQuery(int userId, bool? isActive = null, ApiClientType? apiClientType = null, string? searchTerm = null, 
-            GetUserSessionSortBy getUserSessionSortBy = GetUserSessionSortBy.CreatedAt, SortDirection sortDirection = SortDirection.Descending, int pageNumber = 1, 
+        public GetUserSessionsQuery(int userId, bool? isActive = null, ApiClientType? apiClientType = null, string? searchTerm = null, 
+            GetUserSessionsSortBy userSessionsSortBy = GetUserSessionsSortBy.CreatedAt, SortDirection sortDirection = SortDirection.Descending, int pageNumber = 1, 
             int pageSize = 20)
         {
             UserId = userId;
             IsActive = isActive;
             ApiClientType = apiClientType;
             SearchTerm = searchTerm;
-            GetUserSessionSortBy = getUserSessionSortBy;
+            UserSessionsSortBy = userSessionsSortBy;
             SortDirection = sortDirection;
             PageNumber = pageNumber;
             PageSize = pageSize;
