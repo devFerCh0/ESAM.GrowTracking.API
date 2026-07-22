@@ -186,7 +186,7 @@ namespace ESAM.GrowTracking.Persistence.DataAccess.Queries
             var totalCount = await query.CountAsync(cancellationToken);
             if (totalCount == 0)
                 return new PagedResponse<GetUsersResponse.UserResponse>([], totalCount, usersFilter.PageNumber, usersFilter.PageSize);
-            var items = await ApplySorting(query, usersFilter.SortBy, usersFilter.SortDirection).Skip((usersFilter.PageNumber - 1) * usersFilter.PageSize).Take(usersFilter.PageSize)
+            var items = await ApplySorting(query, usersFilter.UsersSortBy, usersFilter.SortDirection).Skip((usersFilter.PageNumber - 1) * usersFilter.PageSize).Take(usersFilter.PageSize)
                 .Select(u => new GetUsersResponse.UserResponse(u.Id, u.Username, u.Email,
                     u.Person.FirstName + " " + u.Person.LastName + (string.IsNullOrWhiteSpace(u.Person.SecondLastName) ? "" : " " + u.Person.SecondLastName),
                     u.LockoutEndAt != null && u.LockoutEndAt > usersFilter.UtcNow, u.LockoutEndAt, u.IsDeleted, 

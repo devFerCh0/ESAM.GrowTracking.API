@@ -15,6 +15,8 @@ namespace ESAM.GrowTracking.Application.Features.UserDevices.GetUserDevices
         {
             public int UserDeviceId { get; init; }
 
+            public int UserId { get; init; }
+
             public string DeviceName { get; init; }
 
             public string DeviceIdentifier { get; init; }
@@ -41,11 +43,12 @@ namespace ESAM.GrowTracking.Application.Features.UserDevices.GetUserDevices
 
             public DateTime CreatedAt { get; init; }
 
-            public UserDeviceResponse(int userDeviceId, string deviceName, string deviceIdentifier, ApiClientType apiClientType, bool isLocked, DateTime? lockoutEndAt,
+            public UserDeviceResponse(int userDeviceId, int userId, string deviceName, string deviceIdentifier, ApiClientType apiClientType, bool isLocked, DateTime? lockoutEndAt,
                 int failedLoginCount, DateTime? lastFailedLoginAt, DateTime? lastLoginAt, DateTime? lastSeenAt, string? lastIp, bool isDeleted, bool hasActiveSessions, 
                 DateTime createdAt)
             {
                 UserDeviceId = userDeviceId;
+                UserId = userId;
                 DeviceName = deviceName;
                 DeviceIdentifier = deviceIdentifier;
                 ApiClientType = apiClientType;

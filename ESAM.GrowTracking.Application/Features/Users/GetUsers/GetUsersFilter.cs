@@ -12,7 +12,7 @@ namespace ESAM.GrowTracking.Application.Features.Users.GetUsers
 
         public int? WorkProfileId { get; init; }
 
-        public GetUsersSortBy SortBy { get; init; }
+        public GetUsersSortBy UsersSortBy { get; init; }
 
         public SortDirection SortDirection { get; init; }
 
@@ -22,14 +22,14 @@ namespace ESAM.GrowTracking.Application.Features.Users.GetUsers
 
         public DateTime UtcNow { get; init; }
 
-        public GetUsersFilter(string? searchTerm, bool? isDeleted, bool? isLocked, int? workProfileId, GetUsersSortBy sortBy, SortDirection sortDirection, int pageNumber,
+        public GetUsersFilter(string? searchTerm, bool? isDeleted, bool? isLocked, int? workProfileId, GetUsersSortBy usersSortBy, SortDirection sortDirection, int pageNumber,
             int pageSize, DateTime utcNow)
         {
             SearchTerm = searchTerm;
             IsDeleted = isDeleted;
             IsLocked = isLocked;
             WorkProfileId = workProfileId;
-            SortBy = sortBy;
+            UsersSortBy = usersSortBy;
             SortDirection = sortDirection;
             PageNumber = pageNumber;
             PageSize = pageSize;

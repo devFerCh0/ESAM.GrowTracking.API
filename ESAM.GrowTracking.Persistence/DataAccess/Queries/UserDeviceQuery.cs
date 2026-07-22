@@ -40,7 +40,7 @@ namespace ESAM.GrowTracking.Persistence.DataAccess.Queries
                 return new PagedResponse<GetUserDevicesResponse.UserDeviceResponse>([], totalCount, userDevicesFilter.PageNumber, userDevicesFilter.PageSize);
             var items = await ApplySorting(query, userDevicesFilter.UserDevicesSortBy, userDevicesFilter.SortDirection)
                 .Skip((userDevicesFilter.PageNumber - 1) * userDevicesFilter.PageSize).Take(userDevicesFilter.PageSize)
-                .Select(ud => new GetUserDevicesResponse.UserDeviceResponse(ud.Id, ud.DeviceName, ud.DeviceIdentifier, ud.ApiClientType,
+                .Select(ud => new GetUserDevicesResponse.UserDeviceResponse(ud.Id, ud.UserId, ud.DeviceName, ud.DeviceIdentifier, ud.ApiClientType,
                     ud.LockoutEndAt.HasValue && ud.LockoutEndAt.Value > userDevicesFilter.UtcNow, ud.LockoutEndAt, ud.FailedLoginCount, ud.LastFailedLoginAt, ud.LastLoginAt,
                     ud.LastSeenAt, ud.LastIp, ud.IsDeleted, 
                     ud.UserSessions.Any(us => !us.IsRevoked && us.ExpiresAt > userDevicesFilter.UtcNow && us.AbsoluteExpiresAt > userDevicesFilter.UtcNow), ud.CreatedAt))

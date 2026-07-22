@@ -40,10 +40,10 @@ namespace ESAM.GrowTracking.Persistence.DataAccess.Repositories
             return await query.AnyAsync(u => u.Id == id && !u.IsDeleted, cancellationToken);
         }
 
-        public async Task<bool> IsUserValidAsync(int id, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
-        {
-            var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
-            return await query.AnyAsync(u => u.Id == id && !u.IsDeleted && (u.LockoutEndAt == null || u.LockoutEndAt <= utcNow), cancellationToken);
-        }
+        //public async Task<bool> IsUserValidAsync(int id, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default)
+        //{
+        //    var query = asTracking ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
+        //    return await query.AnyAsync(u => u.Id == id && !u.IsDeleted && (u.LockoutEndAt == null || u.LockoutEndAt <= utcNow), cancellationToken);
+        //}
     }
 }

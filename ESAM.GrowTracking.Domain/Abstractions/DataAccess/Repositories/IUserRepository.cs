@@ -14,6 +14,6 @@ namespace ESAM.GrowTracking.Domain.Abstractions.DataAccess.Repositories
 
         Task<bool> IsUserValidAsync(int id, bool asTracking = false, CancellationToken cancellationToken = default);
 
-        Task<bool> IsUserValidAsync(int id, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default);
+        //Task<bool> IsUserValidAsync(int id, DateTime utcNow, bool asTracking = false, CancellationToken cancellationToken = default);
     }
 }
