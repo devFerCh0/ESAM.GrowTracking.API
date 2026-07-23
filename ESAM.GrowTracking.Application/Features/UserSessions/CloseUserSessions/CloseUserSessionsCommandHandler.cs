@@ -45,14 +45,14 @@ namespace ESAM.GrowTracking.Application.Features.UserSessions.CloseUserSessions
             var validation = await _validator.ValidateAsync(request, cancellationToken);
             if (!validation.IsValid)
             {
-                _logger.LogWarning("LogoutAllCommand: validación fallida. Errores: {Errors}", string.Join(" | ", validation.Errors.Select(e => e.ErrorMessage)));
+                _logger.LogWarning("CloseUserSessionsCommand: validación fallida. Errores: {Errors}", string.Join(" | ", validation.Errors.Select(e => e.ErrorMessage)));
                 return Result.Fail(validation.ToCommandErrors());
             }
             var asTracking = false;
             var isUserValid = await _userRepository.IsUserValidAsync(request.UserId, asTracking, cancellationToken);
             if (!isUserValid)
             {
-                _logger.LogWarning("GetUserSessionsQuery: usuario no encontrado o eliminado. UserId={UserId}", request.UserId);
+                _logger.LogWarning("CloseUserSessionsCommand: usuario no encontrado o eliminado. UserId={UserId}", request.UserId);
                 return Result.Fail(Error.NotFound("No se encontró el usuario especificado."));
             }
             var currentUserId = _accessTokenClaimsValidatorService.CurrentUserId;

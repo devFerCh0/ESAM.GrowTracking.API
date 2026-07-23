@@ -4,6 +4,6 @@ namespace ESAM.GrowTracking.Application.Abstractions.Services
 {
     public interface IUserDeviceService
     {
-        void UserDevicxUnlock(UserDevice userDevice, int currentUserId, DateTime utcNow);
+        void UserDeviceUnlock(UserDevice userDevice, int currentUserId, DateTime utcNow);
     }
 }

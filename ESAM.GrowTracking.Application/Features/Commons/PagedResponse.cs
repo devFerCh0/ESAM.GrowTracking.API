@@ -18,13 +18,13 @@
 
         public PagedResponse(IReadOnlyCollection<TItem> items, int totalCount, int pageNumber, int pageSize)
         {
-            Items = items;
-            TotalCount = totalCount;
-            PageNumber = pageNumber;
-            PageSize = pageSize;
-            TotalPages = pageSize > 0 ? (int)Math.Ceiling(totalCount / (double)pageSize) : 0;
-            HasPreviousPage = pageNumber > 1;
-            HasNextPage = pageNumber < TotalPages;
+            Items = items ?? [];
+            TotalCount = totalCount < 0 ? 0 : totalCount;
+            PageNumber = pageNumber < 1 ? 1 : pageNumber;
+            PageSize = pageSize < 1 ? 1 : pageSize;
+            TotalPages = (int)Math.Ceiling(TotalCount / (double)PageSize);
+            HasPreviousPage = PageNumber > 1;
+            HasNextPage = PageNumber < TotalPages;
         }
     }
 }

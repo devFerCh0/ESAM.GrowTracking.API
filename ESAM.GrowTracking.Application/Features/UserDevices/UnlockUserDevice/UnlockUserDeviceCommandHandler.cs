@@ -73,7 +73,7 @@ namespace ESAM.GrowTracking.Application.Features.UserDevices.UnlockUserDevice
                 return Result.Fail(Error.BusinessRule("El dispositivo de usuario no se encuentra bloqueado actualmente."));
             }
             var currentUserId = _accessTokenClaimsValidatorService.CurrentUserId;
-            _userDeviceService.UserDevicxUnlock(userDevice, currentUserId, utcNow);
+            _userDeviceService.UserDeviceUnlock(userDevice, currentUserId, utcNow);
             await _unitOfWork.UserDevices.UpdateAsync(userDevice, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             return Result.Ok();

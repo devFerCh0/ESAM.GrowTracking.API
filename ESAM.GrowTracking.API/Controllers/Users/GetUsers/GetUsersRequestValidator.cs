@@ -6,13 +6,13 @@ using FluentValidation;
 
 namespace ESAM.GrowTracking.API.Controllers.Users.GetUsers
 {
-    public sealed class GetUsersRequestValidator : AbstractValidator<GetUsersRequest> // x2
+    public sealed class GetUsersRequestValidator : AbstractValidator<GetUsersRequest>
     {
         public GetUsersRequestValidator()
         {
-            RuleFor(gur => gur.SortBy).Cascade(CascadeMode.Stop)
+            RuleFor(gur => gur.UsersSortBy).Cascade(CascadeMode.Stop)
                 .Must(EnumHelper.IsValidFromString<GetUsersSortBy>).WithMessage(RequestValidationMessages.SortByInvalid)
-                .When(gur => !string.IsNullOrWhiteSpace(gur.SortBy));
+                .When(gur => !string.IsNullOrWhiteSpace(gur.UsersSortBy));
             RuleFor(gur => gur.SortDirection).Cascade(CascadeMode.Stop)
                 .Must(EnumHelper.IsValidFromString<SortDirection>).WithMessage(RequestValidationMessages.SortDirectionInvalid)
                 .When(gur => !string.IsNullOrWhiteSpace(gur.SortDirection));

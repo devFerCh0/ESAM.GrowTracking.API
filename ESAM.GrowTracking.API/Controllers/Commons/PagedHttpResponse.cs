@@ -1,4 +1,4 @@
-﻿namespace ESAM.GrowTracking.API.Controllers
+﻿namespace ESAM.GrowTracking.API.Controllers.Commons
 {
     public record PagedHttpResponse<TItem>
     {

@@ -7,7 +7,7 @@ namespace ESAM.GrowTracking.Application.Services
     {
         public UserDeviceService() { }
 
-        public void UserDevicxUnlock(UserDevice userDevice, int currentUserId, DateTime utcNow)
+        public void UserDeviceUnlock(UserDevice userDevice, int currentUserId, DateTime utcNow)
         {
             userDevice.ResetFailedLogin(currentUserId, utcNow);
             userDevice.UpdateLastSeenAt(utcNow, currentUserId, utcNow);

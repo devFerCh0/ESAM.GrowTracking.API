@@ -10,7 +10,7 @@
 
         public int? WorkProfileId { get; init; }
 
-        public string? SortBy { get; init; }
+        public string? UsersSortBy { get; init; }
 
         public string? SortDirection { get; init; }
 
@@ -18,16 +18,16 @@
 
         public int? PageSize { get; init; }
 
-        //public GetUsersRequest(string? searchTerm, bool? isDeleted, bool? isLocked, int? workProfileId, string? sortBy, string? sortDirection, int? pageNumber, int? pageSize)
-        //{
-        //    SearchTerm = searchTerm;
-        //    IsDeleted = isDeleted;
-        //    IsLocked = isLocked;
-        //    WorkProfileId = workProfileId;
-        //    SortBy = sortBy;
-        //    SortDirection = sortDirection;
-        //    PageNumber = pageNumber;
-        //    PageSize = pageSize;
-        //}
+        public GetUsersRequest(string? searchTerm, bool? isDeleted, bool? isLocked, int? workProfileId, string? usersSortBy, string? sortDirection, int? pageNumber, int? pageSize)
+        {
+            SearchTerm = searchTerm;
+            IsDeleted = isDeleted;
+            IsLocked = isLocked;
+            WorkProfileId = workProfileId;
+            UsersSortBy = usersSortBy;
+            SortDirection = sortDirection;
+            PageNumber = pageNumber;
+            PageSize = pageSize;
+        }
     }
 }

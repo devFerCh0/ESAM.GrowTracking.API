@@ -13,8 +13,6 @@ namespace ESAM.GrowTracking.Application.Features.UserDevices.GetUserDevices
 
         public ApiClientType? ApiClientType { get; init; }
 
-        public bool? IsTrusted { get; init; }
-
         public bool? IsDeleted { get; init; }
 
         public string? SearchTerm { get; init; }
@@ -27,14 +25,13 @@ namespace ESAM.GrowTracking.Application.Features.UserDevices.GetUserDevices
 
         public int PageSize { get; init; }
 
-        public GetUserDevicesQuery(int userId, bool? isLocked = null, ApiClientType? apiClientType = null, bool? isTrusted = null, bool? isDeleted = null,
-            string? searchTerm = null, GetUserDevicesSortBy userDevicesSortBy = GetUserDevicesSortBy.LastSeenAt, SortDirection sortDirection = SortDirection.Descending, 
-            int pageNumber = 1, int pageSize = 20)
+        public GetUserDevicesQuery(int userId, bool? isLocked = null, ApiClientType? apiClientType = null, bool? isDeleted = null, string? searchTerm = null, 
+            GetUserDevicesSortBy userDevicesSortBy = GetUserDevicesSortBy.LastSeenAt, SortDirection sortDirection = SortDirection.Descending, int pageNumber = 1, 
+            int pageSize = 20)
         {
             UserId = userId;
             IsLocked = isLocked;
             ApiClientType = apiClientType;
-            IsTrusted = isTrusted;
             IsDeleted = isDeleted;
             SearchTerm = searchTerm;
             UserDevicesSortBy = userDevicesSortBy;
